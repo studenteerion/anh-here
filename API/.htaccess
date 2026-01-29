@@ -1,0 +1,13 @@
+<IfModule mod_rewrite.c>
+    #Serve per reindirizzare tutto alla cartella public
+
+    RewriteEngine On 
+    #Se il dominio non c'è inserito niente manda alla cartella public
+    RewriteRule ^$ public/ [L] 
+
+    # 2. FIX LOOP INFINITO:
+    # Applica la regola SOLO se l'URL non contiene già "public/"
+    # ((?!public/).*) significa: prendi tutto ciò che NON inizia con public/
+    RewriteRule ^((?!public/).*)$ public/$1 [L,NC]
+</IfModule>
+
