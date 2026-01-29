@@ -41,7 +41,7 @@ class Auth extends Controller
         // Lo creiamo direttamente qui per semplicità
         // 1. Genera ACCESS TOKEN (breve durata)
         $jwtPayload = [
-            'iss' => 'tuosito.com',
+            'iss' => 'AlpineNode',
             'iat' => time(),
             'exp' => time() + 600,
             'sub' => $user->employee_id,
@@ -64,7 +64,8 @@ class Auth extends Controller
             "status" => "success",
             "status_code" => 200,
             "token" => $accessToken,          // Access Token
-            "refresh_token" => $refreshToken, // Refresh Token (Ora lo passiamo!)
+            "refresh_token" => $refreshToken,
+            "role" => $user->role_id, // Refresh Token (Ora lo passiamo!)
             "expires_in" => 600
         ]);
     }
@@ -96,7 +97,7 @@ class Auth extends Controller
         $user = $this->userModel->getUserById($tokenNelDb->user_id);
 
         $nuovoPayload = [
-            'iss' => 'tuosito.com',
+            'iss' => 'AlpineNode',
             'iat' => time(),
             'exp' => time() + 600,
             'sub' => $user->employee_id,
@@ -112,8 +113,39 @@ class Auth extends Controller
             "status" => "success",
             "status_code" => 200,
             "token" => $nuovoAccessToken,
+            "role" => $user->role_id,
             "expires_in" => 600
         ]);
+    }
+
+    public function validate()
+    {
+        $headers = apache_request_headers();
+        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+
+        if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $this->rispondiJson("Token mancante o malformato", 401);
+            return null;
+        }
+
+        $token = $matches[1];
+
+        if (empty($token)) {
+            $this->rispondiJson("Dati mancanti", 400);
+            return;
+        }
+
+        try {
+            $decoded = JWT::decode($token, new Key(JWT_KEY, 'HS256'));
+            $this->view("data", [
+                "status" => "success",
+                "status_code" => 200,
+                "message" => "Token valido",
+                "data" => $decoded
+            ]);
+        } catch (Exception $e) {
+            $this->rispondiJson("Token non valido: ", 401);
+        }
     }
 
     // --- Helper semplice per rispondere JSON ---
