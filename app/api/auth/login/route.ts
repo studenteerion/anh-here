@@ -15,7 +15,7 @@ const JWT_KEY = process.env.JWT_KEY!;
  *     tags:
  *       - Authentication
  *     summary: User login (public)
- *     description: Authenticate user with email and password, returns JWT access token and refresh token. This endpoint is public and does not require authentication.
+ *     description: Authenticate user with email and password, returns JWT access token and refresh token.
  *     security: []
  *     requestBody:
  *       required: true

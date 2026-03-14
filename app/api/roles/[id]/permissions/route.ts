@@ -4,14 +4,21 @@ import { checkUserPermission, editRolePermission } from "@/lib/db/permissions";
 
 /**
  * @swagger
- * /api/permissions/updateRolePermission:
- *   post:
+ * /api/roles/{roleId}/permissions:
+ *   patch:
  *     tags:
- *       - Permissions
+ *       - Roles
  *     summary: Update role permission
  *     description: Grant or revoke a specific permission for a role
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - name: roleId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Role ID
  *     requestBody:
  *       required: true
  *       content:
@@ -19,12 +26,9 @@ import { checkUserPermission, editRolePermission } from "@/lib/db/permissions";
  *           schema:
  *             type: object
  *             required:
- *               - roleId
  *               - permissionId
  *               - isAllowed
  *             properties:
- *               roleId:
- *                 type: integer
  *               permissionId:
  *                 type: integer
  *               isAllowed:
@@ -43,7 +47,8 @@ import { checkUserPermission, editRolePermission } from "@/lib/db/permissions";
  *       500:
  *         description: Server error
  */
-export async function POST(req: NextRequest) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
 
@@ -51,12 +56,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const roleId = body.roleId;
+    const roleId = parseInt(id);
     const permissionId = body.permissionId;
     const allowed = Number(body.isAllowed ?? 1);
 
-    if (!permissionId || !roleId) {
-      return errorResponse("Dati mancanti (permissionId o roleId)", 400);
+    if (!permissionId) {
+      return errorResponse("Dati mancanti (permissionId)", 400);
     }
 
     const hasPerm = await checkUserPermission(myUserId, "roles_permissions_update");
@@ -64,7 +69,7 @@ export async function POST(req: NextRequest) {
       return errorResponse("Permessi insufficienti per modificare le autorizzazioni dei ruoli", 403);
     }
 
-    const result = await editRolePermission(Number(roleId), Number(permissionId), allowed);
+    const result = await editRolePermission(roleId, Number(permissionId), allowed);
     if (!result) {
       return errorResponse("Errore durante la modifica del permesso al ruolo", 409);
     }
