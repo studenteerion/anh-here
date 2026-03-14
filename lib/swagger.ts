@@ -6,11 +6,11 @@ export const getApiDocs = async () => {
     definition: {
       openapi: '3.0.0',
       info: {
-        title: 'Anhere - Sistema di Gestione Presenze',
+        title: 'ANH-here - Sistema di Gestione Presenze',
         version: '1.0.0',
         description: 'API completa per la gestione del sistema di presenze, dipendenti, turni e permessi.',
         contact: {
-          name: 'Anhere API Support',
+          name: 'ANH-here API Support',
           email: 'support@anhere.local',
         },
       },
