@@ -1,0 +1,181 @@
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
+import { checkUserPermission } from "@/lib/db/permissions";
+import { getDepartmentById, updateDepartment, deleteDepartment } from "@/lib/db/departments";
+
+/**
+ * @swagger
+ * /api/departments/{id}:
+ *   get:
+ *     tags:
+ *       - Departments
+ *     summary: Get department by ID
+ *     description: Retrieve a specific department details
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Department ID
+ *     responses:
+ *       200:
+ *         description: Department retrieved successfully
+ *       403:
+ *         description: Permission denied
+ *       404:
+ *         description: Department not found
+ *       500:
+ *         description: Server error
+ *   put:
+ *     tags:
+ *       - Departments
+ *     summary: Update department
+ *     description: Update department name
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Department ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - departmentName
+ *             properties:
+ *               departmentName:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Department updated successfully
+ *       400:
+ *         description: Validation failed
+ *       403:
+ *         description: Permission denied
+ *       404:
+ *         description: Department not found
+ *       500:
+ *         description: Server error
+ *   delete:
+ *     tags:
+ *       - Departments
+ *     summary: Delete department
+ *     description: Delete a specific department
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Department ID
+ *     responses:
+ *       200:
+ *         description: Department deleted successfully
+ *       403:
+ *         description: Permission denied
+ *       404:
+ *         description: Department not found
+ *       500:
+ *         description: Server error
+ */
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const authResult = verifyAuth(req);
+  if (authResult.error) return authErrorResponse(authResult);
+  const employeeId = authResult.payload!.sub;
+
+  try {
+    const hasPerm = await checkUserPermission(employeeId, "user_permissions_read");
+    if (!hasPerm) {
+      return errorResponse("Permission denied: you don't have access to this feature", 403);
+    }
+
+    const departmentId = parseInt(id);
+    const department = await getDepartmentById(departmentId);
+
+    if (!department) {
+      return errorResponse("Department not found", 404);
+    }
+
+    return successResponse(department, "Department retrieved", 200);
+  } catch (error: any) {
+    return errorResponse(error.message || "Failed to retrieve department", 500);
+  }
+}
+
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const authResult = verifyAuth(req);
+  if (authResult.error) return authErrorResponse(authResult);
+  const employeeId = authResult.payload!.sub;
+
+  try {
+    const hasPerm = await checkUserPermission(employeeId, "user_permissions_update");
+    if (!hasPerm) {
+      return errorResponse("Permission denied: you don't have access to this feature", 403);
+    }
+
+    const departmentId = parseInt(id);
+    const department = await getDepartmentById(departmentId);
+
+    if (!department) {
+      return errorResponse("Department not found", 404);
+    }
+
+    const body = await req.json();
+    const { departmentName } = body;
+
+    if (!departmentName) {
+      return errorResponse("Missing required field: departmentName", 400);
+    }
+
+    const updated = await updateDepartment(departmentId, departmentName);
+
+    if (!updated) {
+      return errorResponse("Failed to update department", 400);
+    }
+
+    const updatedDepartment = await getDepartmentById(departmentId);
+    return successResponse(updatedDepartment, "Department updated successfully", 200);
+  } catch (error: any) {
+    return errorResponse(error.message || "Failed to update department", 500);
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const authResult = verifyAuth(req);
+  if (authResult.error) return authErrorResponse(authResult);
+  const employeeId = authResult.payload!.sub;
+
+  try {
+    const hasPerm = await checkUserPermission(employeeId, "user_permissions_create");
+    if (!hasPerm) {
+      return errorResponse("Permission denied: you don't have access to this feature", 403);
+    }
+
+    const departmentId = parseInt(id);
+    const department = await getDepartmentById(departmentId);
+
+    if (!department) {
+      return errorResponse("Department not found", 404);
+    }
+
+    await deleteDepartment(departmentId);
+
+    return successResponse({ id: departmentId }, "Department deleted successfully", 200);
+  } catch (error: any) {
+    return errorResponse(error.message || "Failed to delete department", 500);
+  }
+}

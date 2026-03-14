@@ -1,0 +1,120 @@
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
+import { checkUserPermission } from "@/lib/db/permissions";
+import { getLeaveRequestById, deleteLeaveRequest } from "@/lib/db/requests";
+
+/**
+ * @swagger
+ * /api/requests/{id}:
+ *   get:
+ *     tags:
+ *       - Leave Requests
+ *     summary: Get leave request by ID
+ *     description: Retrieve a specific leave request details
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Leave request ID
+ *     responses:
+ *       200:
+ *         description: Leave request retrieved successfully
+ *       403:
+ *         description: Permission denied or cannot view other users' requests
+ *       404:
+ *         description: Leave request not found
+ *       500:
+ *         description: Server error
+ *   delete:
+ *     tags:
+ *       - Leave Requests
+ *     summary: Cancel leave request
+ *     description: Cancel a pending leave request (only the requester can cancel their own requests)
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Leave request ID
+ *     responses:
+ *       200:
+ *         description: Leave request cancelled successfully
+ *       400:
+ *         description: Can only delete pending leave requests
+ *       403:
+ *         description: Can only cancel own leave requests
+ *       404:
+ *         description: Leave request not found
+ *       500:
+ *         description: Server error
+ */
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const authResult = verifyAuth(req);
+  if (authResult.error) return authErrorResponse(authResult);
+  const employeeId = authResult.payload!.sub;
+
+  try {
+    const requestId = parseInt(id);
+    const request = await getLeaveRequestById(requestId);
+
+    if (!request) {
+      return errorResponse("Leave request not found", 404);
+    }
+
+    // Only the requester can cancel their own request, and only if it's still pending
+    if (request.employee_id !== employeeId) {
+      return errorResponse("You can only cancel your own leave requests", 403);
+    }
+
+    const deleted = await deleteLeaveRequest(requestId);
+
+    if (!deleted) {
+      return errorResponse("Can only delete pending leave requests", 400);
+    }
+
+    return successResponse({ id: requestId }, "Leave request cancelled successfully", 200);
+  } catch (error: any) {
+    return errorResponse(error.message || "Failed to delete leave request", 500);
+  }
+}
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const authResult = verifyAuth(req);
+  if (authResult.error) return authErrorResponse(authResult);
+  const employeeId = authResult.payload!.sub;
+
+  try {
+    const hasPerm = await checkUserPermission(employeeId, "view_history");
+    if (!hasPerm) {
+      return errorResponse("Permission denied: you don't have access to this feature", 403);
+    }
+
+    const requestId = parseInt(id);
+    const request = await getLeaveRequestById(requestId);
+
+    if (!request) {
+      return errorResponse("Leave request not found", 404);
+    }
+
+    // Users can see their own requests or if they have permission to see all
+    if (request.employee_id !== employeeId) {
+      const canSeeAll = await checkUserPermission(employeeId, "user_permissions_read");
+      if (!canSeeAll) {
+        return errorResponse("You can only view your own leave requests", 403);
+      }
+    }
+
+    return successResponse(request, "Leave request retrieved", 200);
+  } catch (error: any) {
+    return errorResponse(error.message || "Failed to retrieve leave request", 500);
+  }
+}
