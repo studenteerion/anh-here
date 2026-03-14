@@ -13,6 +13,11 @@ export async function getAllRoles(limit?: number, offset?: number) {
   return rows;
 }
 
+export async function getRolesCount() {
+  const [result]: any = await pool.query("SELECT COUNT(*) as total FROM roles");
+  return result[0]?.total || 0;
+}
+
 export async function getRoleById(roleId: number) {
   const [rows]: any = await pool.query(
     `SELECT id, role_name

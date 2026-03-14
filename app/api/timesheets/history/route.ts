@@ -37,28 +37,44 @@ import { getLeaveRequestsByDateRange } from "@/lib/db/requests";
  *           type: string
  *           format: date
  *         description: End date for custom period (required if period=custom)
+ *       - name: page
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (starts at 1). Omit for all results without pagination.
+ *       - name: limit
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Number of items per page. Omit for all results without pagination.
  *     responses:
  *       200:
  *         description: History retrieved successfully
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 period:
- *                   type: string
- *                 startDate:
- *                   type: string
- *                   format: date-time
- *                 endDate:
- *                   type: string
- *                   format: date-time
- *                 history:
- *                   type: array
- *                   items:
- *                     type: object
- *                 totalDays:
- *                   type: integer
+ *             example:
+ *               period: month
+ *               startDate: 2024-01-01T00:00:00Z
+ *               endDate: 2024-01-31T23:59:59Z
+ *               history:
+ *                 - date: "2024-01-15"
+ *                   attendances:
+ *                     - id: 1
+ *                       employee_id: 5
+ *                       clock_in: 2024-01-15T08:00:00Z
+ *                       clock_out: 2024-01-15T17:00:00Z
+ *                   totalHours: 9.0
+ *                   leaves: []
+ *               totalDays: 22
+ *               pagination:
+ *                 page: 1
+ *                 limit: 50
+ *                 total: 22
+ *                 totalPages: 1
+ *                 hasNextPage: false
+ *                 hasPrevPage: false
  *       400:
  *         description: Invalid period or missing dates
  *       403:
@@ -210,13 +226,53 @@ export async function GET(req: NextRequest) {
           new Date(b.date).getTime() - new Date(a.date).getTime()
       );
 
-    return successResponse({
-      period,
-      startDate,
-      endDate,
-      history,
-      totalDays: history.length,
-    }, undefined, 200);
+    // Handle optional pagination
+    const pageParam = searchParams.get("page");
+    const limitParam = searchParams.get("limit");
+    const hasPagination = pageParam || limitParam;
+    
+    let response: any;
+
+    if (hasPagination) {
+      const page = pageParam ? parseInt(pageParam) : 1;
+      const limit = limitParam ? parseInt(limitParam) : 50;
+      const offset = (page - 1) * limit;
+      const total = history.length;
+      const totalPages = Math.ceil(total / limit) || 1;
+
+      // Valida pagina fuori range
+      if (page > totalPages) {
+        return errorResponse(`Page ${page} does not exist. Total pages: ${totalPages}`, 400);
+      }
+
+      const paginatedHistory = history.slice(offset, offset + limit);
+
+      response = {
+        period,
+        startDate,
+        endDate,
+        history: paginatedHistory,
+        totalDays: total,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      };
+    } else {
+      response = {
+        period,
+        startDate,
+        endDate,
+        history,
+        totalDays: history.length,
+      };
+    }
+
+    return successResponse(response, undefined, 200);
   } catch (error) {
     console.error("Endpoint error:", error);
     return errorResponse("Server error", 500);

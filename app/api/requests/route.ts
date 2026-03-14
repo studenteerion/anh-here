@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { createLeaveRequest, getUserLeaveRequests } from "@/lib/db/requests";
+import { createLeaveRequest, getUserLeaveRequests, getUserLeaveRequestsCount } from "@/lib/db/requests";
 
 /**
  * @swagger
@@ -10,32 +10,63 @@ import { createLeaveRequest, getUserLeaveRequests } from "@/lib/db/requests";
  *     tags:
  *       - Leave Requests
  *     summary: List leave requests
- *     description: Retrieve all leave requests for the authenticated user with optional status filtering
+ *     description: |
+ *       Retrieve leave requests.
+ *       By default returns requests for the authenticated user.
+ *       Admins can specify employeeId query parameter to view other employees' requests.
  *     security:
  *       - BearerAuth: []
  *     parameters:
+ *       - name: employeeId
+ *         in: query
+ *         schema:
+ *           type: integer
+ *         description: Employee ID to get requests for (admin only, defaults to current user)
  *       - name: status
  *         in: query
  *         schema:
  *           type: string
  *           enum: [pending, approved, rejected]
  *         description: Filter by request status
+ *       - name: page
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (starts at 1). Omit for all results without pagination.
+ *       - name: limit
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Number of items per page. Omit for all results without pagination.
  *     responses:
  *       200:
  *         description: Leave requests retrieved successfully
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 count:
- *                   type: integer
- *                 requests:
- *                   type: array
- *                   items:
- *                     type: object
+ *             example:
+ *               count: 2
+ *               requests:
+ *                 - id: 1
+ *                   type: vacation
+ *                   startDate: 2024-02-01T00:00:00Z
+ *                   endDate: 2024-02-05T23:59:59Z
+ *                   motivation: Summer vacation
+ *                   status: approved
+ *                   requestedAt: 2024-01-15T10:30:00Z
+ *                   approver1Status: approved
+ *                   approver2Status: approved
+ *               pagination:
+ *                 page: 1
+ *                 limit: 50
+ *                 total: 12
+ *                 totalPages: 1
+ *                 hasNextPage: false
+ *                 hasPrevPage: false
+ *               employeeId: 5
  *       400:
- *         description: Invalid status filter
+ *         description: Invalid status filter or request parameters
  *       403:
  *         description: Permission denied
  *       500:
@@ -104,39 +135,113 @@ export async function GET(req: NextRequest) {
   const employeeId = authResult.payload!.sub;
 
   try {
+    const searchParams = req.nextUrl.searchParams;
+    const requestedEmployeeId = searchParams.get("employeeId");
+    const statusFilter = searchParams.get("status");
+    const pageParam = searchParams.get("page");
+    const limitParam = searchParams.get("limit");
+    
+    const hasPagination = pageParam || limitParam;
+    const page = pageParam ? parseInt(pageParam) : 1;
+    const limit = limitParam ? parseInt(limitParam) : 50;
+    const offset = (page - 1) * limit;
+
+    // Determina di quale utente ottenere le requests
+    let targetEmployeeId = employeeId;
+
+    // Se viene richiesto un employeeId diverso, verifica i permessi
+    if (requestedEmployeeId) {
+      targetEmployeeId = parseInt(requestedEmployeeId);
+      
+      // Solo gli admin con permesso possono vedere le requests di altri utenti
+      if (targetEmployeeId !== employeeId) {
+        const hasPermission = await checkUserPermission(employeeId, "user_permissions_read");
+        if (!hasPermission) {
+          return errorResponse("Permission denied: you can only view your own requests", 403);
+        }
+      }
+    }
+
     const hasPerm = await checkUserPermission(employeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
-    const searchParams = req.nextUrl.searchParams;
-    const statusFilter = searchParams.get("status");
+    let requests: any[];
+    let response: any;
 
-    let requests: any[] = await getUserLeaveRequests(employeeId);
-
-    if (statusFilter) {
+    if (hasPagination) {
       const validStatuses = ["pending", "approved", "rejected"];
-      if (!validStatuses.includes(statusFilter)) {
+      if (statusFilter && !validStatuses.includes(statusFilter)) {
         return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
       }
 
-      requests = requests.filter((r: any) => r.status === statusFilter);
+      requests = await getUserLeaveRequests(targetEmployeeId, {
+        status: statusFilter as any,
+        limit,
+        offset,
+      });
+      let total = await getUserLeaveRequestsCount(targetEmployeeId, {
+        status: statusFilter as any,
+      });
+
+      const totalPages = Math.ceil(total / limit) || 1;
+
+      if (page > totalPages) {
+        return errorResponse(`Page ${page} does not exist. Total pages: ${totalPages}`, 400);
+      }
+
+      response = {
+        count: requests.length,
+        requests: requests.map((r: any) => ({
+          id: r.id,
+          type: r.type,
+          startDate: r.start_datetime,
+          endDate: r.end_datetime,
+          motivation: r.motivation,
+          status: r.status,
+          requestedAt: r.request_date,
+          approver1Status: r.approver1_status,
+          approver2Status: r.approver2_status,
+        })),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+        employeeId: targetEmployeeId,
+      };
+    } else {
+      const validStatuses = ["pending", "approved", "rejected"];
+      if (statusFilter && !validStatuses.includes(statusFilter)) {
+        return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
+      }
+
+      requests = await getUserLeaveRequests(targetEmployeeId, {
+        status: statusFilter as any,
+      });
+
+      response = {
+        count: requests.length,
+        requests: requests.map((r: any) => ({
+          id: r.id,
+          type: r.type,
+          startDate: r.start_datetime,
+          endDate: r.end_datetime,
+          motivation: r.motivation,
+          status: r.status,
+          requestedAt: r.request_date,
+          approver1Status: r.approver1_status,
+          approver2Status: r.approver2_status,
+        })),
+        employeeId: targetEmployeeId,
+      };
     }
 
-    return successResponse({
-      count: requests.length,
-      requests: requests.map((r: any) => ({
-        id: r.id,
-        type: r.type,
-        startDate: r.start_datetime,
-        endDate: r.end_datetime,
-        motivation: r.motivation,
-        status: r.status,
-        requestedAt: r.request_date,
-        approver1Status: r.approver1_status,
-        approver2Status: r.approver2_status,
-      })),
-    }, undefined, 200);
+    return successResponse(response, undefined, 200);
   } catch (error: any) {
     console.error("Endpoint error:", error);
     return errorResponse("Server error", 500);

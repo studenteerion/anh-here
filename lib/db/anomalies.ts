@@ -13,17 +13,48 @@ export interface Anomaly {
 
 export async function getEmployeeAnomalies(
   employeeId: number,
-  limit: number = 50
+  filters?: {
+    status?: 'open' | 'in_progress' | 'closed';
+    limit?: number;
+    offset?: number;
+  }
 ): Promise<Anomaly[]> {
-  const [rows]: any = await pool.query(
-    `SELECT id, description, created_at, reporter_id, resolver_id, status, resolution_notes, resolved_at
+  let query = `SELECT id, description, created_at, reporter_id, resolver_id, status, resolution_notes, resolved_at
      FROM anomalies 
-     WHERE reporter_id = ?
-     ORDER BY created_at DESC
-     LIMIT ?`,
-    [employeeId, limit]
-  );
+     WHERE reporter_id = ?`;
+  
+  const params: any[] = [employeeId];
+
+  if (filters?.status) {
+    query += ` AND status = ?`;
+    params.push(filters.status);
+  }
+
+  query += ` ORDER BY created_at DESC`;
+
+  if (filters?.limit) {
+    query += ` LIMIT ? OFFSET ?`;
+    params.push(filters.limit, filters.offset || 0);
+  }
+
+  const [rows]: any = await pool.query(query, params);
   return rows;
+}
+
+export async function getEmployeeAnomaliesCount(
+  employeeId: number,
+  filters?: { status?: string }
+): Promise<number> {
+  let query = `SELECT COUNT(*) as total FROM anomalies WHERE reporter_id = ?`;
+  const params: any[] = [employeeId];
+
+  if (filters?.status) {
+    query += ` AND status = ?`;
+    params.push(filters.status);
+  }
+
+  const [result]: any = await pool.query(query, params);
+  return result[0]?.total || 0;
 }
 
 export async function createAnomaly(

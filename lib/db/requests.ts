@@ -18,17 +18,52 @@ export async function createLeaveRequest(
   return result.insertId;
 }
 
-export async function getUserLeaveRequests(employeeId: number) {
-  const [rows]: any = await pool.query(
-    `SELECT id, employee_id, request_date, start_datetime, end_datetime, 
+export async function getUserLeaveRequests(
+  employeeId: number,
+  filters?: {
+    status?: 'approved' | 'pending' | 'rejected';
+    limit?: number;
+    offset?: number;
+  }
+) {
+  let query = `SELECT id, employee_id, request_date, start_datetime, end_datetime, 
             type, motivation, approver1_id, approver1_status, approver1_date,
             approver2_id, approver2_status, approver2_date, status
      FROM leave_requests 
-     WHERE employee_id = ?
-     ORDER BY request_date DESC`,
-    [employeeId]
-  );
+     WHERE employee_id = ?`;
+  
+  const params: any[] = [employeeId];
+
+  if (filters?.status) {
+    query += ` AND status = ?`;
+    params.push(filters.status);
+  }
+
+  query += ` ORDER BY request_date DESC`;
+
+  if (filters?.limit) {
+    query += ` LIMIT ? OFFSET ?`;
+    params.push(filters.limit, filters.offset || 0);
+  }
+
+  const [rows]: any = await pool.query(query, params);
   return rows;
+}
+
+export async function getUserLeaveRequestsCount(
+  employeeId: number,
+  filters?: { status?: string }
+) {
+  let query = `SELECT COUNT(*) as total FROM leave_requests WHERE employee_id = ?`;
+  const params: any[] = [employeeId];
+
+  if (filters?.status) {
+    query += ` AND status = ?`;
+    params.push(filters.status);
+  }
+
+  const [result]: any = await pool.query(query, params);
+  return result[0]?.total || 0;
 }
 
 export async function getLeaveRequestById(requestId: number) {
