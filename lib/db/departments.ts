@@ -13,6 +13,11 @@ export async function getAllDepartments(limit?: number, offset?: number) {
   return rows;
 }
 
+export async function getDepartmentsCount() {
+  const [result]: any = await pool.query("SELECT COUNT(*) as total FROM departments");
+  return result[0]?.total || 0;
+}
+
 export async function getDepartmentById(departmentId: number) {
   const [rows]: any = await pool.query(
     `SELECT id, department_name

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getAllRoles, createRole } from "@/lib/db/roles";
+import { getAllRoles, createRole, getRolesCount } from "@/lib/db/roles";
 
 /**
  * @swagger
@@ -14,36 +14,36 @@ import { getAllRoles, createRole } from "@/lib/db/roles";
  *     security:
  *       - BearerAuth: []
  *     parameters:
+ *       - name: page
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (starts at 1). Omit for all results without pagination.
  *       - name: limit
  *         in: query
  *         schema:
  *           type: integer
  *           default: 50
- *         description: Maximum number of results to return
- *       - name: offset
- *         in: query
- *         schema:
- *           type: integer
- *           default: 0
- *         description: Number of results to skip
+ *         description: Number of items per page. Omit for all results without pagination.
  *     responses:
  *       200:
  *         description: Roles retrieved successfully
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 roles:
- *                   type: array
- *                   items:
- *                     type: object
- *                 count:
- *                   type: integer
- *                 limit:
- *                   type: integer
- *                 offset:
- *                   type: integer
+ *             example:
+ *               roles:
+ *                 - id: 1
+ *                   role_name: Admin
+ *                 - id: 2
+ *                   role_name: User
+ *               pagination:
+ *                 page: 1
+ *                 limit: 50
+ *                 total: 3
+ *                 totalPages: 1
+ *                 hasNextPage: false
+ *                 hasPrevPage: false
  *       403:
  *         description: Permission denied
  *       500:
@@ -99,17 +99,44 @@ export async function GET(req: NextRequest) {
     }
 
     const url = new URL(req.url);
-    const limit = url.searchParams.get("limit") ? parseInt(url.searchParams.get("limit")!) : 50;
-    const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset")!) : 0;
+    const pageParam = url.searchParams.get("page");
+    const limitParam = url.searchParams.get("limit");
+    
+    const hasPagination = pageParam || limitParam;
+    const page = pageParam ? parseInt(pageParam) : 1;
+    const limit = limitParam ? parseInt(limitParam) : 50;
+    const offset = (page - 1) * limit;
 
-    const roles = await getAllRoles(limit, offset);
+    let roles;
+    let response: any;
 
-    return successResponse({
-      roles,
-      count: roles.length,
-      limit,
-      offset,
-    }, "Roles retrieved", 200);
+    if (hasPagination) {
+      roles = await getAllRoles(limit, offset);
+      const total = await getRolesCount();
+      const totalPages = Math.ceil(total / limit) || 1;
+
+      // Valida pagina fuori range
+      if (page > totalPages) {
+        return errorResponse(`Page ${page} does not exist. Total pages: ${totalPages}`, 400);
+      }
+
+      response = {
+        roles,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      };
+    } else {
+      roles = await getAllRoles();
+      response = { roles };
+    }
+
+    return successResponse(response, "Roles retrieved", 200);
   } catch (error: any) {
     return errorResponse(error.message || "Failed to retrieve roles", 500);
   }

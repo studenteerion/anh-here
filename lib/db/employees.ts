@@ -13,6 +13,11 @@ export async function getAllEmployees(limit?: number, offset?: number) {
   return rows;
 }
 
+export async function getEmployeesCount() {
+  const [result]: any = await pool.query("SELECT COUNT(*) as total FROM employees");
+  return result[0]?.total || 0;
+}
+
 export async function getEmployeeById(employeeId: number) {
   const [rows]: any = await pool.query(
     `SELECT id, first_name, last_name, role_id, department_id, status, created_at, updated_at

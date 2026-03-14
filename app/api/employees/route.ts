@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getAllEmployees, getEmployeeById, createEmployee } from "@/lib/db/employees";
+import { getAllEmployees, getEmployeeById, createEmployee, getEmployeesCount } from "@/lib/db/employees";
 import crypto from "crypto";
 
 const PEPPER = process.env.PEPPER || "";
@@ -26,19 +26,42 @@ function hashPassword(password: string): string {
  *     security:
  *       - BearerAuth: []
  *     parameters:
+ *       - name: page
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (starts at 1). Omit for all results without pagination.
  *       - name: limit
  *         in: query
  *         schema:
  *           type: integer
  *           default: 50
- *       - name: offset
- *         in: query
- *         schema:
- *           type: integer
- *           default: 0
+ *         description: Number of items per page. Omit for all results without pagination.
  *     responses:
  *       200:
  *         description: Employees retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *             example:
+ *               employees:
+ *                 - id: 1
+ *                   first_name: John
+ *                   last_name: Doe
+ *                   role_id: 1
+ *                   department_id: 1
+ *                   status: active
+ *                   created_at: 2024-01-15T10:30:00Z
+ *                   updated_at: 2024-01-15T10:30:00Z
+ *               pagination:
+ *                 page: 1
+ *                 limit: 50
+ *                 total: 125
+ *                 totalPages: 3
+ *                 hasNextPage: true
+ *                 hasPrevPage: false
  *       403:
  *         description: Permission denied
  *   post:
@@ -117,17 +140,49 @@ export async function GET(req: NextRequest) {
     }
 
     const url = new URL(req.url);
-    const limit = url.searchParams.get("limit") ? parseInt(url.searchParams.get("limit")!) : 50;
-    const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset")!) : 0;
+    const pageParam = url.searchParams.get("page");
+    const limitParam = url.searchParams.get("limit");
+    
+    // Se non specifici pagination parameters, restituisci tutto
+    const hasPagination = pageParam || limitParam;
+    const page = pageParam ? parseInt(pageParam) : 1;
+    const limit = limitParam ? parseInt(limitParam) : 50;
+    const offset = (page - 1) * limit;
 
-    const employees = await getAllEmployees(limit, offset);
+    let employees;
+    let total = 0;
+    let response: any;
 
-    return successResponse({
-      employees,
-      count: employees.length,
-      limit,
-      offset,
-    }, "Employees retrieved", 200);
+    if (hasPagination) {
+      employees = await getAllEmployees(limit, offset);
+      total = await getEmployeesCount();
+      const totalPages = Math.ceil(total / limit) || 1;
+
+      // Valida pagina fuori range
+      if (page > totalPages) {
+        return errorResponse(`Page ${page} does not exist. Total pages: ${totalPages}`, 400);
+      }
+
+      response = {
+        employees,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      };
+    } else {
+      // Restituisci tutti i risultati
+      employees = await getAllEmployees();
+      response = {
+        employees,
+      };
+    }
+
+    return successResponse(response, "Employees retrieved", 200);
   } catch (error: any) {
     return errorResponse(error.message || "Failed to retrieve employees", 500);
   }

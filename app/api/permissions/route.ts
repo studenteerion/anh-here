@@ -23,17 +23,23 @@ import { checkUserPermission, getUserPermissionsById, createPermission } from "@
  *         description: Permissions retrieved successfully
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 user_id:
- *                   type: integer
- *                 role_id:
- *                   type: integer
- *                 permissions:
- *                   type: array
- *                   items:
- *                     type: object
+ *             example:
+ *               user_id: 5
+ *               role_id: 1
+ *               permissions:
+ *                 - id: 1
+ *                   permission_code: user_permissions_read
+ *                   description: Can view other users' information
+ *                 - id: 2
+ *                   permission_code: user_permissions_create
+ *                   description: Can create new users
+ *               pagination:
+ *                 page: 1
+ *                 limit: 50
+ *                 total: 15
+ *                 totalPages: 1
+ *                 hasNextPage: false
+ *                 hasPrevPage: false
  *       403:
  *         description: Insufficient permissions to view other users' permissions
  *       500:
@@ -81,6 +87,14 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const idParam = url.searchParams.get("id");
+    const pageParam = url.searchParams.get("page");
+    const limitParam = url.searchParams.get("limit");
+    
+    const hasPagination = pageParam || limitParam;
+    const page = pageParam ? parseInt(pageParam) : 1;
+    const limit = limitParam ? parseInt(limitParam) : 50;
+    const offset = (page - 1) * limit;
+    
     let targetUserId = userId;
 
     if (idParam && idParam !== String(userId)) {
@@ -92,9 +106,42 @@ export async function GET(req: NextRequest) {
       targetUserId = Number(idParam);
     }
 
-    const permissionsList = await getUserPermissionsById(targetUserId);
+    let permissionsList = await getUserPermissionsById(targetUserId);
+    let response: any;
 
-    return successResponse({ user_id: userId, role_id: roleId, permissions: permissionsList }, undefined, 200);
+    if (hasPagination) {
+      const total = permissionsList.length;
+      const totalPages = Math.ceil(total / limit) || 1;
+
+      // Valida pagina fuori range
+      if (page > totalPages) {
+        return errorResponse(`Page ${page} does not exist. Total pages: ${totalPages}`, 400);
+      }
+
+      const paginatedList = permissionsList.slice(offset, offset + limit);
+
+      response = {
+        user_id: userId,
+        role_id: roleId,
+        permissions: paginatedList,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      };
+    } else {
+      response = {
+        user_id: userId,
+        role_id: roleId,
+        permissions: permissionsList,
+      };
+    }
+
+    return successResponse(response, undefined, 200);
   } catch (e) {
     console.error("Endpoint error:", e);
     return errorResponse("Server error", 500);
