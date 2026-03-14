@@ -1,4 +1,5 @@
 import pool from "@/lib/db";
+import { Role, RoleFilter } from "@/types/roles";
 
 export async function getAllRoles(limit?: number, offset?: number) {
   const query = `

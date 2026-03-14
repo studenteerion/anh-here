@@ -1,4 +1,5 @@
 import pool from "@/lib/db";
+import { LeaveRequest, LeaveRequestFilter } from "@/types/requests";
 
 export async function createLeaveRequest(
   employeeId: number,
@@ -20,11 +21,7 @@ export async function createLeaveRequest(
 
 export async function getUserLeaveRequests(
   employeeId: number,
-  filters?: {
-    status?: 'approved' | 'pending' | 'rejected';
-    limit?: number;
-    offset?: number;
-  }
+  filters?: LeaveRequestFilter
 ) {
   let query = `SELECT id, employee_id, request_date, start_datetime, end_datetime, 
             type, motivation, approver1_id, approver1_status, approver1_date,
@@ -52,7 +49,7 @@ export async function getUserLeaveRequests(
 
 export async function getUserLeaveRequestsCount(
   employeeId: number,
-  filters?: { status?: string }
+  filters?: { status?: LeaveRequest["status"] }
 ) {
   let query = `SELECT COUNT(*) as total FROM leave_requests WHERE employee_id = ?`;
   const params: any[] = [employeeId];

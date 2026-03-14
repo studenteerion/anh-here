@@ -1,4 +1,5 @@
 import pool from "@/lib/db";
+import { Department, DepartmentFilter } from "@/types/departments";
 
 export async function getAllDepartments(limit?: number, offset?: number) {
   const query = `

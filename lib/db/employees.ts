@@ -1,4 +1,5 @@
 import pool from "@/lib/db";
+import { Employee, EmployeeFilter } from "@/types/employees";
 
 export async function getAllEmployees(limit?: number, offset?: number) {
   const query = `

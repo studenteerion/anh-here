@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import { getEmployeeAnomalies, getEmployeeAnomaliesCount, createAnomaly, getAnomalyById, updateAnomaly, deleteAnomaly } from "@/lib/db/anomalies";
+import { Anomaly } from "@/types/anomalies";
 
 /**
  * @swagger
