@@ -14,20 +14,31 @@ const JWT_KEY = process.env.JWT_KEY!;
  *     tags:
  *       - Authentication
  *     summary: Refresh access token
- *     description: Generate a new access token using a valid refresh token
+ *     description: |
+ *       Generate a new access token using a valid refresh token.
+ *       The refresh token is obtained from the login response and is valid for 7 days.
+ *       Each refresh invalidates the old token (rotation).
  *     requestBody:
- *       required: false
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - refresh_token
  *             properties:
  *               refresh_token:
  *                 type: string
- *                 description: Refresh token (can also be provided in cookies)
+ *                 description: Refresh token obtained from login response
+ *                 example: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+ *           examples:
+ *             refreshExample:
+ *               summary: Refresh token example
+ *               value:
+ *                 refresh_token: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
  *     responses:
  *       200:
- *         description: New token issued successfully
+ *         description: New tokens issued successfully
  *         content:
  *           application/json:
  *             schema:
@@ -35,12 +46,16 @@ const JWT_KEY = process.env.JWT_KEY!;
  *               properties:
  *                 status:
  *                   type: string
+ *                   example: "success"
  *                 token:
  *                   type: string
+ *                   description: New JWT access token (valid for 10 minutes)
  *                 refresh_token:
  *                   type: string
+ *                   description: New refresh token (valid for 7 days)
  *                 expires_in:
  *                   type: integer
+ *                   example: 600
  *       400:
  *         description: Missing refresh token
  *       401:
