@@ -1,21 +1,44 @@
 import pool from "@/lib/db";
 import { Employee, EmployeeFilter } from "@/types/employees";
 
-export async function getAllEmployees(limit?: number, offset?: number) {
-  const query = `
-    SELECT id, first_name, last_name, role_id, department_id, status, created_at, updated_at
-    FROM employees
-    ORDER BY created_at DESC
-    ${limit ? "LIMIT ? OFFSET ?" : ""}
-  `;
+export async function getAllEmployees(
+  filters?: {
+    status?: Employee["status"];
+    limit?: number;
+    offset?: number;
+  }
+) {
+  let query = `SELECT id, first_name, last_name, role_id, department_id, status, created_at, updated_at
+    FROM employees`;
   
-  const params = limit ? [limit, offset || 0] : [];
+  const params: any[] = [];
+
+  if (filters?.status) {
+    query += ` WHERE status = ?`;
+    params.push(filters.status);
+  }
+
+  query += ` ORDER BY created_at DESC`;
+
+  if (filters?.limit) {
+    query += ` LIMIT ? OFFSET ?`;
+    params.push(filters.limit, filters.offset || 0);
+  }
+
   const [rows]: any = await pool.query(query, params);
   return rows;
 }
 
-export async function getEmployeesCount() {
-  const [result]: any = await pool.query("SELECT COUNT(*) as total FROM employees");
+export async function getEmployeesCount(filters?: { status?: Employee["status"] }) {
+  let query = `SELECT COUNT(*) as total FROM employees`;
+  const params: any[] = [];
+
+  if (filters?.status) {
+    query += ` WHERE status = ?`;
+    params.push(filters.status);
+  }
+
+  const [result]: any = await pool.query(query, params);
   return result[0]?.total || 0;
 }
 
