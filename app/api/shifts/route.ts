@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getAllShifts, getShiftsByDepartment, createShift } from "@/lib/db/shifts";
+import { getAllShifts, getShiftsByDepartment, createShift, getShiftsCount } from "@/lib/db/shifts";
 
 /**
  * @swagger
@@ -18,19 +18,37 @@ import { getAllShifts, getShiftsByDepartment, createShift } from "@/lib/db/shift
  *         in: query
  *         schema:
  *           type: integer
+ *       - name: page
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (starts at 1). Omit for all results without pagination.
  *       - name: limit
  *         in: query
  *         schema:
  *           type: integer
  *           default: 50
- *       - name: offset
- *         in: query
- *         schema:
- *           type: integer
- *           default: 0
+ *         description: Number of items per page. Omit for all results without pagination.
  *     responses:
  *       200:
  *         description: Shifts retrieved successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               shifts:
+ *                 - id: 1
+ *                   department_id: 2
+ *                   name: Morning Shift
+ *                   start_time: "08:00:00"
+ *                   end_time: "16:00:00"
+ *               pagination:
+ *                 page: 1
+ *                 limit: 50
+ *                 total: 8
+ *                 totalPages: 1
+ *                 hasNextPage: false
+ *                 hasPrevPage: false
  *       403:
  *         description: Permission denied
  *   post:
@@ -82,20 +100,47 @@ export async function GET(req: NextRequest) {
 
     const url = new URL(req.url);
     const departmentId = url.searchParams.get("departmentId");
-    const limit = url.searchParams.get("limit") ? parseInt(url.searchParams.get("limit")!) : 50;
-    const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset")!) : 0;
+    const pageParam = url.searchParams.get("page");
+    const limitParam = url.searchParams.get("limit");
+    
+    const hasPagination = pageParam || limitParam;
+    const page = pageParam ? parseInt(pageParam) : 1;
+    const limit = limitParam ? parseInt(limitParam) : 50;
+    const offset = (page - 1) * limit;
 
     let shifts;
+    let response: any;
+    
     if (departmentId) {
       shifts = await getShiftsByDepartment(parseInt(departmentId));
-    } else {
+      response = { shifts };
+    } else if (hasPagination) {
       shifts = await getAllShifts(limit, offset);
+      const total = await getShiftsCount();
+      const totalPages = Math.ceil(total / limit) || 1;
+
+      // Valida pagina fuori range
+      if (page > totalPages) {
+        return errorResponse(`Page ${page} does not exist. Total pages: ${totalPages}`, 400);
+      }
+
+      response = {
+        shifts,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      };
+    } else {
+      shifts = await getAllShifts();
+      response = { shifts };
     }
 
-    return successResponse({
-      shifts,
-      count: shifts.length,
-    }, "Shifts retrieved", 200);
+    return successResponse(response, "Shifts retrieved", 200);
   } catch (error: any) {
     return errorResponse(error.message || "Failed to retrieve shifts", 500);
   }

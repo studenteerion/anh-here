@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getAllDepartments, createDepartment } from "@/lib/db/departments";
+import { getAllDepartments, createDepartment, getDepartmentsCount } from "@/lib/db/departments";
 
 /**
  * @swagger
@@ -14,36 +14,36 @@ import { getAllDepartments, createDepartment } from "@/lib/db/departments";
  *     security:
  *       - BearerAuth: []
  *     parameters:
+ *       - name: page
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (starts at 1). Omit for all results without pagination.
  *       - name: limit
  *         in: query
  *         schema:
  *           type: integer
  *           default: 50
- *         description: Maximum number of results to return
- *       - name: offset
- *         in: query
- *         schema:
- *           type: integer
- *           default: 0
- *         description: Number of results to skip
+ *         description: Number of items per page. Omit for all results without pagination.
  *     responses:
  *       200:
  *         description: Departments retrieved successfully
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 departments:
- *                   type: array
- *                   items:
- *                     type: object
- *                 count:
- *                   type: integer
- *                 limit:
- *                   type: integer
- *                 offset:
- *                   type: integer
+ *             example:
+ *               departments:
+ *                 - id: 1
+ *                   department_name: Engineering
+ *                 - id: 2
+ *                   department_name: Sales
+ *               pagination:
+ *                 page: 1
+ *                 limit: 50
+ *                 total: 5
+ *                 totalPages: 1
+ *                 hasNextPage: false
+ *                 hasPrevPage: false
  *       403:
  *         description: Permission denied
  *       500:
@@ -99,17 +99,44 @@ export async function GET(req: NextRequest) {
     }
 
     const url = new URL(req.url);
-    const limit = url.searchParams.get("limit") ? parseInt(url.searchParams.get("limit")!) : 50;
-    const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset")!) : 0;
+    const pageParam = url.searchParams.get("page");
+    const limitParam = url.searchParams.get("limit");
+    
+    const hasPagination = pageParam || limitParam;
+    const page = pageParam ? parseInt(pageParam) : 1;
+    const limit = limitParam ? parseInt(limitParam) : 50;
+    const offset = (page - 1) * limit;
 
-    const departments = await getAllDepartments(limit, offset);
+    let departments;
+    let response: any;
 
-    return successResponse({
-      departments,
-      count: departments.length,
-      limit,
-      offset,
-    }, "Departments retrieved", 200);
+    if (hasPagination) {
+      departments = await getAllDepartments(limit, offset);
+      const total = await getDepartmentsCount();
+      const totalPages = Math.ceil(total / limit) || 1;
+
+      // Valida pagina fuori range
+      if (page > totalPages) {
+        return errorResponse(`Page ${page} does not exist. Total pages: ${totalPages}`, 400);
+      }
+
+      response = {
+        departments,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      };
+    } else {
+      departments = await getAllDepartments();
+      response = { departments };
+    }
+
+    return successResponse(response, "Departments retrieved", 200);
   } catch (error: any) {
     return errorResponse(error.message || "Failed to retrieve departments", 500);
   }

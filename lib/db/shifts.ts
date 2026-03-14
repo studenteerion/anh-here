@@ -13,6 +13,11 @@ export async function getAllShifts(limit?: number, offset?: number) {
   return rows;
 }
 
+export async function getShiftsCount() {
+  const [result]: any = await pool.query("SELECT COUNT(*) as total FROM shifts");
+  return result[0]?.total || 0;
+}
+
 export async function getShiftById(shiftId: number) {
   const [rows]: any = await pool.query(
     `SELECT id, department_id, name, start_time, end_time
