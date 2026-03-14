@@ -1,23 +1,9 @@
 import pool from "@/lib/db";
-
-export interface Anomaly {
-  id: number;
-  description: string;
-  created_at: Date;
-  reporter_id: number;
-  resolver_id: number | null;
-  status: "open" | "in_progress" | "closed";
-  resolution_notes: string | null;
-  resolved_at: Date | null;
-}
+import { Anomaly, AnomalyFilter } from "@/types/anomalies";
 
 export async function getEmployeeAnomalies(
   employeeId: number,
-  filters?: {
-    status?: 'open' | 'in_progress' | 'closed';
-    limit?: number;
-    offset?: number;
-  }
+  filters?: AnomalyFilter
 ): Promise<Anomaly[]> {
   let query = `SELECT id, description, created_at, reporter_id, resolver_id, status, resolution_notes, resolved_at
      FROM anomalies 
@@ -43,7 +29,7 @@ export async function getEmployeeAnomalies(
 
 export async function getEmployeeAnomaliesCount(
   employeeId: number,
-  filters?: { status?: string }
+  filters?: { status?: Anomaly["status"] }
 ): Promise<number> {
   let query = `SELECT COUNT(*) as total FROM anomalies WHERE reporter_id = ?`;
   const params: any[] = [employeeId];
