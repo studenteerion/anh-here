@@ -4,14 +4,21 @@ import { checkUserPermission, addPermissionToUser } from "@/lib/db/permissions";
 
 /**
  * @swagger
- * /api/permissions/change:
- *   post:
+ * /api/permissions/{userId}:
+ *   patch:
  *     tags:
  *       - Permissions
  *     summary: Change user permission
  *     description: Grant or revoke a specific permission for a user
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - name: userId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID to change permissions for
  *     requestBody:
  *       required: true
  *       content:
@@ -19,12 +26,9 @@ import { checkUserPermission, addPermissionToUser } from "@/lib/db/permissions";
  *           schema:
  *             type: object
  *             required:
- *               - userId
  *               - permissionId
  *               - isAllowed
  *             properties:
- *               userId:
- *                 type: integer
  *               permissionId:
  *                 type: integer
  *               isAllowed:
@@ -40,20 +44,21 @@ import { checkUserPermission, addPermissionToUser } from "@/lib/db/permissions";
  *       500:
  *         description: Server error
  */
-export async function POST(req: NextRequest) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+  const { userId } = await params;
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
 
   const myUserId = authResult.payload!.sub;
+  const targetUserId = parseInt(userId);
 
   try {
     const body = await req.json();
-    const targetUserId = body.userId;
     const permissionId = body.permissionId;
     const isAllowed = Number(body.isAllowed ?? 0);
 
-    if (!targetUserId || !permissionId) {
-      return errorResponse("Missing data (userId or permissionId)", 400);
+    if (!permissionId) {
+      return errorResponse("Missing data (permissionId)", 400);
     }
 
     if (myUserId === targetUserId) {
