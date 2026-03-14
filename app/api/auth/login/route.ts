@@ -14,8 +14,9 @@ const JWT_KEY = process.env.JWT_KEY!;
  *   post:
  *     tags:
  *       - Authentication
- *     summary: User login
- *     description: Authenticate user with email and password, returns JWT token
+ *     summary: User login (public)
+ *     description: Authenticate user with email and password, returns JWT access token and refresh token. This endpoint is public and does not require authentication.
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
@@ -29,8 +30,10 @@ const JWT_KEY = process.env.JWT_KEY!;
  *               email:
  *                 type: string
  *                 format: email
+ *                 example: "mario@example.com"
  *               password:
  *                 type: string
+ *                 example: "password123"
  *     responses:
  *       200:
  *         description: Login successful
@@ -39,12 +42,20 @@ const JWT_KEY = process.env.JWT_KEY!;
  *             schema:
  *               type: object
  *               properties:
- *                 access_token:
+ *                 status:
  *                   type: string
+ *                   example: "success"
+ *                 token:
+ *                   type: string
+ *                   description: JWT access token (valid for 10 minutes)
  *                 refresh_token:
  *                   type: string
- *                 role_id:
+ *                   description: Refresh token (valid for 7 days)
+ *                 role:
  *                   type: integer
+ *                 expires_in:
+ *                   type: integer
+ *                   example: 600
  *       400:
  *         description: Missing credentials
  *       401:

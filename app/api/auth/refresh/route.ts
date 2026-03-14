@@ -13,11 +13,13 @@ const JWT_KEY = process.env.JWT_KEY!;
  *   post:
  *     tags:
  *       - Authentication
- *     summary: Refresh access token
+ *     summary: Refresh access token (public)
  *     description: |
  *       Generate a new access token using a valid refresh token.
  *       The refresh token is obtained from the login response and is valid for 7 days.
  *       Each refresh invalidates the old token (rotation).
+ *       This endpoint is public and does not require Authorization header.
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
