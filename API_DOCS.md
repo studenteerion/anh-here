@@ -1,0 +1,156 @@
+# Anhere API Documentation
+
+This project uses **next-swagger-doc** for automatic OpenAPI 3.0.0 specification generation from JSDoc comments.
+
+## Accessing Documentation
+
+- **Swagger UI**: [http://localhost:3000/docs](http://localhost:3000/docs)
+- **OpenAPI JSON**: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
+
+## How It Works
+
+1. **JSDoc Comments**: Each API route file contains JSDoc `@swagger` blocks
+2. **Auto-Generation**: `lib/swagger.ts` uses `next-swagger-doc` to parse comments
+3. **Dynamic Spec**: OpenAPI spec is generated at runtime and served from `/api/docs`
+
+## Example JSDoc Format
+
+```typescript
+/**
+ * @swagger
+ * /api/endpoint:
+ *   get:
+ *     tags:
+ *       - Entity
+ *     summary: Brief description
+ *     description: Detailed description
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Success
+ *       403:
+ *         description: Permission denied
+ */
+export async function GET(req: NextRequest) {
+  // Implementation
+}
+```
+
+## Documented Endpoints (32 total)
+
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/change-password` - Change own password
+- `POST /api/auth/reset-password/{id}` - Admin reset user password
+- `POST /api/auth/refresh` - Refresh access token
+- `POST /api/auth/validate` - Validate token
+
+### Employees
+- `GET /api/employees` - List all employees
+- `POST /api/employees/create` - Create new employee
+- `GET /api/employees/me` - Get own profile
+- `GET /api/employees/{id}` - Get employee by ID
+- `PUT /api/employees/{id}` - Update employee
+- `DELETE /api/employees/{id}` - Delete employee
+
+### Shifts
+- `GET /api/shifts` - List shifts
+- `POST /api/shifts/create` - Create shift
+- `GET /api/shifts/{id}` - Get shift by ID
+- `PUT /api/shifts/{id}` - Update shift
+- `DELETE /api/shifts/{id}` - Delete shift
+
+### Departments
+- `GET /api/departments` - List departments
+- `POST /api/departments/create` - Create department
+- `GET /api/departments/{id}` - Get department
+- `PUT /api/departments/{id}` - Update department
+- `DELETE /api/departments/{id}` - Delete department
+
+### Roles
+- `GET /api/roles` - List roles
+- `POST /api/roles/create` - Create role
+- `GET /api/roles/{id}` - Get role
+- `PUT /api/roles/{id}` - Update role
+- `DELETE /api/roles/{id}` - Delete role
+
+### Permissions
+- `GET /api/permissions` - Get user permissions
+- `GET /api/permissions/all` - Get all permissions
+- `POST /api/permissions/change` - Change user permission
+- `POST /api/permissions/updateRolePermission` - Update role permission
+
+### Leave Requests
+- `GET /api/requests/list` - List leave requests
+- `POST /api/requests/create` - Create leave request
+- `GET /api/requests/{id}` - Get leave request
+- `PUT /api/requests/update` - Update/approve leave request
+- `DELETE /api/requests/{id}` - Delete leave request
+
+### Timesheets
+- `POST /api/timesheets/punch` - Clock in/out
+- `GET /api/timesheets/status` - Get current timesheet status
+- `GET /api/timesheets/history` - Get timesheet history
+- `GET /api/timesheets/summary` - Get timesheet summary
+
+### Anomalies
+- `GET /api/notifications/anomalies` - List anomalies
+- `GET /api/notifications/anomalies/{id}` - Get anomaly
+- `PUT /api/notifications/anomalies/{id}` - Update anomaly
+- `DELETE /api/notifications/anomalies/{id}` - Delete anomaly
+
+## Configuration
+
+The Swagger spec is configured in `lib/swagger.ts`:
+
+```typescript
+createSwaggerSpec({
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Anhere API",
+      version: "1.0.0",
+      description: "Presence management system API",
+    },
+    servers: [{ url: "/api" }],
+    components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: "http",
+          scheme: "bearer",
+        },
+      },
+    },
+  },
+  apiFolder: "app/api",
+})
+```
+
+## Adding New Endpoints
+
+1. Create route file: `app/api/path/route.ts`
+2. Add JSDoc @swagger comment before function
+3. Build/restart server
+4. Spec automatically updates and visible in Swagger UI
+
+## Building & Testing
+
+```bash
+# Development
+npm run dev
+
+# Production build
+npm run build
+
+# Start production server
+npm start
+```
+
+API documentation is always available in both dev and production environments.
