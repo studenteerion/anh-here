@@ -1,4 +1,4 @@
-# Anhere API Documentation
+# ANH-here API Documentation
 
 This project uses **next-swagger-doc** for automatic OpenAPI 3.0.0 specification generation from JSDoc comments.
 
@@ -115,7 +115,7 @@ createSwaggerSpec({
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Anhere API",
+      title: "ANH-here API",
       version: "1.0.0",
       description: "Presence management system API",
     },
