@@ -23,29 +23,42 @@ function hashPassword(password: string): string {
  *     tags:
  *       - Employees
  *     summary: List all employees
- *     description: Retrieve paginated list of all employees
+ *     description: |
+ *       Retrieve paginated list of all employees.
+ *       Supports optional status filtering and pagination.
+ *       Paginazione opzionale: se non specifichi page/limit, restituisce tutti i risultati.
  *     security:
  *       - BearerAuth: []
  *     parameters:
+ *       - name: status
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [active, inactive]
+ *         description: Filter by employee status
  *       - name: page
  *         in: query
+ *         required: false
  *         schema:
  *           type: integer
+ *           minimum: 1
  *           default: 1
  *         description: Page number (starts at 1). Omit for all results without pagination.
  *       - name: limit
  *         in: query
+ *         required: false
  *         schema:
  *           type: integer
+ *           minimum: 1
+ *           maximum: 100
  *           default: 50
  *         description: Number of items per page. Omit for all results without pagination.
  *     responses:
  *       200:
- *         description: Employees retrieved successfully
+ *         description: Employees retrieved successfully (with or without pagination)
  *         content:
  *           application/json:
- *             schema:
- *               type: object
  *             example:
  *               employees:
  *                 - id: 1
@@ -56,6 +69,14 @@ function hashPassword(password: string): string {
  *                   status: active
  *                   created_at: 2024-01-15T10:30:00Z
  *                   updated_at: 2024-01-15T10:30:00Z
+ *                 - id: 2
+ *                   first_name: Jane
+ *                   last_name: Smith
+ *                   role_id: 2
+ *                   department_id: 1
+ *                   status: active
+ *                   created_at: 2024-01-16T10:30:00Z
+ *                   updated_at: 2024-01-16T10:30:00Z
  *               pagination:
  *                 page: 1
  *                 limit: 50
@@ -63,6 +84,8 @@ function hashPassword(password: string): string {
  *                 totalPages: 3
  *                 hasNextPage: true
  *                 hasPrevPage: false
+ *       400:
+ *         description: Invalid pagination parameters or status filter
  *       403:
  *         description: Permission denied
  *   post:
@@ -141,6 +164,7 @@ export async function GET(req: NextRequest) {
     }
 
     const url = new URL(req.url);
+    const statusFilter = url.searchParams.get("status");
     const pageParam = url.searchParams.get("page");
     const limitParam = url.searchParams.get("limit");
     
@@ -155,8 +179,19 @@ export async function GET(req: NextRequest) {
     let response: any;
 
     if (hasPagination) {
-      employees = await getAllEmployees(limit, offset);
-      total = await getEmployeesCount();
+      const validStatuses = ["active", "inactive"];
+      if (statusFilter && !validStatuses.includes(statusFilter)) {
+        return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
+      }
+
+      employees = await getAllEmployees({
+        status: statusFilter as any,
+        limit,
+        offset,
+      });
+      total = await getEmployeesCount({
+        status: statusFilter as any,
+      });
       const totalPages = Math.ceil(total / limit) || 1;
 
       // Valida pagina fuori range
@@ -176,8 +211,15 @@ export async function GET(req: NextRequest) {
         },
       };
     } else {
+      const validStatuses = ["active", "inactive"];
+      if (statusFilter && !validStatuses.includes(statusFilter)) {
+        return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
+      }
+
       // Restituisci tutti i risultati
-      employees = await getAllEmployees();
+      employees = await getAllEmployees({
+        status: statusFilter as any,
+      });
       response = {
         employees,
       };
