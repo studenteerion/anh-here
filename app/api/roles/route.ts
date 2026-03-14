@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
     let response: any;
 
     if (hasPagination) {
-      roles = await getAllRoles(limit, offset);
+      roles = await getAllRoles({ limit, offset });
       const total = await getRolesCount();
       const totalPages = Math.ceil(total / limit) || 1;
 

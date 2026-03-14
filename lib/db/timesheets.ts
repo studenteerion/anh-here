@@ -1,7 +1,7 @@
 import pool from "@/lib/db";
 import { Timesheet, TimesheetFilter } from "@/types/timesheets";
 
-export async function getOpenAttendance(employeeId: number) {
+export async function getOpenAttendance(employeeId: number): Promise<any | null> {
   const [rows]: any = await pool.query(
     `SELECT id, employee_id, shift_id, start_datetime 
      FROM attendances 
@@ -16,7 +16,7 @@ export async function createAttendance(
   employeeId: number,
   shiftId: number,
   startDatetime: Date
-) {
+): Promise<number> {
   const [result]: any = await pool.query(
     `INSERT INTO attendances (employee_id, shift_id, start_datetime) 
      VALUES (?, ?, ?)`,
@@ -28,7 +28,7 @@ export async function createAttendance(
 export async function closeAttendance(
   attendanceId: number,
   endDatetime: Date
-) {
+): Promise<void> {
   await pool.query(
     `UPDATE attendances SET end_datetime = ? WHERE id = ?`,
     [endDatetime, attendanceId]
@@ -39,7 +39,7 @@ export async function getAttendanceHistory(
   employeeId: number,
   startDate: Date,
   endDate: Date
-) {
+): Promise<any[]> {
   const [rows]: any = await pool.query(
     `SELECT id, employee_id, shift_id, start_datetime, end_datetime 
      FROM attendances 
@@ -49,10 +49,10 @@ export async function getAttendanceHistory(
      ORDER BY start_datetime DESC`,
     [employeeId, startDate, endDate]
   );
-  return rows;
+  return rows as any[];
 }
 
-export async function getTodayAttendance(employeeId: number) {
+export async function getTodayAttendance(employeeId: number): Promise<any[]> {
   const [rows]: any = await pool.query(
     `SELECT id, employee_id, shift_id, start_datetime, end_datetime 
      FROM attendances 
@@ -60,10 +60,10 @@ export async function getTodayAttendance(employeeId: number) {
      ORDER BY start_datetime DESC`,
     [employeeId]
   );
-  return rows;
+  return rows as any[];
 }
 
-export async function getEmployeeShift(employeeId: number) {
+export async function getEmployeeShift(employeeId: number): Promise<any | null> {
   const [rows]: any = await pool.query(
     `SELECT s.id, s.name, s.start_time, s.end_time 
      FROM shifts s
@@ -71,7 +71,7 @@ export async function getEmployeeShift(employeeId: number) {
      WHERE e.id = ? LIMIT 1`,
     [employeeId]
   );
-  return rows[0] || null;
+  return (rows[0] || null) as any | null;
 }
 
 export async function calculateWorkedHours(
