@@ -43,12 +43,11 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-## Documented Endpoints (32 total)
+## Documented Endpoints (31 total)
 
 ### Authentication
 - `POST /api/auth/login` - User login
-- `POST /api/auth/change-password` - Change own password
-- `POST /api/auth/reset-password/{id}` - Admin reset user password
+- `POST /api/auth/change-password` - Change own password (requires current password)
 - `POST /api/auth/refresh` - Refresh access token
 - `POST /api/auth/validate` - Validate token
 
