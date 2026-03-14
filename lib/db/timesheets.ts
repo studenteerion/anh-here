@@ -1,4 +1,5 @@
 import pool from "@/lib/db";
+import { Timesheet, TimesheetFilter } from "@/types/timesheets";
 
 export async function getOpenAttendance(employeeId: number) {
   const [rows]: any = await pool.query(

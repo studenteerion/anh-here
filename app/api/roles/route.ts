@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import { getAllRoles, createRole, getRolesCount } from "@/lib/db/roles";
+import { Role } from "@/types/roles";
 
 /**
  * @swagger

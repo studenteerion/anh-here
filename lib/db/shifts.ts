@@ -1,4 +1,5 @@
 import pool from "@/lib/db";
+import { Shift, ShiftFilter } from "@/types/shifts";
 
 export async function getAllShifts(limit?: number, offset?: number) {
   const query = `

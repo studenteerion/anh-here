@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import { getAllEmployees, getEmployeeById, createEmployee, getEmployeesCount } from "@/lib/db/employees";
+import { Employee } from "@/types/employees";
 import crypto from "crypto";
 
 const PEPPER = process.env.PEPPER || "";

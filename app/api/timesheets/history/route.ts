@@ -6,6 +6,7 @@ import {
   calculateWorkedHours,
 } from "@/lib/db/timesheets";
 import { getLeaveRequestsByDateRange } from "@/lib/db/requests";
+import { Timesheet } from "@/types/timesheets";
 
 /**
  * @swagger

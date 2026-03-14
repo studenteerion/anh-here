@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import { getAllShifts, getShiftsByDepartment, createShift, getShiftsCount } from "@/lib/db/shifts";
+import { Shift } from "@/types/shifts";
 
 /**
  * @swagger
