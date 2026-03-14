@@ -39,7 +39,7 @@ export async function checkUserPermission(
   }
 }
 
-export async function getUserPermissionsById(user_id: number) {
+export async function getUserPermissionsById(user_id: number): Promise<Permission[]> {
   // Costruisce i permessi dal ruolo dell'utente, escludendo eventuali negazioni esplicite,
   // poi include eventuali permessi esplicitamente consentiti in permission_exceptions.
   const [rows]: any = await pool.query(
@@ -68,10 +68,10 @@ export async function getUserPermissionsById(user_id: number) {
     [user_id, user_id, user_id]
   );
 
-  return rows || [];
+  return (rows || []) as Permission[];
 }
 
-export async function getAllPermissions() {
+export async function getAllPermissions(): Promise<Permission[]> {
   const [rows]: any = await pool.query(
     `
       SELECT id, permission_code, description
@@ -79,10 +79,10 @@ export async function getAllPermissions() {
       ORDER BY permission_code
     `
   );
-  return rows || [];
+  return (rows || []) as Permission[];
 }
 
-export async function addPermissionToUser(user_id: number, permission_id: number, isAllowed: number) {
+export async function addPermissionToUser(user_id: number, permission_id: number, isAllowed: number): Promise<boolean> {
   // Usa permission_exceptions per memorizzare override per dipendente (is_allowed = 0/1).
   // Inserisce o aggiorna l'eccezione. Se il progetto preferisce cancellare per i dinieghi,
   // potremmo eliminare la riga quando isAllowed è 0, ma mantenere la riga esplicita è più chiaro.
@@ -99,7 +99,7 @@ export async function addPermissionToUser(user_id: number, permission_id: number
   }
 }
 
-export async function createPermission(permissionCode: string, description: string) {
+export async function createPermission(permissionCode: string, description: string): Promise<number | null> {
   try {
     const [res]: any = await pool.query(
       `INSERT INTO permissions (permission_code, description) VALUES (?, ?)`,
@@ -112,7 +112,7 @@ export async function createPermission(permissionCode: string, description: stri
   }
 }
 
-export async function editRolePermission(roleId: number, permissionId: number, allowed: number) {
+export async function editRolePermission(roleId: number, permissionId: number, allowed: number): Promise<boolean> {
   try {
     await pool.query(
       `INSERT INTO role_permission (role_id, permission_id, allowed) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE allowed = ?`,

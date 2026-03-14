@@ -7,7 +7,7 @@ export async function getAllEmployees(
     limit?: number;
     offset?: number;
   }
-) {
+): Promise<Employee[]> {
   let query = `SELECT id, first_name, last_name, role_id, department_id, status, created_at, updated_at
     FROM employees`;
   
@@ -26,7 +26,7 @@ export async function getAllEmployees(
   }
 
   const [rows]: any = await pool.query(query, params);
-  return rows;
+  return rows as Employee[];
 }
 
 export async function getEmployeesCount(filters?: { status?: Employee["status"] }) {

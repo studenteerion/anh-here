@@ -1,41 +1,45 @@
 import pool from "@/lib/db";
 import { Shift, ShiftFilter } from "@/types/shifts";
 
-export async function getAllShifts(limit?: number, offset?: number) {
-  const query = `
-    SELECT id, department_id, name, start_time, end_time
-    FROM shifts
-    ORDER BY created_at DESC
-    ${limit ? "LIMIT ? OFFSET ?" : ""}
-  `;
+export async function getAllShifts(
+  filters?: ShiftFilter
+): Promise<Shift[]> {
+  let query = `SELECT id, department_id, name, start_time, end_time
+    FROM shifts ORDER BY created_at DESC`;
   
-  const params = limit ? [limit, offset || 0] : [];
+  const params: any[] = [];
+
+  if (filters?.limit) {
+    query += ` LIMIT ? OFFSET ?`;
+    params.push(filters.limit, filters.offset || 0);
+  }
+
   const [rows]: any = await pool.query(query, params);
-  return rows;
+  return rows as Shift[];
 }
 
-export async function getShiftsCount() {
+export async function getShiftsCount(): Promise<number> {
   const [result]: any = await pool.query("SELECT COUNT(*) as total FROM shifts");
   return result[0]?.total || 0;
 }
 
-export async function getShiftById(shiftId: number) {
+export async function getShiftById(shiftId: number): Promise<Shift | null> {
   const [rows]: any = await pool.query(
     `SELECT id, department_id, name, start_time, end_time
      FROM shifts WHERE id = ? LIMIT 1`,
     [shiftId]
   );
-  return rows[0] || null;
+  return (rows[0] || null) as Shift | null;
 }
 
-export async function getShiftsByDepartment(departmentId: number) {
+export async function getShiftsByDepartment(departmentId: number): Promise<Shift[]> {
   const [rows]: any = await pool.query(
     `SELECT id, department_id, name, start_time, end_time
      FROM shifts WHERE department_id = ?
      ORDER BY name ASC`,
     [departmentId]
   );
-  return rows;
+  return rows as Shift[];
 }
 
 export async function createShift(
@@ -43,7 +47,7 @@ export async function createShift(
   name: string,
   startTime: Date,
   endTime: Date
-) {
+): Promise<number> {
   const [result]: any = await pool.query(
     `INSERT INTO shifts (department_id, name, start_time, end_time)
      VALUES (?, ?, ?, ?)`,
@@ -61,7 +65,7 @@ export async function updateShift(
     endTime?: Date;
     departmentId?: number;
   }
-) {
+): Promise<boolean> {
   const setClauses = [];
   const values = [];
 
@@ -96,7 +100,7 @@ export async function updateShift(
   return result.affectedRows > 0;
 }
 
-export async function deleteShift(shiftId: number) {
+export async function deleteShift(shiftId: number): Promise<boolean> {
   const [result]: any = await pool.query(
     `DELETE FROM shifts WHERE id = ?`,
     [shiftId]

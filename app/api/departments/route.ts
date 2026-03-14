@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
     let response: any;
 
     if (hasPagination) {
-      departments = await getAllDepartments(limit, offset);
+      departments = await getAllDepartments({ limit, offset });
       const total = await getDepartmentsCount();
       const totalPages = Math.ceil(total / limit) || 1;
 
