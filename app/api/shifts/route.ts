@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
       shifts = await getShiftsByDepartment(parseInt(departmentId));
       response = { shifts };
     } else if (hasPagination) {
-      shifts = await getAllShifts(limit, offset);
+      shifts = await getAllShifts({ limit, offset });
       const total = await getShiftsCount();
       const totalPages = Math.ceil(total / limit) || 1;
 
