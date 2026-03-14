@@ -1,71 +1,94 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Script from 'next/script';
+import { useEffect, useRef } from 'react';
 
-export default function SwaggerUI() {
-  const [html, setHtml] = useState<string>('');
+declare global {
+  interface Window {
+    SwaggerUIBundle: any;
+    SwaggerUIStandalonePreset: any;
+  }
+}
+
+export default function DocsPage() {
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const swaggerHtml = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <title>Anhere API Documentation</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4/swagger-ui.css" />
-        <style>
-          body {
-            margin: 0;
-            padding: 0;
-            background: #fafafa;
-          }
-          html {
-            box-sizing: border-box;
-            overflow: -moz-scrollbars-vertical;
-            overflow-y: scroll;
-          }
-          *,
-          *:before,
-          *:after {
-            box-sizing: inherit;
-          }
-        </style>
-      </head>
-      <body>
-        <div id="swagger-ui"></div>
-        <script src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
-        <script src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-standalone-preset.js"></script>
-        <script>
-          window.onload = function() {
-            const ui = SwaggerUIBundle({
-              url: "/api/docs",
-              dom_id: '#swagger-ui',
-              deepLinking: true,
-              presets: [
-                SwaggerUIBundle.presets.apis,
-                SwaggerUIStandalonePreset
-              ],
-              plugins: [
-                SwaggerUIBundle.plugins.DownloadUrl
-              ],
-              layout: "StandaloneLayout",
-              defaultModelsExpandDepth: 1,
-              docExpansion: "list",
-            });
-            window.ui = ui;
-          };
-        </script>
-      </body>
-      </html>
-    `;
-    setHtml(swaggerHtml);
+    const initSwagger = () => {
+      if (window.SwaggerUIBundle && containerRef.current) {
+        try {
+          window.SwaggerUIBundle({
+            url: '/api/docs',
+            dom_id: '#swagger-ui',
+            deepLinking: true,
+            presets: [
+              window.SwaggerUIBundle.presets.apis,
+              window.SwaggerUIStandalonePreset,
+            ],
+            plugins: [window.SwaggerUIBundle.plugins.DownloadUrl],
+            layout: 'StandaloneLayout',
+            defaultModelsExpandDepth: 1,
+            docExpansion: 'list',
+          });
+        } catch (error) {
+          console.error('Failed to initialize Swagger UI:', error);
+        }
+      }
+    };
+
+    // Attendi che gli script siano caricati
+    const checkAndInit = () => {
+      if (
+        typeof window !== 'undefined' &&
+        window.SwaggerUIBundle &&
+        window.SwaggerUIStandalonePreset
+      ) {
+        initSwagger();
+      } else {
+        setTimeout(checkAndInit, 100);
+      }
+    };
+
+    checkAndInit();
   }, []);
 
   return (
-    <div
-      dangerouslySetInnerHTML={{ __html: html }}
-      style={{ width: '100%', height: '100vh' }}
-    />
+    <>
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/swagger-ui-dist@4/swagger-ui.css"
+        type="text/css"
+      />
+      <style>{`
+        html {
+          box-sizing: border-box;
+          overflow: -moz-scrollbars-vertical;
+          overflow-y: scroll;
+        }
+        *,
+        *:before,
+        *:after {
+          box-sizing: inherit;
+        }
+        body {
+          margin: 0;
+          padding: 0;
+          background: #fafafa;
+        }
+      `}</style>
+      <div
+        id="swagger-ui"
+        ref={containerRef}
+        style={{ width: '100%', minHeight: '100vh' }}
+      />
+      <Script
+        src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-bundle.js"
+        strategy="afterInteractive"
+      />
+      <Script
+        src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-standalone-preset.js"
+        strategy="afterInteractive"
+      />
+    </>
   );
 }
