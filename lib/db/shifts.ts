@@ -19,8 +19,8 @@ export async function getAllShifts(
 }
 
 export async function getShiftsCount(): Promise<number> {
-  const [result]: any = await pool.query("SELECT COUNT(*) as total FROM shifts");
-  return result[0]?.total || 0;
+  // Using countRows utility
+
 }
 
 export async function getShiftById(shiftId: number): Promise<Shift | null> {
