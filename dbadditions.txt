@@ -717,3 +717,155 @@ If admin is missing the permission, add it:
   ON DUPLICATE KEY UPDATE role_id = 3;
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+USER ACCOUNTS - ACCOUNT DELETION & TOKEN INVALIDATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Overview:
+  The distinction between "inactive" accounts and "deleted" accounts must be clear:
+  
+  ├─ INACTIVE account: Employee hasn't logged in for 30+ days
+  │  └─ Status determined by: last_login IS NULL OR last_login <= NOW() - 30 days
+  │  └─ Access: ✅ CAN still log in and access system
+  │  └─ Use case: Temporarily away employees, on leave, etc.
+  │  └─ Token invalidation: NO (employee can still authenticate)
+  │
+  └─ DELETED account: Account permanently removed from system
+     └─ Status: user_accounts row deleted from database
+     └─ Access: ❌ CANNOT access system
+     └─ Use case: Terminated employees, offboarded staff
+     └─ Token invalidation: YES (all refresh tokens deleted immediately)
+
+Important Distinction:
+  
+  ❌ INCORRECT: Invalidate tokens for inactive employees
+     Problem: Prevents inactive employees from logging back in
+     Impact: Terminated staff can't log in to access final documents
+  
+  ✅ CORRECT: Invalidate tokens only when account is DELETED
+     Benefit: Inactive employees can still authenticate
+     Benefit: Deleted employees immediately lose all access
+
+
+Account Deletion Workflow:
+
+  1. Admin calls DELETE /api/accounts/{employeeId}
+  2. API validates:
+     ├─ User has "manage_accounts" permission
+     ├─ User is not deleting their own account
+     └─ Account exists
+  3. Database layer executes:
+     ├─ deleteTokensByUser(employeeId) → removes ALL refresh_tokens
+     └─ DELETE FROM user_accounts WHERE employee_id = ?
+  4. Result:
+     ├─ Account row deleted
+     ├─ All active sessions invalidated
+     ├─ Refresh tokens unusable
+     └─ User cannot authenticate or re-authenticate
+
+Security Implications:
+
+  Token Invalidation Benefits:
+    ✅ Prevents unauthorized access after deletion
+    ✅ Removes all active sessions immediately
+    ✅ Protects data from terminated employees
+    ✅ Complies with security best practices
+    ✅ Audit trail: deleted account cannot access future logs
+
+  Refresh Token Management:
+    ├─ Tokens stored hashed in refresh_tokens table
+    ├─ Each token has expires_at timestamp (default 7 days)
+    ├─ Deletion removes all rows for user_id (all devices/sessions)
+    ├─ Logout endpoint also uses deleteTokensByUser() for security
+    └─ Even valid tokens are invalidated (deleted, not just expired)
+
+
+Implementation Details:
+
+  Database Function: deleteUserAccount()
+  Location: lib/db/userAccounts.ts
+  
+  Behavior:
+    1. Calls deleteTokensByUser(employeeId)
+       └─ Executes: DELETE FROM refresh_tokens WHERE user_id = ?
+    2. Calls: DELETE FROM user_accounts WHERE employee_id = ?
+    3. Returns: boolean (success/failure)
+  
+  Endpoint: DELETE /api/accounts/{employeeId}
+  
+  Request:
+    Method: DELETE
+    Path: /api/accounts/{employeeId}
+    Header: Authorization: Bearer {access_token}
+  
+  Validation:
+    ├─ User has "manage_accounts" permission (REQUIRED)
+    ├─ User is not deleting their own account (REQUIRED)
+    ├─ Account exists (REQUIRED)
+    └─ Associated employee exists (REQUIRED)
+  
+  Response:
+    200 OK: {
+      status: "success",
+      message: "Account deleted successfully"
+    }
+  
+  Errors:
+    ├─ 400: Cannot delete own account
+    ├─ 403: Permission denied (missing manage_accounts)
+    ├─ 404: Account not found
+    └─ 500: Server error
+
+
+Test Scenarios:
+
+  Scenario 1: Normal deletion flow
+  ────────────────────────────
+  1. Employee exists with valid account
+  2. Employee has active refresh_token (expires in 5 days)
+  3. Admin calls DELETE /api/accounts/{employeeId}
+  4. Result:
+     ├─ refresh_tokens row deleted
+     ├─ user_accounts row deleted
+     ├─ Employee cannot log in anymore
+     ├─ Employee cannot use refresh token to get new access token
+     └─ If already logged in, token expires naturally (no logout needed)
+
+
+  Scenario 2: Inactive employee (NOT deleted)
+  ──────────────────────────────────────────
+  1. Employee exists with account
+  2. last_login was 35 days ago
+  3. Account status: "inactive" (calculated at API response time)
+  4. Admin calls GET /api/accounts/{employeeId}
+  5. Response shows: status: "inactive"
+  6. Admin DOES NOT delete account
+  7. Result:
+     ├─ refresh_tokens still valid
+     ├─ Employee CAN still log in
+     ├─ Employee CAN use refresh token
+     └─ Status remains "inactive" until they log in
+
+
+  Scenario 3: Deleting account with multiple active sessions
+  ─────────────────────────────────────────────────────────
+  1. Employee logged in on 3 devices
+  2. Each device has a refresh_token in database
+  3. Admin calls DELETE /api/accounts/{employeeId}
+  4. Result:
+     ├─ ALL 3 refresh_tokens deleted at once
+     ├─ All 3 devices cannot use refresh token
+     ├─ All 3 active sessions invalidated
+     └─ All 3 access tokens expire naturally
+
+
+Summary:
+
+  Active → Inactive transition: Automatic (based on last_login, no action needed)
+  Account Deletion: Manual (admin action via API), triggers token invalidation
+  
+  Inactive does NOT mean access is blocked - it's just a status indicator
+  Deleted DOES mean access is blocked - account is permanently removed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
