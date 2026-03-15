@@ -1,8 +1,6 @@
 import pool from "@/lib/db";
 import { Employee, EmployeeFilter } from "@/types/employees";
 import { countRows, getById, exists } from "./utils";
-import { roleExists as checkRoleExists } from "./roles";
-import { departmentExists as checkDepartmentExists } from "./departments";
 
 export async function getAllEmployees(
   filters?: {
@@ -30,13 +28,6 @@ export async function getAllEmployees(
 
   const [rows]: any = await pool.query(query, params);
   return rows as Employee[];
-}
-
-export async function getEmployeesCount(filters?: { status?: Employee["status"] }) {
-  if (filters?.status) {
-    return await countRows('employees', 'status = ?', [filters.status]);
-  }
-  return await countRows('employees');
 }
 
 export async function getEmployeeById(employeeId: number) {
@@ -74,21 +65,6 @@ export async function getEmployeesByDepartment(
 
   const [rows]: any = await pool.query(query, params);
   return rows;
-}
-
-export async function getEmployeesByDepartmentCount(
-  departmentId: number,
-  filters?: { status?: Employee["status"] }
-) {
-  let whereClause = 'department_id = ?';
-  const params: any[] = [departmentId];
-
-  if (filters?.status) {
-    whereClause += ' AND status = ?';
-    params.push(filters.status);
-  }
-
-  return await countRows('employees', whereClause, params);
 }
 
 export async function createEmployee(
@@ -162,20 +138,4 @@ export async function deleteEmployee(employeeId: number) {
   );
 
   return result.affectedRows > 0;
-}
-
-/**
- * Check if a role exists by ID
- * Re-exported from roles.ts for backward compatibility
- */
-export async function roleExists(roleId: number): Promise<boolean> {
-  return await checkRoleExists(roleId);
-}
-
-/**
- * Check if a department exists by ID
- * Re-exported from departments.ts for backward compatibility
- */
-export async function departmentExists(departmentId: number): Promise<boolean> {
-  return await checkDepartmentExists(departmentId);
 }

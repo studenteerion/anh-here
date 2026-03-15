@@ -21,10 +21,6 @@ export async function getAllDepartments(
   return rows as Department[];
 }
 
-export async function getDepartmentsCount(): Promise<number> {
-  return await countRows('departments');
-}
-
 export async function getDepartmentById(departmentId: number): Promise<Department | null> {
   return await getById<Department>(
     'departments',
@@ -52,12 +48,4 @@ export async function updateDepartment(departmentId: number, departmentName: str
 
 export async function deleteDepartment(departmentId: number): Promise<boolean> {
   return await deleteById('departments', departmentId);
-}
-
-/**
- * Check if a department exists by ID
- * Used for FK validation in employee creation
- */
-export async function departmentExists(departmentId: number): Promise<boolean> {
-  return await exists('departments', departmentId);
 }

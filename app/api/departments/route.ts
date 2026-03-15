@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getAllDepartments, createDepartment, getDepartmentsCount } from "@/lib/db/departments";
+import { getAllDepartments, createDepartment } from "@/lib/db/departments";
+import { countRows } from "@/lib/db/utils";
 import { Department } from "@/types/departments";
 
 /**
@@ -113,7 +114,7 @@ export async function GET(req: NextRequest) {
 
     if (hasPagination) {
       departments = await getAllDepartments({ limit, offset });
-      const total = await getDepartmentsCount();
+      const total = await countRows('departments');
       const totalPages = Math.ceil(total / limit) || 1;
 
       // Valida pagina fuori range
