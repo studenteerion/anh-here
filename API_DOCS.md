@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-## Documented Endpoints (42 total)
+## Documented Endpoints (43 total)
 
 ### User Accounts
 - `GET /api/accounts` - List all user accounts
@@ -60,6 +60,7 @@ export async function GET(req: NextRequest) {
 
 ### Authentication
 - `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout (invalidates all refresh tokens)
 - `POST /api/auth/change-password` - Change own password (requires current password)
 - `POST /api/auth/refresh` - Refresh access token
 - `POST /api/auth/validate` - Validate token
