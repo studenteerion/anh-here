@@ -4,17 +4,17 @@ import { checkUserPermission } from "@/lib/db/permissions";
 import {
   getAttendanceHistory,
   calculateWorkedHours,
-} from "@/lib/db/timesheets";
+} from "@/lib/db/attendances";
 import { getLeaveRequestsByDateRange } from "@/lib/db/requests";
-import { Timesheet } from "@/types/timesheets";
+import { Attendance } from "@/types/attendances";
 
 /**
  * @swagger
- * /api/timesheets/history:
+ * /api/attendances/history:
  *   get:
  *     tags:
- *       - Timesheets
- *     summary: Get timesheet history
+ *       - Attendances
+ *     summary: Get attendance history
  *     description: Retrieve attendance history for a specified period with leave requests grouped by date
  *     security:
  *       - BearerAuth: []
