@@ -1,5 +1,6 @@
 import pool from "@/lib/db";
 import { UserAccount, UserAccountFilter } from "@/types/userAccounts";
+import { deleteTokensByUser } from "@/lib/db/refreshTokens";
 
 export async function getAllUserAccounts(
   filters?: UserAccountFilter
@@ -93,6 +94,9 @@ export async function updateLastLogin(employeeId: number): Promise<boolean> {
 }
 
 export async function deleteUserAccount(employeeId: number): Promise<boolean> {
+  // Invalidate all refresh tokens for this user before deletion
+  await deleteTokensByUser(employeeId);
+  
   const [result]: any = await pool.query(
     `DELETE FROM user_accounts WHERE employee_id = ?`,
     [employeeId]
