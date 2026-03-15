@@ -1,11 +1,11 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║           DATABASE ADDITIONS FOR COMPANY REPORTS FEATURE                     ║
+║      DATABASE ADDITIONS FOR COMPANY REPORTS & USER ACCOUNTS FEATURES          ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 OVERVIEW
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-The new company reports endpoints use existing permissions in the system. However,
-to properly manage company reports, the following permissions are needed:
+The new company reports and user accounts endpoints use existing permissions in
+the system. To properly manage both features, the following permissions are needed:
 
 REQUIRED PERMISSIONS (Already exist in the system)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -254,22 +254,74 @@ Who can do what after applying these updates:
 NOTES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+
+USER ACCOUNTS ENDPOINTS - ADDITIONAL PERMISSIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The user accounts endpoints use the existing manage_accounts permission:
+
+1. Permission ID: 16 | Code: "manage_accounts"
+   Status: ✅ ALREADY EXISTS
+   Used for: GET /api/accounts (list all accounts)
+             GET /api/accounts/{employeeId} (get single account)
+             PUT /api/accounts/{employeeId} (update email/password)
+             DELETE /api/accounts/{employeeId} (delete account)
+   Description: Edit or disable user accounts
+
+
+USER ACCOUNTS ENDPOINTS SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Permission Flow:
+
+┌─ GET /api/accounts
+│  ├─ Must have: manage_accounts
+│  ├─ Optional filter: status (active/inactive)
+│  ├─ Optional pagination: page, limit
+│  └─ Returns: All user accounts with pagination
+
+┌─ GET /api/accounts/{employeeId}
+│  ├─ Must have: manage_accounts
+│  └─ Returns: Single account details
+
+┌─ PUT /api/accounts/{employeeId}
+│  ├─ Must have: manage_accounts
+│  ├─ Can update: email (with uniqueness check), password (hashed)
+│  ├─ Validation: Email format, password >= 8 chars
+│  └─ Returns: Updated account
+
+┌─ DELETE /api/accounts/{employeeId}
+│  ├─ Must have: manage_accounts
+│  ├─ Protection: Cannot delete own account (prevent self-lockout)
+│  └─ Returns: Success message
+
+
+NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 • No NEW permissions were created - all endpoints use EXISTING permissions
   in the system (view_reports, generate_reports, manage_accounts)
 
 • All endpoints have full Swagger documentation with JSDoc comments
 
-• URL validation is strict - invalid URLs will return 400 Bad Request
+• Email validation is strict - invalid format returns 400 Bad Request
+  Also checks for uniqueness across all accounts
+
+• Password validation: minimum 8 characters, hashed with PEPPER
 
 • All operations require valid JWT token (BearerAuth)
 
 • Pagination is optional - if page/limit not provided, returns all results
 
-• Employee cascade delete: when employee is deleted, their reports are 
+• Status determination: "active" = has logged in, "inactive" = never logged in
+
+• Employee cascade delete: when employee is deleted, their account is 
   NOT automatically deleted (no FK constraint with cascade). This allows
   maintaining historical records. You may want to add:
-  ALTER TABLE company_reports
-  ADD CONSTRAINT fk_company_reports_employee
+  ALTER TABLE user_accounts
+  ADD CONSTRAINT fk_user_accounts_employee
   FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE;
+
+• Account deletion also deletes the associated employee record (FK relationship)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
