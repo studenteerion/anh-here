@@ -108,6 +108,24 @@ export async function getLeaveRequestsByDateRange(
   return rows;
 }
 
+function calculateLeaveRequestStatus(
+  approver1_status: string | null,
+  approver2_status: string | null
+): "pending" | "approved" | "rejected" {
+  // If either approver has rejected, the entire request is rejected
+  if (approver1_status === "rejected" || approver2_status === "rejected") {
+    return "rejected";
+  }
+  
+  // Both approvers must have approved for the request to be approved
+  if (approver1_status === "approved" && approver2_status === "approved") {
+    return "approved";
+  }
+  
+  // Otherwise, it's still pending (at least one hasn't decided)
+  return "pending";
+}
+
 export async function assignAndUpdateApproval(
   requestId: number,
   approverId: number,
@@ -131,6 +149,8 @@ export async function assignAndUpdateApproval(
   // Determine which approver slot this action belongs to
   let updateQuery = "";
   let params: any[] = [];
+  let newApprover1Status = request.approver1_status;
+  let newApprover2Status = request.approver2_status;
 
   if (!request.approver1_id) {
     // First approver: assign to approver1 slot
@@ -138,24 +158,28 @@ export async function assignAndUpdateApproval(
                    SET approver1_id = ?, approver1_status = ?, approver1_date = NOW()
                    WHERE id = ?`;
     params = [approverId, approvalStatus, requestId];
+    newApprover1Status = approvalStatus;
   } else if (!request.approver2_id) {
     // Second approver: assign to approver2 slot
     updateQuery = `UPDATE leave_requests 
                    SET approver2_id = ?, approver2_status = ?, approver2_date = NOW()
                    WHERE id = ?`;
     params = [approverId, approvalStatus, requestId];
+    newApprover2Status = approvalStatus;
   } else if (request.approver1_id === approverId) {
     // Approver1 is updating their own decision (within modification window)
     updateQuery = `UPDATE leave_requests 
                    SET approver1_status = ?, approver1_date = NOW()
                    WHERE id = ?`;
     params = [approvalStatus, requestId];
+    newApprover1Status = approvalStatus;
   } else if (request.approver2_id === approverId) {
     // Approver2 is updating their own decision (within modification window)
     updateQuery = `UPDATE leave_requests 
                    SET approver2_status = ?, approver2_date = NOW()
                    WHERE id = ?`;
     params = [approvalStatus, requestId];
+    newApprover2Status = approvalStatus;
   } else {
     // Neither approver1 nor approver2, and both slots are full
     return { 
@@ -166,6 +190,18 @@ export async function assignAndUpdateApproval(
 
   try {
     const [result]: any = await pool.query(updateQuery, params);
+    
+    if (result.affectedRows > 0) {
+      // Calculate new status based on both approvers' decisions
+      const newStatus = calculateLeaveRequestStatus(newApprover1Status, newApprover2Status);
+      
+      // Update the main status field
+      await pool.query(
+        `UPDATE leave_requests SET status = ? WHERE id = ?`,
+        [newStatus, requestId]
+      );
+    }
+    
     return { 
       success: result.affectedRows > 0,
       request: await getLeaveRequestById(requestId)
