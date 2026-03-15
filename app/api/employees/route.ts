@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getAllEmployees, getEmployeeById, createEmployee, getEmployeesCount } from "@/lib/db/employees";
+import { getAllEmployees, getEmployeeById, createEmployee, getEmployeesCount, roleExists, departmentExists } from "@/lib/db/employees";
 import { Employee } from "@/types/employees";
 import crypto from "crypto";
 
@@ -247,6 +247,20 @@ export async function POST(req: NextRequest) {
 
     if (!firstName || !lastName || !roleId || !departmentId || !email || !password) {
       return errorResponse("Missing required fields: firstName, lastName, roleId, departmentId, email, password", 400);
+    }
+
+    // Validate foreign keys
+    const [roleValid, deptValid] = await Promise.all([
+      roleExists(roleId),
+      departmentExists(departmentId)
+    ]);
+
+    if (!roleValid) {
+      return errorResponse(`Role with ID ${roleId} does not exist`, 400);
+    }
+
+    if (!deptValid) {
+      return errorResponse(`Department with ID ${departmentId} does not exist`, 400);
     }
 
     const passwordHash = hashPassword(password);
