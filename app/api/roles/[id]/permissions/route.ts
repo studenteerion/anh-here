@@ -1,10 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
-import { checkUserPermission, editRolePermission } from "@/lib/db/permissions";
+import { checkUserPermission, editRolePermission, getRolePermissions } from "@/lib/db/permissions";
 
 /**
  * @swagger
  * /api/roles/{roleId}/permissions:
+ *   get:
+ *     tags:
+ *       - Roles
+ *     summary: Get permissions assigned to a role
+ *     description: Retrieve all permissions assigned to a specific role
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: roleId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Role ID
+ *     responses:
+ *       200:
+ *         description: Permissions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 roleId:
+ *                   type: integer
+ *                 permissions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       permission_code:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *       403:
+ *         description: Permission denied
+ *       404:
+ *         description: Role not found
+ *       500:
+ *         description: Server error
  *   patch:
  *     tags:
  *       - Roles
@@ -47,6 +88,40 @@ import { checkUserPermission, editRolePermission } from "@/lib/db/permissions";
  *       500:
  *         description: Server error
  */
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const authResult = verifyAuth(req);
+  if (authResult.error) return authErrorResponse(authResult);
+
+  const employeeId = authResult.payload!.sub;
+
+  try {
+    const hasPerm = await checkUserPermission(employeeId, "user_permissions_read");
+    if (!hasPerm) {
+      return errorResponse(
+        "Permission denied: you don't have access to this feature",
+        403
+      );
+    }
+
+    const roleId = parseInt(id);
+    const permissions = await getRolePermissions(roleId);
+
+    return successResponse(
+      {
+        roleId,
+        permissions,
+      },
+      "Role permissions retrieved successfully",
+      200
+    );
+  } catch (error: any) {
+    console.error("Endpoint error:", error);
+    return errorResponse(error.message || "Failed to retrieve role permissions", 500);
+  }
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const authResult = verifyAuth(req);
