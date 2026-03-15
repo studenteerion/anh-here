@@ -108,6 +108,76 @@ export async function getLeaveRequestsByDateRange(
   return rows;
 }
 
+export async function assignAndUpdateApproval(
+  requestId: number,
+  approverId: number,
+  approvalStatus: "approved" | "rejected"
+) {
+  const request = await getLeaveRequestById(requestId);
+  if (!request) return { success: false, error: "Request not found" };
+
+  // Check if modification window is valid (more than 1 day before start_datetime)
+  const startDate = new Date(request.start_datetime);
+  const now = new Date();
+  const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  if (startDate <= oneDayFromNow) {
+    return { 
+      success: false, 
+      error: "Cannot modify approval less than 1 day before leave start date" 
+    };
+  }
+
+  // Determine which approver slot this action belongs to
+  let updateQuery = "";
+  let params: any[] = [];
+
+  if (!request.approver1_id) {
+    // First approver: assign to approver1 slot
+    updateQuery = `UPDATE leave_requests 
+                   SET approver1_id = ?, approver1_status = ?, approver1_date = NOW()
+                   WHERE id = ?`;
+    params = [approverId, approvalStatus, requestId];
+  } else if (!request.approver2_id) {
+    // Second approver: assign to approver2 slot
+    updateQuery = `UPDATE leave_requests 
+                   SET approver2_id = ?, approver2_status = ?, approver2_date = NOW()
+                   WHERE id = ?`;
+    params = [approverId, approvalStatus, requestId];
+  } else if (request.approver1_id === approverId) {
+    // Approver1 is updating their own decision (within modification window)
+    updateQuery = `UPDATE leave_requests 
+                   SET approver1_status = ?, approver1_date = NOW()
+                   WHERE id = ?`;
+    params = [approvalStatus, requestId];
+  } else if (request.approver2_id === approverId) {
+    // Approver2 is updating their own decision (within modification window)
+    updateQuery = `UPDATE leave_requests 
+                   SET approver2_status = ?, approver2_date = NOW()
+                   WHERE id = ?`;
+    params = [approvalStatus, requestId];
+  } else {
+    // Neither approver1 nor approver2, and both slots are full
+    return { 
+      success: false, 
+      error: "This leave request already has two approvers assigned" 
+    };
+  }
+
+  try {
+    const [result]: any = await pool.query(updateQuery, params);
+    return { 
+      success: result.affectedRows > 0,
+      request: await getLeaveRequestById(requestId)
+    };
+  } catch (error: any) {
+    return { 
+      success: false, 
+      error: error.message || "Failed to update approval" 
+    };
+  }
+}
+
 export async function updateLeaveRequestApproval(
   requestId: number,
   approverId: number,

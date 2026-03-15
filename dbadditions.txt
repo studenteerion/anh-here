@@ -487,6 +487,171 @@ Code Pattern Implemented:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
+LEAVE REQUESTS - MULTI-LEVEL APPROVAL LOGIC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Overview:
+  The leave_requests table supports multi-level approval with two approver slots.
+  This enables a workflow where multiple managers/supervisors must approve before
+  a leave request is fully authorized.
+
+Database Schema:
+  leave_requests table has 6 approval-related fields:
+  ├─ approver1_id: INT NULL (first approver employee ID)
+  ├─ approver1_status: ENUM ('pending', 'approved', 'rejected') 
+  ├─ approver1_date: DATETIME (when first approver took action)
+  ├─ approver2_id: INT NULL (second approver employee ID)
+  ├─ approver2_status: ENUM ('pending', 'approved', 'rejected')
+  └─ approver2_date: DATETIME (when second approver took action)
+
+Approval Flow:
+  1. Employee creates leave request (approver1_id = NULL, approver2_id = NULL)
+  2. First manager with "approve_requests" permission takes action
+     → Auto-assigned as approver1
+     → approver1_id and approver1_status are set
+  3. Second manager with "approve_requests" permission takes action
+     → Auto-assigned as approver2
+     → approver2_id and approver2_status are set
+  4. Both approvers can modify their decision up to 1 day before leave start
+     → After 1 day before start: approvals are locked
+
+Modification Window Logic:
+  ├─ Check: start_datetime > NOW() + INTERVAL 1 DAY (one day away)
+  ├─ If TRUE: approver can modify their decision
+  │  └─ Updates approver_status and approver_date
+  ├─ If FALSE (too close to start): modification blocked
+  │  └─ Returns error: "Cannot modify approval less than 1 day before leave start date"
+  └─ Rationale: Ensures staffing decisions are finalized before leave begins
+
+Auto-Assignment Examples:
+
+  Example 1: Basic approval sequence
+  ─────────────────────────────────
+  Jan 15, 10:00 AM → Manager A approves
+    Result: approver1_id = A, approver1_status = 'approved', approver1_date = Jan 15 10:00
+  
+  Jan 15, 11:00 AM → Manager B approves
+    Result: approver2_id = B, approver2_status = 'approved', approver2_date = Jan 15 11:00
+  
+  Jan 15, 2:00 PM → Manager A changes mind to reject (still 1+ days before start)
+    Result: approver1_status = 'rejected', approver1_date = Jan 15 14:00
+
+
+  Example 2: Within modification window
+  ────────────────────────────────────
+  Leave starts: Jan 16, 9:00 AM
+  Current time: Jan 15, 4:00 PM (20 hours before start - within window)
+  
+  Manager A can still modify decision because:
+    start_datetime (Jan 16 09:00) > NOW() + 24 hours (Jan 16 16:00) ? FALSE
+    Actually: NOW() + 24 hours = Jan 16 16:00
+    start_datetime = Jan 16 09:00
+    09:00 is NOT > 16:00, so modification is BLOCKED ✓
+
+
+  Example 3: Outside modification window
+  ──────────────────────────────────────
+  Leave starts: Jan 16, 9:00 AM
+  Current time: Jan 15, 9:00 PM (12 hours before start - OUTSIDE window)
+  
+  Manager A tries to modify: BLOCKED
+    Error: "Cannot modify approval less than 1 day before leave start date"
+    Reason: NOW() + 24 hours = Jan 16 21:00
+    start_datetime = Jan 16 09:00
+    09:00 is NOT > 21:00 ✓ Correctly blocked
+
+
+Implementation Details:
+
+  Function: assignAndUpdateApproval(requestId, approverId, approvalStatus)
+  
+  Logic:
+    1. Fetch current request state
+    2. Validate modification window: start_datetime > NOW() + 1 day
+    3. Determine approver assignment:
+       ├─ If approver1_id is NULL → assign this action to approver1
+       ├─ If approver1_id is set but approver2_id is NULL → assign to approver2
+       ├─ If both are set and approverId == approver1_id → update approver1
+       ├─ If both are set and approverId == approver2_id → update approver2
+       └─ If both are set and approverId is neither → ERROR (slot full)
+    4. Execute UPDATE query with new status and timestamp
+    5. Return updated request state
+
+Endpoint Behavior:
+
+  PUT /api/requests/{id}
+  Request body: { "status": "approved" | "rejected" }
+  
+  Authentication: Required (JWT token)
+  Permission: "approve_requests" (REQUIRED)
+  
+  Validation:
+    1. User must have "approve_requests" permission
+    2. Leave start_datetime must be > 1 day away
+    3. User is either approver1, approver2, or will become one of them
+  
+  On Success (200):
+    Returns full leave request object including:
+    - approver1_id, approver1_status, approver1_date
+    - approver2_id, approver2_status, approver2_date
+    - Allows frontend to show who approved and when
+  
+  On Failure:
+    - 400: Outside modification window ("Cannot modify approval < 1 day before...")
+    - 400: Both approver slots filled and user is neither (not expected)
+    - 403: User lacks "approve_requests" permission
+    - 404: Leave request not found
+    - 500: Server error
+
+Permission Requirements:
+  
+  Required: "approve_requests" (ID 9)
+  
+  Current assignments:
+    ├─ Manager (ID 2): ✅ HAS
+    ├─ Supervisor (ID 4): ✅ HAS
+    ├─ Admin (ID 3): CHECK NEEDED
+    └─ Employee (ID 1): ❌ CORRECT (employees shouldn't approve)
+
+Security Notes:
+  
+  ✅ Secure by default: requires explicit permission
+  ✅ Role-based: only approved personnel can be approvers
+  ✅ Modification window: prevents last-minute approval changes
+  ✅ Timestamp tracking: auditable trail of decisions
+  ✅ Two-level approval: requires consensus between two levels
+  ✅ Auto-assignment: prevents manual configuration errors
+  ⚠️  1-day window: consider if this is appropriate for your business
+      (Could be made configurable in future if needed)
+
+Testing Scenarios:
+
+  1. Normal flow (both approve):
+     ├─ Employee submits leave request
+     ├─ Manager A approves → becomes approver1
+     ├─ Manager B approves → becomes approver2
+     └─ Both within modification window, can change decision
+
+  2. Rejection flow:
+     ├─ Employee submits leave request
+     ├─ Manager A rejects → becomes approver1 with rejected status
+     ├─ Manager B approves → becomes approver2 with approved status
+     └─ Mixed approval states are allowed
+
+  3. Modification within window:
+     ├─ Manager A approves (2 days before leave)
+     ├─ Manager A changes to reject (1.5 days before leave) ✅ ALLOWED
+     └─ approver1_date updates to new timestamp
+
+  4. Locked after window:
+     ├─ Leave starts tomorrow at 9 AM
+     ├─ Current time: 8 PM today (13 hours before)
+     ├─ Manager A tries to modify approval ❌ BLOCKED
+     └─ Error: "Cannot modify approval less than 1 day before leave start date"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
 LEAVE REQUESTS - PERMISSION FIX
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
