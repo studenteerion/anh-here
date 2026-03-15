@@ -43,7 +43,13 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-## Documented Endpoints (36 total)
+## Documented Endpoints (41 total)
+
+### User Accounts
+- `GET /api/accounts` - List all user accounts
+- `GET /api/accounts/{employeeId}` - Get user account by employee ID
+- `PUT /api/accounts/{employeeId}` - Update user account (email/password)
+- `DELETE /api/accounts/{employeeId}` - Delete user account
 
 ### Company Reports
 - `GET /api/company-reports` - List company reports
