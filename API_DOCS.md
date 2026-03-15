@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-## Documented Endpoints (45 total)
+## Documented Endpoints (47 total)
 
 ### User Accounts
 - `GET /api/accounts` - List all user accounts
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
 
 ### Employees
 - `GET /api/employees` - List all employees
-- `POST /api/employees/create` - Create new employee
+- `POST /api/employees` - Create new employee
 - `GET /api/employees/me` - Get own profile
 - `GET /api/employees/{id}` - Get employee by ID
 - `PUT /api/employees/{id}` - Update employee
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
 
 ### Shifts
 - `GET /api/shifts` - List shifts
-- `POST /api/shifts/create` - Create shift
+- `POST /api/shifts` - Create shift
 - `GET /api/shifts/{id}` - Get shift by ID
 - `PUT /api/shifts/{id}` - Update shift
 - `DELETE /api/shifts/{id}` - Delete shift
@@ -84,14 +84,15 @@ export async function GET(req: NextRequest) {
 
 ### Departments
 - `GET /api/departments` - List departments
-- `POST /api/departments/create` - Create department
+- `POST /api/departments` - Create department
 - `GET /api/departments/{id}` - Get department
 - `PUT /api/departments/{id}` - Update department
 - `DELETE /api/departments/{id}` - Delete department
+- `GET /api/departments/{id}/employees` - Get employees in department
 
 ### Roles
 - `GET /api/roles` - List roles
-- `POST /api/roles/create` - Create role
+- `POST /api/roles` - Create role
 - `GET /api/roles/{id}` - Get role
 - `PUT /api/roles/{id}` - Update role
 - `DELETE /api/roles/{id}` - Delete role
@@ -101,14 +102,14 @@ export async function GET(req: NextRequest) {
 ### Permissions
 - `GET /api/permissions` - Get user permissions
 - `GET /api/permissions/all` - Get all permissions
-- `POST /api/permissions/change` - Change user permission
-- `POST /api/permissions/updateRolePermission` - Update role permission
+- `POST /api/permissions` - Change user permission
+- `PATCH /api/permissions/{userId}` - Grant/revoke permission for user
 
 ### Leave Requests
-- `GET /api/requests/list` - List leave requests
-- `POST /api/requests/create` - Create leave request
+- `GET /api/requests` - List leave requests
+- `POST /api/requests` - Create leave request
 - `GET /api/requests/{id}` - Get leave request
-- `PUT /api/requests/update` - Update/approve leave request
+- `PUT /api/requests/{id}` - Update/approve leave request
 - `DELETE /api/requests/{id}` - Delete leave request
 
 ### Attendances
