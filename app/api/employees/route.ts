@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getAllEmployees, getEmployeeById, createEmployee, getEmployeesCount, roleExists, departmentExists } from "@/lib/db/employees";
+import { getAllEmployees, getEmployeeById, createEmployee } from "@/lib/db/employees";
+import { countRows, exists } from "@/lib/db/utils";
 import { Employee } from "@/types/employees";
 import crypto from "crypto";
 
@@ -189,9 +190,13 @@ export async function GET(req: NextRequest) {
         limit,
         offset,
       });
-      total = await getEmployeesCount({
-        status: statusFilter as any,
-      });
+      let whereClause = '';
+      const params: any[] = [];
+      if (statusFilter) {
+        whereClause = 'status = ?';
+        params.push(statusFilter);
+      }
+      total = await countRows('employees', whereClause || undefined, params);
       const totalPages = Math.ceil(total / limit) || 1;
 
       // Valida pagina fuori range
@@ -251,8 +256,8 @@ export async function POST(req: NextRequest) {
 
     // Validate foreign keys
     const [roleValid, deptValid] = await Promise.all([
-      roleExists(roleId),
-      departmentExists(departmentId)
+      exists('roles', roleId),
+      exists('departments', departmentId)
     ]);
 
     if (!roleValid) {

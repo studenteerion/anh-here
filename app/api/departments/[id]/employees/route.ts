@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getEmployeesByDepartment, getEmployeesByDepartmentCount } from "@/lib/db/employees";
+import { getEmployeesByDepartment } from "@/lib/db/employees";
 import { getDepartmentById } from "@/lib/db/departments";
+import { countRows } from "@/lib/db/utils";
 import { Employee } from "@/types/employees";
 
 /**
@@ -143,9 +144,13 @@ export async function GET(
         limit,
         offset,
       });
-      let total = await getEmployeesByDepartmentCount(departmentId, {
-        status: statusFilter as any,
-      });
+      let whereClause = 'department_id = ?';
+      const params: any[] = [departmentId];
+      if (statusFilter) {
+        whereClause += ' AND status = ?';
+        params.push(statusFilter);
+      }
+      let total = await countRows('employees', whereClause, params);
 
       const totalPages = Math.ceil(total / limit) || 1;
 
