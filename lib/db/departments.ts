@@ -1,5 +1,6 @@
 import pool from "@/lib/db";
 import { Department, DepartmentFilter } from "@/types/departments";
+import { countRows, getById, getByField, insert, updateById, deleteById, exists } from "./utils";
 
 export async function getAllDepartments(
   filters?: DepartmentFilter
@@ -21,52 +22,42 @@ export async function getAllDepartments(
 }
 
 export async function getDepartmentsCount(): Promise<number> {
-  const [result]: any = await pool.query("SELECT COUNT(*) as total FROM departments");
-  return result[0]?.total || 0;
+  return await countRows('departments');
 }
 
 export async function getDepartmentById(departmentId: number): Promise<Department | null> {
-  const [rows]: any = await pool.query(
-    `SELECT id, department_name
-     FROM departments WHERE id = ? LIMIT 1`,
-    [departmentId]
+  return await getById<Department>(
+    'departments',
+    departmentId,
+    'id, department_name'
   );
-  return (rows[0] || null) as Department | null;
 }
 
 export async function getDepartmentByName(departmentName: string): Promise<Department | null> {
-  const [rows]: any = await pool.query(
-    `SELECT id, department_name
-     FROM departments WHERE department_name = ? LIMIT 1`,
-    [departmentName]
+  return await getByField<Department>(
+    'departments',
+    'department_name',
+    departmentName,
+    'id, department_name'
   );
-  return (rows[0] || null) as Department | null;
 }
 
 export async function createDepartment(departmentName: string): Promise<number> {
-  const [result]: any = await pool.query(
-    `INSERT INTO departments (department_name)
-     VALUES (?)`,
-    [departmentName]
-  );
-
-  return result.insertId;
+  return await insert('departments', { department_name: departmentName });
 }
 
 export async function updateDepartment(departmentId: number, departmentName: string): Promise<boolean> {
-  const [result]: any = await pool.query(
-    `UPDATE departments SET department_name = ? WHERE id = ?`,
-    [departmentName, departmentId]
-  );
-
-  return result.affectedRows > 0;
+  return await updateById('departments', departmentId, { department_name: departmentName });
 }
 
 export async function deleteDepartment(departmentId: number): Promise<boolean> {
-  const [result]: any = await pool.query(
-    `DELETE FROM departments WHERE id = ?`,
-    [departmentId]
-  );
+  return await deleteById('departments', departmentId);
+}
 
-  return result.affectedRows > 0;
+/**
+ * Check if a department exists by ID
+ * Used for FK validation in employee creation
+ */
+export async function departmentExists(departmentId: number): Promise<boolean> {
+  return await exists('departments', departmentId);
 }

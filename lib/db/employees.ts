@@ -1,5 +1,8 @@
 import pool from "@/lib/db";
 import { Employee, EmployeeFilter } from "@/types/employees";
+import { countRows, getById, exists } from "./utils";
+import { roleExists as checkRoleExists } from "./roles";
+import { departmentExists as checkDepartmentExists } from "./departments";
 
 export async function getAllEmployees(
   filters?: {
@@ -30,25 +33,18 @@ export async function getAllEmployees(
 }
 
 export async function getEmployeesCount(filters?: { status?: Employee["status"] }) {
-  let query = `SELECT COUNT(*) as total FROM employees`;
-  const params: any[] = [];
-
   if (filters?.status) {
-    query += ` WHERE status = ?`;
-    params.push(filters.status);
+    return await countRows('employees', 'status = ?', [filters.status]);
   }
-
-  const [result]: any = await pool.query(query, params);
-  return result[0]?.total || 0;
+  return await countRows('employees');
 }
 
 export async function getEmployeeById(employeeId: number) {
-  const [rows]: any = await pool.query(
-    `SELECT id, first_name, last_name, role_id, department_id, status, created_at, updated_at
-     FROM employees WHERE id = ? LIMIT 1`,
-    [employeeId]
+  return await getById<Employee>(
+    'employees',
+    employeeId,
+    'id, first_name, last_name, role_id, department_id, status, created_at, updated_at'
   );
-  return rows[0] || null;
 }
 
 export async function getEmployeesByDepartment(
@@ -84,16 +80,15 @@ export async function getEmployeesByDepartmentCount(
   departmentId: number,
   filters?: { status?: Employee["status"] }
 ) {
-  let query = `SELECT COUNT(*) as total FROM employees WHERE department_id = ?`;
+  let whereClause = 'department_id = ?';
   const params: any[] = [departmentId];
 
   if (filters?.status) {
-    query += ` AND status = ?`;
+    whereClause += ' AND status = ?';
     params.push(filters.status);
   }
 
-  const [result]: any = await pool.query(query, params);
-  return result[0]?.total || 0;
+  return await countRows('employees', whereClause, params);
 }
 
 export async function createEmployee(
@@ -131,35 +126,20 @@ export async function updateEmployee(
     status?: "active" | "inactive";
   }
 ) {
-  const allowedFields = ["first_name", "last_name", "role_id", "department_id", "status"];
-  const setClauses = [];
-  const values = [];
+  const updateFields: Record<string, any> = {};
 
-  if (updates.firstName) {
-    setClauses.push("first_name = ?");
-    values.push(updates.firstName);
-  }
-  if (updates.lastName) {
-    setClauses.push("last_name = ?");
-    values.push(updates.lastName);
-  }
-  if (updates.roleId) {
-    setClauses.push("role_id = ?");
-    values.push(updates.roleId);
-  }
-  if (updates.departmentId) {
-    setClauses.push("department_id = ?");
-    values.push(updates.departmentId);
-  }
-  if (updates.status) {
-    setClauses.push("status = ?");
-    values.push(updates.status);
-  }
+  if (updates.firstName) updateFields['first_name'] = updates.firstName;
+  if (updates.lastName) updateFields['last_name'] = updates.lastName;
+  if (updates.roleId) updateFields['role_id'] = updates.roleId;
+  if (updates.departmentId) updateFields['department_id'] = updates.departmentId;
+  if (updates.status) updateFields['status'] = updates.status;
 
-  if (setClauses.length === 0) {
+  if (Object.keys(updateFields).length === 0) {
     return false;
   }
 
+  const setClauses = Object.keys(updateFields).map((key) => `${key} = ?`);
+  const values = Object.values(updateFields);
   values.push(employeeId);
 
   const [result]: any = await pool.query(
@@ -184,18 +164,18 @@ export async function deleteEmployee(employeeId: number) {
   return result.affectedRows > 0;
 }
 
+/**
+ * Check if a role exists by ID
+ * Re-exported from roles.ts for backward compatibility
+ */
 export async function roleExists(roleId: number): Promise<boolean> {
-  const [rows]: any = await pool.query(
-    `SELECT id FROM roles WHERE id = ? LIMIT 1`,
-    [roleId]
-  );
-  return rows.length > 0;
+  return await checkRoleExists(roleId);
 }
 
+/**
+ * Check if a department exists by ID
+ * Re-exported from departments.ts for backward compatibility
+ */
 export async function departmentExists(departmentId: number): Promise<boolean> {
-  const [rows]: any = await pool.query(
-    `SELECT id FROM departments WHERE id = ? LIMIT 1`,
-    [departmentId]
-  );
-  return rows.length > 0;
+  return await checkDepartmentExists(departmentId);
 }

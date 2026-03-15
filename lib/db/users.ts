@@ -1,4 +1,5 @@
 import pool from "@/lib/db";
+import { updateUserAccountPassword } from "@/lib/db/userAccounts";
 
 export async function getUserByEmail(email: string) {
     const [rows]: any = await pool.query(
@@ -38,13 +39,13 @@ export async function getUserById(employeeId: number) {
     return rows[0] || null;
 }
 
+/**
+ * Update user password
+ * Delegated to userAccounts.ts for single source of truth
+ * @deprecated Use updateUserAccountPassword from userAccounts.ts instead
+ */
 export async function updateUserPassword(employeeId: number, newPasswordHash: string) {
-    const [result]: any = await pool.query(
-        `UPDATE user_accounts SET password_hash = ? WHERE employee_id = ?`,
-        [newPasswordHash, employeeId]
-    );
-
-    return result.affectedRows > 0;
+    return await updateUserAccountPassword(employeeId, newPasswordHash);
 }
 
 export async function getUserPasswordHash(employeeId: number) {
