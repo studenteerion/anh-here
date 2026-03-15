@@ -1,5 +1,5 @@
 import pool from "@/lib/db";
-import { Timesheet, TimesheetFilter } from "@/types/timesheets";
+import { Attendance, AttendanceFilter } from "@/types/attendances";
 
 export async function getOpenAttendance(employeeId: number): Promise<any | null> {
   const [rows]: any = await pool.query(

@@ -106,11 +106,11 @@ export async function GET(req: NextRequest) {
 - `PUT /api/requests/update` - Update/approve leave request
 - `DELETE /api/requests/{id}` - Delete leave request
 
-### Timesheets
-- `POST /api/timesheets/punch` - Clock in/out
-- `GET /api/timesheets/status` - Get current timesheet status
-- `GET /api/timesheets/history` - Get timesheet history
-- `GET /api/timesheets/summary` - Get timesheet summary
+### Attendances
+- `POST /api/attendances/punch` - Clock in/out
+- `GET /api/attendances/status` - Get current attendance status
+- `GET /api/attendances/history` - Get attendance history
+- `GET /api/attendances/summary` - Get attendance summary
 
 ### Anomalies
 - `GET /api/notifications/anomalies` - List anomalies
