@@ -21,7 +21,7 @@ import { getAllUserAccounts, getUserAccountsCount } from "@/lib/db/userAccounts"
  *         schema:
  *           type: string
  *           enum: [active, inactive]
- *         description: Filter by account status (active = has logged in, inactive = never logged in)
+ *         description: Filter by account status (active = logged in within 30 days, inactive = never logged in or no login for 30+ days)
  *       - name: page
  *         in: query
  *         schema:
@@ -113,14 +113,21 @@ export async function GET(req: NextRequest) {
       }
 
       response = {
-        accounts: accounts.map((a) => ({
-          employeeId: a.employee_id,
-          email: a.email,
-          status: a.last_login ? "active" : "inactive",
-          createdAt: a.created_at,
-          updatedAt: a.updated_at,
-          lastLogin: a.last_login,
-        })),
+        accounts: accounts.map((a) => {
+          const lastLoginDate = a.last_login ? new Date(a.last_login) : null;
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          const status = lastLoginDate && lastLoginDate > thirtyDaysAgo ? "active" : "inactive";
+          
+          return {
+            employeeId: a.employee_id,
+            email: a.email,
+            status,
+            createdAt: a.created_at,
+            updatedAt: a.updated_at,
+            lastLogin: a.last_login,
+          };
+        }),
         pagination: {
           page,
           limit,
@@ -144,14 +151,21 @@ export async function GET(req: NextRequest) {
       });
 
       response = {
-        accounts: accounts.map((a) => ({
-          employeeId: a.employee_id,
-          email: a.email,
-          status: a.last_login ? "active" : "inactive",
-          createdAt: a.created_at,
-          updatedAt: a.updated_at,
-          lastLogin: a.last_login,
-        })),
+        accounts: accounts.map((a) => {
+          const lastLoginDate = a.last_login ? new Date(a.last_login) : null;
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          const status = lastLoginDate && lastLoginDate > thirtyDaysAgo ? "active" : "inactive";
+          
+          return {
+            employeeId: a.employee_id,
+            email: a.email,
+            status,
+            createdAt: a.created_at,
+            updatedAt: a.updated_at,
+            lastLogin: a.last_login,
+          };
+        }),
       };
     }
 
