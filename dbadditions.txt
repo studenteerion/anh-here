@@ -869,3 +869,230 @@ Summary:
   Deleted DOES mean access is blocked - account is permanently removed
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+PERMISSION GRANULARITY ROADMAP - FUTURE ENHANCEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Overview:
+  Currently, many endpoints use generic permissions like "user_permissions_read"
+  for accessing different resources. For better security and access control,
+  implement resource-specific granular permissions.
+
+Current State:
+  ├─ ✅ Some specific permissions exist (view_reports, manage_accounts, etc.)
+  ├─ ⚠️  Many endpoints use generic "user_permissions_read"
+  └─ ❌ Cannot grant different access levels per resource
+
+Proposed Granular Permissions:
+
+  Resource: EMPLOYEES
+  ───────────────────
+  • Permission: view_employees
+    Code: view_employees
+    Description: View list of employees and employee details
+    Current Usage: GET /api/employees, GET /api/employees/{id}
+    Suggested Roles: employee (own only), manager, admin, supervisor
+  
+  • Permission: manage_employees
+    Code: manage_employees
+    Description: Create, update, delete employees
+    Current Usage: POST /api/employees, PUT /api/employees/{id}, DELETE /api/employees/{id}
+    Suggested Roles: admin only
+
+
+  Resource: SHIFTS
+  ────────────────
+  • Permission: view_shifts
+    Code: view_shifts
+    Description: View shift schedules
+    Current Usage: GET /api/shifts, GET /api/shifts/{id}, GET /api/shifts/me
+    Suggested Roles: employee, manager, admin, supervisor
+  
+  • Permission: manage_shifts
+    Code: manage_shifts
+    Description: Create, update, delete shifts
+    Current Usage: POST /api/shifts, PUT /api/shifts/{id}, DELETE /api/shifts/{id}
+    Suggested Roles: admin, manager (own department)
+
+
+  Resource: DEPARTMENTS
+  ─────────────────────
+  • Permission: view_departments
+    Code: view_departments
+    Description: View department information
+    Current Usage: GET /api/departments, GET /api/departments/{id}
+    Suggested Roles: employee, manager, admin, supervisor
+  
+  • Permission: manage_departments
+    Code: manage_departments
+    Description: Create, update, delete departments
+    Current Usage: POST /api/departments, PUT /api/departments/{id}, DELETE /api/departments/{id}
+    Suggested Roles: admin only
+
+
+  Generic Fallback Permissions:
+  ────────────────────────────
+  • Permission: view_own_data
+    Code: view_own_data
+    Description: View authenticated user's own information
+    Current Usage: GET /api/employees/me (implicit)
+    Suggested Roles: employee, manager, admin, supervisor (all roles)
+  
+  • Permission: view_all_data
+    Code: view_all_data
+    Description: View any user's information (admin override)
+    Current Usage: Fallback for admin level access
+    Suggested Roles: admin only
+
+
+Implementation Plan:
+
+  Phase 1: Create new permissions (SQL scripts)
+  ─────────────────────────────────────────
+  
+  INSERT INTO permissions (permission_code, description) VALUES
+    ('view_employees', 'View employee list and details'),
+    ('manage_employees', 'Create, update, delete employees'),
+    ('view_shifts', 'View shift schedules'),
+    ('manage_shifts', 'Create, update, delete shifts'),
+    ('view_departments', 'View department information'),
+    ('manage_departments', 'Create, update, delete departments'),
+    ('view_own_data', 'View own user information'),
+    ('view_all_data', 'View any user information (admin)');
+
+  Phase 2: Assign permissions to roles
+  ──────────────────────────────────
+  
+  Role: EMPLOYEE (ID 1)
+  ├─ view_shifts (can see assigned shifts)
+  ├─ view_own_data (can see own profile)
+  └─ Deny: manage_employees, manage_shifts, manage_departments
+  
+  Role: MANAGER (ID 2)
+  ├─ view_employees (see team members)
+  ├─ view_shifts (see all shifts)
+  ├─ manage_shifts (create/update shifts for department)
+  ├─ view_departments (see department info)
+  └─ Deny: manage_employees, manage_departments
+  
+  Role: ADMIN (ID 3)
+  ├─ view_employees ✅
+  ├─ manage_employees ✅
+  ├─ view_shifts ✅
+  ├─ manage_shifts ✅
+  ├─ view_departments ✅
+  ├─ manage_departments ✅
+  ├─ view_own_data ✅
+  └─ view_all_data ✅
+  
+  Role: SUPERVISOR (ID 4)
+  ├─ view_employees (see team)
+  ├─ view_shifts
+  ├─ view_departments
+  └─ Deny: manage_employees, manage_shifts, manage_departments
+
+  Phase 3: Update endpoints
+  ──────────────────────
+  Replace \"user_permissions_read\" checks with specific permissions:
+  
+  GET /api/employees:
+    Before: checkUserPermission(empId, \"user_permissions_read\")
+    After:  checkUserPermission(empId, \"view_employees\")
+  
+  POST /api/employees:
+    Before: checkUserPermission(empId, \"user_permissions_read\")
+    After:  checkUserPermission(empId, \"manage_employees\")
+  
+  Similar updates for shifts, departments, etc.
+
+  Phase 4: Backward compatibility
+  ──────────────────────────────
+  - Old generic \"user_permissions_read\" can remain for now
+  - New checks use granular permissions
+  - Phased rollout: update endpoints gradually
+  - Monitor access denied errors during transition
+
+Access Control Pattern (Updated):
+
+  Before (Generic):
+    const hasPerm = await checkUserPermission(empId, \"user_permissions_read\");
+  
+  After (Granular):
+    // For viewing list
+    const canView = await checkUserPermission(empId, \"view_employees\");
+    
+    // For creating/updating
+    const canManage = await checkUserPermission(empId, \"manage_employees\");
+    
+    // For admins only
+    const isAdmin = await checkUserPermission(empId, \"view_all_data\");
+
+Benefits of Granular Permissions:
+
+  ✅ Principle of least privilege: Users have only needed access
+  ✅ Role-based access: Managers see employees, not raw databases
+  ✅ Auditable: Clear which permission was used for each action
+  ✅ Future-proof: Easy to add new resources/permissions
+  ✅ Compliance: Meets security standards (GDPR, SOC 2, etc.)
+  ✅ Scalable: Works for 10 or 10,000 resources
+
+Security Improvements:
+
+  ├─ Prevent privilege escalation: Can't get view_all_data by accident
+  ├─ Reduce attack surface: Fewer generic permissions
+  ├─ Clear responsibility: Each permission has specific purpose
+  ├─ Easier auditing: Permission usage logs are meaningful
+  └─ Compliance-ready: Demonstrates access controls
+
+Implementation Notes:
+
+  • These permissions are OPTIONAL but RECOMMENDED
+  • System works fine with current generic permissions
+  • Can be implemented incrementally, one resource at a time
+  • Start with admin/manager roles, then cascade to employees
+  • Update API_DOCS.md when changes deployed
+  • Monitor permission denial errors during transition
+
+SQL Script (When Ready):
+
+  -- Create new permissions
+  INSERT INTO permissions (permission_code, description) VALUES
+    ('view_employees', 'View employee list and details'),
+    ('manage_employees', 'Create, update, delete employees'),
+    ('view_shifts', 'View shift schedules'),
+    ('manage_shifts', 'Create, update, delete shifts'),
+    ('view_departments', 'View department information'),
+    ('manage_departments', 'Create, update, delete departments'),
+    ('view_own_data', 'View own user information'),
+    ('view_all_data', 'View any user information (admin)');
+  
+  -- Get permission IDs (will vary based on current state)
+  SELECT id FROM permissions WHERE permission_code IN (
+    'view_employees', 'manage_employees', 'view_shifts', 'manage_shifts',
+    'view_departments', 'manage_departments', 'view_own_data', 'view_all_data'
+  );
+  
+  -- Assign to roles (example with assumption of IDs)
+  -- Adjust IDs based on actual permissions created above
+  
+  -- Admin gets everything (IDs 18-25 assumed for new permissions)
+  INSERT INTO role_permission (role_id, permission_id) VALUES
+    (3, 18), (3, 19), (3, 20), (3, 21),
+    (3, 22), (3, 23), (3, 24), (3, 25);
+  
+  -- Manager gets partial access (IDs 18, 20, 22-23 assumed)
+  INSERT INTO role_permission (role_id, permission_id) VALUES
+    (2, 18), (2, 20), (2, 21), (2, 22);
+  
+  -- Employee gets minimal access (IDs 20, 24 assumed)
+  INSERT INTO role_permission (role_id, permission_id) VALUES
+    (1, 20), (1, 24);
+
+Status:
+  🔄 PROPOSED - Not yet implemented
+  📝 Documentation provided
+  ⏳ Ready for implementation when desired
+  💡 Can be rolled out gradually
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
