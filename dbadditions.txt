@@ -352,6 +352,12 @@ NEW PERMISSIONS TO CREATE
    Used for: Exporting attendance summaries and reports
    Suggested roles: admin, manager
 
+4. Permission Code: "view_all_attendances"
+   Description: View attendance history of other employees (not just own)
+   Used for: GET /api/attendances/history?employeeId=X when X != authenticated user
+   Suggested roles: admin, manager, supervisor
+   Purpose: Access control to prevent information disclosure via query parameter
+
 
 SQL SCRIPT TO CREATE PERMISSIONS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -362,40 +368,44 @@ SQL SCRIPT TO CREATE PERMISSIONS
    INSERT INTO permissions (permission_code, description) VALUES
    ('view_attendances', 'View employee attendance records and history'),
    ('manage_attendances', 'Manage attendance records (edit, delete, export)'),
-   ('export_attendances', 'Export attendance data to external systems');
+   ('export_attendances', 'Export attendance data to external systems'),
+   ('view_all_attendances', 'View attendance history of other employees');
 
    Note: This will auto-assign IDs. After insertion, query to get the IDs:
    SELECT id, permission_code FROM permissions 
-   WHERE permission_code IN ('view_attendances', 'manage_attendances', 'export_attendances')
+   WHERE permission_code IN ('view_attendances', 'manage_attendances', 'export_attendances', 'view_all_attendances')
    ORDER BY id;
 
 
 2. ASSIGN PERMISSIONS TO ROLES (after getting the permission IDs)
    ──────────────────────────────────────────────────────────────
 
-   Example (replace X, Y, Z with actual permission IDs from step 1):
+   Example (replace W, X, Y, Z with actual permission IDs from step 1):
 
    -- Employee: can view own attendance
    INSERT INTO role_permission (role_id, permission_id) VALUES
-   (1, X);  -- employee gets "view_attendances"
+   (1, W);  -- employee gets "view_attendances" (own only)
 
    -- Manager: can view and manage attendance
    INSERT INTO role_permission (role_id, permission_id) VALUES
-   (2, X),  -- manager gets "view_attendances"
-   (2, Y),  -- manager gets "manage_attendances"
-   (2, Z);  -- manager gets "export_attendances"
+   (2, W),  -- manager gets "view_attendances"
+   (2, X),  -- manager gets "manage_attendances"
+   (2, Y),  -- manager gets "export_attendances"
+   (2, Z);  -- manager gets "view_all_attendances" (see other employees)
 
    -- Admin: can do everything
    INSERT INTO role_permission (role_id, permission_id) VALUES
-   (3, X),  -- admin gets "view_attendances"
-   (3, Y),  -- admin gets "manage_attendances"
-   (3, Z);  -- admin gets "export_attendances"
+   (3, W),  -- admin gets "view_attendances"
+   (3, X),  -- admin gets "manage_attendances"
+   (3, Y),  -- admin gets "export_attendances"
+   (3, Z);  -- admin gets "view_all_attendances"
 
    -- Supervisor: can view and manage
    INSERT INTO role_permission (role_id, permission_id) VALUES
-   (4, X),  -- supervisor gets "view_attendances"
-   (4, Y),  -- supervisor gets "manage_attendances"
-   (4, Z);  -- supervisor gets "export_attendances"
+   (4, W),  -- supervisor gets "view_attendances"
+   (4, X),  -- supervisor gets "manage_attendances"
+   (4, Y),  -- supervisor gets "export_attendances"
+   (4, Z);  -- supervisor gets "view_all_attendances"
 
 
 ATTENDANCES ENDPOINTS SECURITY MAPPING
@@ -414,8 +424,13 @@ After permissions are created, implement in endpoints:
 │  └─ Action: Get current clock status
 │
 ├─ GET /api/attendances/history
-│  ├─ Current permission: "view_history"
-│  ├─ Recommended: Use "view_attendances" instead
+│  ├─ Current permission: "view_history" (base check)
+│  ├─ New parameter: employeeId (optional, defaults to authenticated user)
+│  ├─ Access control:
+│  │  ├─ If employeeId == authenticated user → allowed (no extra permission)
+│  │  └─ If employeeId != authenticated user → REQUIRES "view_all_attendances" permission
+│  ├─ Recommended: Replace "view_history" with "view_attendances"
+│  ├─ Status: ✅ IMPLEMENTED (access control added, permission pending)
 │  └─ Action: List attendance history with date filtering
 │
 └─ GET /api/attendances/summary
@@ -432,6 +447,41 @@ TODO: Update endpoint code to use these new permissions:
   - Add "manage_attendances" check for any administrative functions
   - Add "export_attendances" check for data export features
 
+Implementation Status:
+  ✅ GET /api/attendances/history - Access control for employeeId parameter added
+     - Checks "view_all_attendances" when requesting other employee's data
+     - Prevents information disclosure vulnerability
+     - Code ready, permission "view_all_attendances" pending database creation
+  
+  ⏳ GET /api/attendances/status - Permission check pending
+  ⏳ GET /api/attendances/summary - Permission check pending
+  ⏳ Other endpoints - Permission updates pending
+
 Current status: Permissions table structure ready, new permissions pending creation
+
+SECURITY NOTES FOR ATTENDANCES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Issue Fixed:
+  ❌ Before: GET /api/attendances/history could leak other employees' data
+     Vulnerability: No permission check on employeeId query parameter
+     Risk: Information disclosure - users could view any employee's attendance
+
+  ✅ After: Access control implemented
+     - If no employeeId parameter → shows authenticated user's history (safe)
+     - If employeeId == authenticated user → shows history (allowed)
+     - If employeeId != authenticated user → requires "view_all_attendances" permission
+     - Default deny: returns 403 if permission missing (secure by default)
+
+Code Pattern Implemented:
+  if (requestedEmployeeId !== authenticatedEmployeeId) {
+    const hasViewAllPerm = await checkUserPermission(
+      authenticatedEmployeeId, 
+      'view_all_attendances'
+    );
+    if (!hasViewAllPerm) {
+      return errorResponse("Permission denied", 403);
+    }
+  }
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
