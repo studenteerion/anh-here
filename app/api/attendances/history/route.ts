@@ -15,10 +15,17 @@ import { Attendance } from "@/types/attendances";
  *     tags:
  *       - Attendances
  *     summary: Get attendance history
- *     description: Retrieve attendance history for a specified period with leave requests grouped by date
+ *     description: |
+ *       Retrieve attendance history for a specified period with leave requests grouped by date.
+ *       Can request own history or other employees' history with proper permissions.
  *     security:
  *       - BearerAuth: []
  *     parameters:
+ *       - name: employeeId
+ *         in: query
+ *         schema:
+ *           type: integer
+ *         description: Employee ID to get history for (defaults to authenticated user). Requires view_all_attendances permission if different from authenticated user.
  *       - name: period
  *         in: query
  *         schema:
@@ -79,23 +86,36 @@ import { Attendance } from "@/types/attendances";
  *       400:
  *         description: Invalid period or missing dates
  *       403:
- *         description: Permission denied
+ *         description: Permission denied or insufficient permissions to view other employee's history
  *       500:
  *         description: Server error
  */
 export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
-  const employeeId = authResult.payload!.sub;
+  const authenticatedEmployeeId = authResult.payload!.sub;
 
   try {
-    // Verifica permesso
-    const hasPerm = await checkUserPermission(employeeId, "view_history");
+    // Check base permission
+    const hasPerm = await checkUserPermission(authenticatedEmployeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const searchParams = req.nextUrl.searchParams;
+    const requestedEmployeeIdParam = searchParams.get("employeeId");
+    const requestedEmployeeId = requestedEmployeeIdParam 
+      ? parseInt(requestedEmployeeIdParam) 
+      : authenticatedEmployeeId;
+
+    // Check access control: if requesting another employee's data, need special permission
+    if (requestedEmployeeId !== authenticatedEmployeeId) {
+      const hasViewAllPerm = await checkUserPermission(authenticatedEmployeeId, "view_all_attendances");
+      if (!hasViewAllPerm) {
+        return errorResponse("Permission denied: you don't have access to view other employees' attendance history", 403);
+      }
+    }
+
     const period = searchParams.get("period") || "month";
     const fromParam = searchParams.get("from");
     const toParam = searchParams.get("to");
@@ -135,14 +155,14 @@ export async function GET(req: NextRequest) {
 
     // Ottieni presenze nel periodo
     const attendances = await getAttendanceHistory(
-      employeeId,
+      requestedEmployeeId,
       startDate,
       endDate
     );
 
     // Ottieni permessi approvati nel periodo
     const leaveRequests = await getLeaveRequestsByDateRange(
-      employeeId,
+      requestedEmployeeId,
       startDate,
       endDate
     );
