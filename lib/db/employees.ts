@@ -183,3 +183,19 @@ export async function deleteEmployee(employeeId: number) {
 
   return result.affectedRows > 0;
 }
+
+export async function roleExists(roleId: number): Promise<boolean> {
+  const [rows]: any = await pool.query(
+    `SELECT id FROM roles WHERE id = ? LIMIT 1`,
+    [roleId]
+  );
+  return rows.length > 0;
+}
+
+export async function departmentExists(departmentId: number): Promise<boolean> {
+  const [rows]: any = await pool.query(
+    `SELECT id FROM departments WHERE id = ? LIMIT 1`,
+    [departmentId]
+  );
+  return rows.length > 0;
+}
