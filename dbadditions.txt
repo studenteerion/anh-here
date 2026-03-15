@@ -325,3 +325,113 @@ NOTES
 • Account deletion also deletes the associated employee record (FK relationship)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+ATTENDANCES ENDPOINTS - MISSING PERMISSIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The attendances endpoints (formerly timesheets) currently use generic "clock_in_out"
+and "view_history" permissions. To properly manage attendance features, the following
+NEW permissions should be added:
+
+NEW PERMISSIONS TO CREATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Permission Code: "view_attendances"
+   Description: View employee attendance records and history
+   Used for: GET /api/attendances/history, GET /api/attendances/status
+   Suggested roles: employee, manager, admin, supervisor
+
+2. Permission Code: "manage_attendances"
+   Description: Manage attendance records (edit, delete, export for all employees)
+   Used for: Administrative functions to modify attendance records
+   Suggested roles: admin, manager
+
+3. Permission Code: "export_attendances"
+   Description: Export attendance data to reports or external systems
+   Used for: Exporting attendance summaries and reports
+   Suggested roles: admin, manager
+
+
+SQL SCRIPT TO CREATE PERMISSIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ADD NEW PERMISSIONS TO permissions TABLE
+   ────────────────────────────────────────
+
+   INSERT INTO permissions (permission_code, description) VALUES
+   ('view_attendances', 'View employee attendance records and history'),
+   ('manage_attendances', 'Manage attendance records (edit, delete, export)'),
+   ('export_attendances', 'Export attendance data to external systems');
+
+   Note: This will auto-assign IDs. After insertion, query to get the IDs:
+   SELECT id, permission_code FROM permissions 
+   WHERE permission_code IN ('view_attendances', 'manage_attendances', 'export_attendances')
+   ORDER BY id;
+
+
+2. ASSIGN PERMISSIONS TO ROLES (after getting the permission IDs)
+   ──────────────────────────────────────────────────────────────
+
+   Example (replace X, Y, Z with actual permission IDs from step 1):
+
+   -- Employee: can view own attendance
+   INSERT INTO role_permission (role_id, permission_id) VALUES
+   (1, X);  -- employee gets "view_attendances"
+
+   -- Manager: can view and manage attendance
+   INSERT INTO role_permission (role_id, permission_id) VALUES
+   (2, X),  -- manager gets "view_attendances"
+   (2, Y),  -- manager gets "manage_attendances"
+   (2, Z);  -- manager gets "export_attendances"
+
+   -- Admin: can do everything
+   INSERT INTO role_permission (role_id, permission_id) VALUES
+   (3, X),  -- admin gets "view_attendances"
+   (3, Y),  -- admin gets "manage_attendances"
+   (3, Z);  -- admin gets "export_attendances"
+
+   -- Supervisor: can view and manage
+   INSERT INTO role_permission (role_id, permission_id) VALUES
+   (4, X),  -- supervisor gets "view_attendances"
+   (4, Y),  -- supervisor gets "manage_attendances"
+   (4, Z);  -- supervisor gets "export_attendances"
+
+
+ATTENDANCES ENDPOINTS SECURITY MAPPING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After permissions are created, implement in endpoints:
+
+┌─ POST /api/attendances/punch
+│  ├─ Current permission: "clock_in_out"
+│  ├─ New permission: (keep as is, clock_in_out is specific to clocking)
+│  └─ Action: Punch in/out
+│
+├─ GET /api/attendances/status
+│  ├─ Current permission: "view_history"
+│  ├─ Recommended: Use "view_attendances" instead
+│  └─ Action: Get current clock status
+│
+├─ GET /api/attendances/history
+│  ├─ Current permission: "view_history"
+│  ├─ Recommended: Use "view_attendances" instead
+│  └─ Action: List attendance history with date filtering
+│
+└─ GET /api/attendances/summary
+   ├─ Current permission: "view_history"
+   ├─ Recommended: Use "view_attendances" + "export_attendances" for exports
+   └─ Action: Get attendance summary and statistics
+
+
+FUTURE ENHANCEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TODO: Update endpoint code to use these new permissions:
+  - Replace "view_history" with "view_attendances" in GET endpoints
+  - Add "manage_attendances" check for any administrative functions
+  - Add "export_attendances" check for data export features
+
+Current status: Permissions table structure ready, new permissions pending creation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
