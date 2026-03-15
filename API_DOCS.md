@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-## Documented Endpoints (41 total)
+## Documented Endpoints (42 total)
 
 ### User Accounts
 - `GET /api/accounts` - List all user accounts
@@ -78,6 +78,7 @@ export async function GET(req: NextRequest) {
 - `GET /api/shifts/{id}` - Get shift by ID
 - `PUT /api/shifts/{id}` - Update shift
 - `DELETE /api/shifts/{id}` - Delete shift
+- `GET /api/shifts/employee/{employeeId}` - Get shifts assigned to employee
 
 ### Departments
 - `GET /api/departments` - List departments
