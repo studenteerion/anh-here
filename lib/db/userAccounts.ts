@@ -8,9 +8,11 @@ export async function getAllUserAccounts(
   const params: any[] = [];
 
   if (filters?.status === "active") {
-    query += ` WHERE last_login IS NOT NULL`;
+    // Active: has logged in within the last 30 days
+    query += ` WHERE last_login IS NOT NULL AND last_login > DATE_SUB(NOW(), INTERVAL 30 DAY)`;
   } else if (filters?.status === "inactive") {
-    query += ` WHERE last_login IS NULL`;
+    // Inactive: never logged in OR hasn't logged in for 30+ days
+    query += ` WHERE last_login IS NULL OR last_login <= DATE_SUB(NOW(), INTERVAL 30 DAY)`;
   }
 
   query += ` ORDER BY created_at DESC`;
@@ -31,9 +33,9 @@ export async function getUserAccountsCount(
   const params: any[] = [];
 
   if (filters?.status === "active") {
-    query += ` WHERE last_login IS NOT NULL`;
+    query += ` WHERE last_login IS NOT NULL AND last_login > DATE_SUB(NOW(), INTERVAL 30 DAY)`;
   } else if (filters?.status === "inactive") {
-    query += ` WHERE last_login IS NULL`;
+    query += ` WHERE last_login IS NULL OR last_login <= DATE_SUB(NOW(), INTERVAL 30 DAY)`;
   }
 
   const [result]: any = await pool.query(query, params);

@@ -162,7 +162,12 @@ export async function GET(
       {
         employeeId: account.employee_id,
         email: account.email,
-        status: account.last_login ? "active" : "inactive",
+        status: (() => {
+          const lastLoginDate = account.last_login ? new Date(account.last_login) : null;
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          return lastLoginDate && lastLoginDate > thirtyDaysAgo ? "active" : "inactive";
+        })(),
         createdAt: account.created_at,
         updatedAt: account.updated_at,
         lastLogin: account.last_login,
@@ -257,7 +262,12 @@ export async function PUT(
       {
         employeeId: updatedAccount!.employee_id,
         email: updatedAccount!.email,
-        status: updatedAccount!.last_login ? "active" : "inactive",
+        status: (() => {
+          const lastLoginDate = updatedAccount!.last_login ? new Date(updatedAccount!.last_login) : null;
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          return lastLoginDate && lastLoginDate > thirtyDaysAgo ? "active" : "inactive";
+        })(),
         createdAt: updatedAccount!.created_at,
         updatedAt: updatedAccount!.updated_at,
         lastLogin: updatedAccount!.last_login,
