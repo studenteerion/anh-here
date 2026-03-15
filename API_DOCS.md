@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-## Documented Endpoints (44 total)
+## Documented Endpoints (45 total)
 
 ### User Accounts
 - `GET /api/accounts` - List all user accounts
@@ -95,6 +95,8 @@ export async function GET(req: NextRequest) {
 - `GET /api/roles/{id}` - Get role
 - `PUT /api/roles/{id}` - Update role
 - `DELETE /api/roles/{id}` - Delete role
+- `GET /api/roles/{id}/permissions` - Get permissions assigned to role
+- `PATCH /api/roles/{id}/permissions` - Update role permission
 
 ### Permissions
 - `GET /api/permissions` - Get user permissions
