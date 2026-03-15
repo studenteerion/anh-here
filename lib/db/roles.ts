@@ -17,10 +17,6 @@ export async function getAllRoles(filters?: RoleFilter): Promise<Role[]> {
   return rows as Role[];
 }
 
-export async function getRolesCount(): Promise<number> {
-  return await countRows('roles');
-}
-
 export async function getRoleById(roleId: number): Promise<Role | null> {
   return await getById<Role>(
     'roles',
@@ -48,12 +44,4 @@ export async function updateRole(roleId: number, roleName: string): Promise<bool
 
 export async function deleteRole(roleId: number): Promise<boolean> {
   return await deleteById('roles', roleId);
-}
-
-/**
- * Check if a role exists by ID
- * Used for FK validation in employee creation
- */
-export async function roleExists(roleId: number): Promise<boolean> {
-  return await exists('roles', roleId);
 }

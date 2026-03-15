@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getAllRoles, createRole, getRolesCount } from "@/lib/db/roles";
+import { getAllRoles, createRole } from "@/lib/db/roles";
+import { countRows } from "@/lib/db/utils";
 import { Role } from "@/types/roles";
 
 /**
@@ -113,7 +114,7 @@ export async function GET(req: NextRequest) {
 
     if (hasPagination) {
       roles = await getAllRoles({ limit, offset });
-      const total = await getRolesCount();
+      const total = await countRows('roles');
       const totalPages = Math.ceil(total / limit) || 1;
 
       // Valida pagina fuori range
