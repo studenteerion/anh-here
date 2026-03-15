@@ -43,7 +43,14 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-## Documented Endpoints (31 total)
+## Documented Endpoints (36 total)
+
+### Company Reports
+- `GET /api/company-reports` - List company reports
+- `POST /api/company-reports` - Create company report
+- `GET /api/company-reports/{id}` - Get company report by ID
+- `PUT /api/company-reports/{id}` - Update company report
+- `DELETE /api/company-reports/{id}` - Delete company report
 
 ### Authentication
 - `POST /api/auth/login` - User login
