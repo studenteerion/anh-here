@@ -1096,3 +1096,286 @@ Status:
   💡 Can be rolled out gradually
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+MISSING SPECIFIC PERMISSIONS - AUDIT FINDINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Overview:
+  The API uses several generic permissions that should be standardized and made
+  more specific to individual resources. This analysis identifies all permissions
+  currently used in the API and recommendations for standardization.
+
+Current Permission Usage by Endpoint:
+
+  Specific Permissions (Already Standardized):
+  ────────────────────────────────────────
+  ✅ approve_requests (ID: 9)
+     Used by: PUT /api/requests/{id} (approval workflow)
+     Status: Good, specific to leave request approvals
+
+  ✅ clock_in_out (ID: 4)
+     Used by: POST /api/attendances/punch
+     Status: Good, specific to attendance punch in/out
+
+  ✅ generate_reports (ID: 12)
+     Used by: GET/POST/PUT /api/company-reports
+     Status: Good, specific to report generation
+
+  ✅ logout (ID: 2)
+     Used by: POST /api/auth/logout
+     Status: Good, specific to logout action
+
+  ✅ manage_accounts (ID: 16)
+     Used by: GET/PUT/DELETE /api/accounts
+     Status: Good, specific to account management
+
+  ✅ request_leave (ID: 6)
+     Used by: POST /api/requests
+     Status: Good, specific to leave request creation
+
+  ✅ resolve_anomalies (ID: ?)
+     Used by: PUT/DELETE /api/notifications/anomalies
+     Status: Good, specific to anomaly resolution
+     NOTE: Need to verify this permission exists in database
+
+  ✅ view_all_attendances (ID: ?)
+     Used by: GET /api/attendances/history (with cross-employee access)
+     Status: Good, specific to viewing all attendance records
+     NOTE: Need to verify this permission exists in database
+
+  ✅ view_reports (ID: 8)
+     Used by: GET /api/company-reports
+     Status: Good, specific to report viewing
+
+Generic Permissions (Need Standardization):
+──────────────────────────────────────────
+
+  ⚠️  user_permissions_read (Generic Read)
+     Used by: 12 endpoints across multiple resources
+     ├─ GET /api/employees
+     ├─ GET /api/employees/{id}
+     ├─ GET /api/departments
+     ├─ GET /api/departments/{id}
+     ├─ GET /api/departments/{id}/employees
+     ├─ GET /api/shifts
+     ├─ GET /api/shifts/{id}
+     ├─ GET /api/shifts/employee/{employeeId}
+     ├─ GET /api/roles/{id}/permissions
+     ├─ GET /api/permissions
+     ├─ GET /api/requests
+     ├─ GET /api/notifications/anomalies
+     └─ GET /api/requests/{id}
+     
+     Problem: Can't grant view access to specific resource
+     Recommendation: Break into:
+       • view_employees (view employee list/details)
+       • view_shifts (view shift schedules)
+       • view_departments (view department info)
+       • view_history (view historical records/anomalies)
+
+
+  ⚠️  user_permissions_create (Generic Create)
+     Used by: 6 endpoints
+     ├─ POST /api/employees
+     ├─ POST /api/departments
+     ├─ POST /api/shifts
+     ├─ POST /api/roles
+     └─ POST /api/permissions
+     
+     Problem: Grants creation permission for ALL resources
+     Recommendation: Break into:
+       • create_employees
+       • create_departments
+       • create_shifts
+       • create_roles
+
+
+  ⚠️  user_permissions_update (Generic Update)
+     Used by: 5 endpoints
+     ├─ PUT /api/employees/{id}
+     ├─ PUT /api/departments/{id}
+     ├─ PUT /api/shifts/{id}
+     ├─ PUT /api/roles/{id}
+     └─ PATCH /api/permissions/{userId}
+     
+     Problem: Grants update permission for ALL resources
+     Recommendation: Break into:
+       • update_employees
+       • update_departments
+       • update_shifts
+       • update_roles
+
+
+  ⚠️  permissions_read_all (Generic Permission Access)
+     Used by: 3 endpoints
+     ├─ GET /api/roles
+     ├─ GET /api/roles/{id}
+     └─ GET /api/permissions/all
+     
+     Problem: Unclear purpose, mixes role listing with permission listing
+     Recommendation: Could be split or renamed to:
+       • view_roles (for GET /api/roles endpoints)
+       • view_all_permissions (for GET /api/permissions/all)
+
+
+  ⚠️  roles_permissions_update (Generic Role Permission Management)
+     Used by: 1 endpoint
+     └─ PATCH /api/roles/{id}/permissions
+     
+     Status: Reasonably specific but could be clearer
+     Recommendation: Rename to:
+       • manage_role_permissions
+
+
+  ⚠️  view_history (Generic Historical Data Access)
+     Used by: 4 endpoints
+     ├─ GET /api/attendances/status
+     ├─ GET /api/attendances/summary
+     ├─ GET /api/notifications/anomalies
+     └─ GET /api/notifications/anomalies/{id}
+     
+     Problem: Used for both attendance and notification history
+     Recommendation: Keep or split into:
+       • view_attendance_history
+       • view_notification_history
+
+
+Recommended Standardization Plan:
+
+  Phase 1: Create New Specific Permissions
+  ────────────────────────────────────────
+  INSERT INTO permissions (permission_code, description) VALUES
+    -- Employee Management
+    ('view_employees', 'View employee list and details'),
+    ('create_employees', 'Create new employees'),
+    ('update_employees', 'Update employee information'),
+    ('delete_employees', 'Delete employees'),
+    
+    -- Department Management
+    ('view_departments', 'View department information'),
+    ('create_departments', 'Create departments'),
+    ('update_departments', 'Update departments'),
+    ('delete_departments', 'Delete departments'),
+    
+    -- Shift Management
+    ('view_shifts', 'View shift schedules'),
+    ('create_shifts', 'Create shifts'),
+    ('update_shifts', 'Update shifts'),
+    ('delete_shifts', 'Delete shifts'),
+    
+    -- Role Management
+    ('view_roles', 'View role information'),
+    ('create_roles', 'Create roles'),
+    ('update_roles', 'Update roles'),
+    ('delete_roles', 'Delete roles'),
+    ('manage_role_permissions', 'Assign/revoke role permissions'),
+    
+    -- Permission Management
+    ('view_all_permissions', 'View all available permissions'),
+    ('manage_user_permissions', 'Grant/revoke permissions to users');
+
+
+  Phase 2: Update API Endpoints
+  ──────────────────────────────
+  Replace generic permission checks with specific ones:
+  
+  Before: checkUserPermission(empId, "user_permissions_read")
+  After:  checkUserPermission(empId, "view_employees")
+  
+  For each resource:
+    GET /api/resource → view_{resource}
+    POST /api/resource → create_{resource}
+    PUT /api/resource/{id} → update_{resource}
+    DELETE /api/resource/{id} → delete_{resource}
+
+
+  Phase 3: Verify Missing Permissions in Database
+  ───────────────────────────────────────────────
+  
+  Run this query to check what permissions currently exist:
+  
+    SELECT id, permission_code, description 
+    FROM permissions 
+    ORDER BY permission_code;
+  
+  Verify these exist (currently used):
+    ✓ approve_requests
+    ✓ clock_in_out
+    ✓ generate_reports
+    ✓ logout
+    ✓ manage_accounts
+    ✓ permissions_read_all
+    ✓ request_leave
+    ? resolve_anomalies (NEEDS VERIFICATION)
+    ✓ roles_permissions_update
+    ✓ user_permissions_create
+    ✓ user_permissions_read
+    ✓ user_permissions_update
+    ? view_all_attendances (NEEDS VERIFICATION)
+    ✓ view_history
+    ✓ view_reports
+  
+  Permissions that may need to be created:
+    - view_attendances (basic attendance viewing)
+    - manage_attendances (attendance management)
+    - export_attendances (attendance export)
+    - manage_role_permissions (rename from roles_permissions_update)
+
+
+  Phase 4: Role Assignment Strategy
+  ─────────────────────────────────
+  
+  For each role, assign appropriate permissions:
+  
+  EMPLOYEE (minimal access):
+    • view_shifts
+    • view_employees (own only - enforced in code)
+    • clock_in_out
+    • request_leave
+    • view_history
+  
+  MANAGER (team management):
+    • view_employees (team)
+    • view_shifts
+    • create_shifts (for department)
+    • update_shifts (for department)
+    • view_departments
+    • view_history
+    • approve_requests
+  
+  SUPERVISOR (department oversight):
+    • view_employees
+    • view_shifts
+    • view_departments
+    • view_history
+    • approve_requests
+  
+  ADMIN (full access):
+    • All permissions
+
+
+Current Status:
+  ✅ Specific permissions: 10 (approve_requests, clock_in_out, etc.)
+  ⚠️  Generic permissions: 5 (user_permissions_*, permissions_read_all, view_history)
+  ❓ Uncertain existence: 2 (resolve_anomalies, view_all_attendances)
+  
+  Recommendation: Implement Phase 1 & 2 for better security posture
+
+
+Security Impact:
+  Current: Users with "user_permissions_read" can view ALL resources
+  After:   Users with "view_employees" can only view employees
+  
+  Benefit: Principle of Least Privilege fully implemented
+
+
+Implementation Timeline:
+  - Phase 1: Create permissions (1 SQL script)
+  - Phase 2: Update code (15-20 endpoints)
+  - Phase 3: Verify database (1 query)
+  - Phase 4: Test role assignments (thorough testing needed)
+  
+  Risk Level: Medium (phased rollout recommended)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
