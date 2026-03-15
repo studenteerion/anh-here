@@ -108,3 +108,15 @@ export async function deleteShift(shiftId: number): Promise<boolean> {
 
   return result.affectedRows > 0;
 }
+
+export async function getShiftsByEmployee(employeeId: number): Promise<Shift[]> {
+  const [rows]: any = await pool.query(
+    `SELECT s.id, s.department_id, s.name, s.start_time, s.end_time
+     FROM shifts s
+     JOIN employees e ON s.department_id = e.department_id
+     WHERE e.id = ?
+     ORDER BY s.name ASC`,
+    [employeeId]
+  );
+  return rows as Shift[];
+}
