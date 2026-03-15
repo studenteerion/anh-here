@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getLeaveRequestById, deleteLeaveRequest, updateLeaveRequestApproval } from "@/lib/db/requests";
+import { getLeaveRequestById, deleteLeaveRequest, assignAndUpdateApproval } from "@/lib/db/requests";
 
 /**
  * @swagger
@@ -57,8 +57,21 @@ import { getLeaveRequestById, deleteLeaveRequest, updateLeaveRequestApproval } f
  *   put:
  *     tags:
  *       - Leave Requests
- *     summary: Approve or reject leave request
- *     description: Process a leave request as an approver (approve or reject)
+ *     summary: Approve or reject leave request (with auto-assignment)
+ *     description: |
+ *       Process a leave request as an approver (approve or reject).
+ *       
+ *       **Multi-level approval logic:**
+ *       - First approver action: automatically assigned to approver1
+ *       - Second approver action: automatically assigned to approver2
+ *       - Modification window: approvers can change their decision up to 1 day before leave start
+ *       
+ *       **Example flow:**
+ *       1. Employee creates leave request (Jan 15)
+ *       2. Manager1 approves (Jan 14, 10:00) → Manager1 becomes approver1
+ *       3. Manager2 approves (Jan 14, 11:00) → Manager2 becomes approver2
+ *       4. Before Jan 14 24:00: Either manager can change their approval
+ *       5. After Jan 14 24:00: Approval decisions are locked
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -87,10 +100,27 @@ import { getLeaveRequestById, deleteLeaveRequest, updateLeaveRequestApproval } f
  *           application/json:
  *             schema:
  *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 employee_id:
+ *                   type: integer
+ *                 approver1_id:
+ *                   type: integer
+ *                 approver1_status:
+ *                   type: string
+ *                 approver1_date:
+ *                   type: string
+ *                 approver2_id:
+ *                   type: integer
+ *                 approver2_status:
+ *                   type: string
+ *                 approver2_date:
+ *                   type: string
  *       400:
- *         description: Missing required fields or validation failed
+ *         description: Missing required fields, validation failed, or modification window passed
  *       403:
- *         description: User is not an approver for this request
+ *         description: User lacks approve_requests permission
  *       404:
  *         description: Leave request not found
  *       500:
@@ -190,17 +220,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return errorResponse("Leave request not found", 404);
     }
 
-    if (request.approver1_id !== employeeId && request.approver2_id !== employeeId) {
-      return errorResponse("You are not an approver for this request", 403);
+    // Use the new auto-assignment function
+    const result = await assignAndUpdateApproval(requestId, employeeId, status);
+
+    if (!result.success) {
+      // Determine appropriate HTTP status based on error type
+      const statusCode = result.error?.includes("modification window") ? 400 : 403;
+      return errorResponse(result.error || "Failed to process approval", statusCode);
     }
 
-    const updated = await updateLeaveRequestApproval(requestId, employeeId, status);
-
-    if (!updated) {
-      return errorResponse("This approval has already been processed", 400);
-    }
-
-    const updatedRequest = await getLeaveRequestById(requestId);
+    const updatedRequest = result.request;
     return successResponse(updatedRequest, `Leave request ${status} successfully`, 200);
   } catch (error: any) {
     return errorResponse(error.message || "Failed to update leave request", 500);
