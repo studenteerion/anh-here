@@ -167,6 +167,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const employeeId = authResult.payload!.sub;
 
   try {
+    // Check permission to approve/reject requests
+    const hasPerm = await checkUserPermission(employeeId, "approve_requests");
+    if (!hasPerm) {
+      return errorResponse("Permission denied: you don't have access to approve requests", 403);
+    }
+
     const body = await req.json();
     const { status } = body;
 
