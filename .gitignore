@@ -1,7 +1,7 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
+# ============================================================================
+# DEPENDENCIES
+# ============================================================================
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -9,40 +9,199 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
 
-# testing
-/coverage
+# ============================================================================
+# BUILD OUTPUT & CACHES
+# ============================================================================
 
-# next.js
+# Next.js build directories
 /.next/
 /out/
-
-# production
 /build
 
-# misc
-.DS_Store
-*.pem
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+tsconfig.tsbuildinfo
 
-# debug
+# Testing
+/coverage
+.nyc_output
+
+# ============================================================================
+# ENVIRONMENT & SECRETS
+# ============================================================================
+
+# Environment files (only .env.local and production variants)
+.env
+.env.local
+.env.*.local
+.env.production.local
+.env.test.local
+# NOTE: .env.example is safe to commit
+
+# Sensitive files
+*.pem
+*.key
+.ssh/
+
+# ============================================================================
+# IDEs & EDITORS
+# ============================================================================
+
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+
+# JetBrains (WebStorm, IntelliJ, PhpStorm, etc)
+.idea/
+*.iml
+*.iws
+*.ipr
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+.vim/
+.swp
+.swo
+*~
+
+# Emacs
+*~
+.\#*
+\#*\#
+
+# ============================================================================
+# OPERATING SYSTEM
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+
+# ============================================================================
+# LOGS
+# ============================================================================
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
+*.log
+logs/
+*.log.gz
 
-# env files (can opt-in for committing if needed)
-.env
-.env.local
-.env.*.local
-.env.production
-# NOTE: .env.example is committed and safe, but .env.local is NOT committed
+# ============================================================================
+# RUNTIME & PROCESS
+# ============================================================================
 
-# vercel
-.vercel
+# Node.js
+.npm
+.eslintcache
+.node_repl_history
+*.tgz
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Process files
+.pid
+.seed
+*.pid.lock
+*.pid
 
-# documentation (internal use only - not for submission)
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+.tmp/
+
+# ============================================================================
+# DATABASE
+# ============================================================================
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+*.sql.local
+*.db.local
+db.backup
+
+# Database dumps
+database-exports/
+backups/
+
+# ============================================================================
+# DOCUMENTATION & INTERNAL
+# ============================================================================
+
+# Local documentation (internal use, not for submission)
 /docs
+
+# Session state
+.copilot/
+.copilot-session/
+
+# ============================================================================
+# DEPLOYMENT & HOSTING
+# ============================================================================
+
+# Vercel
+.vercel
+.vercel.json
+vercel.json.local
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# ============================================================================
+# MISC
+# ============================================================================
+
+# IDE-specific
+*.sublime-workspace
+.eslintignore
+
+# OS-specific Finder attributes
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Backup files
+*.backup
+*.bak
+*.swp
+
+# Lock files for tools
+package-lock.json
+pnpm-lock.yaml
+
