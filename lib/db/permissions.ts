@@ -123,3 +123,20 @@ export async function editRolePermission(roleId: number, permissionId: number, a
     return false;
   }
 }
+
+export async function getRolePermissions(roleId: number): Promise<Permission[]> {
+  try {
+    const [rows]: any = await pool.query(
+      `SELECT p.id, p.permission_code, p.description
+       FROM permissions p
+       JOIN role_permission rp ON p.id = rp.permission_id
+       WHERE rp.role_id = ? AND rp.allowed = 1
+       ORDER BY p.permission_code`,
+      [roleId]
+    );
+    return (rows || []) as Permission[];
+  } catch (error) {
+    console.error("Error fetching role permissions:", error);
+    return [];
+  }
+}
