@@ -485,3 +485,70 @@ Code Pattern Implemented:
   }
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+LEAVE REQUESTS - PERMISSION FIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Issue Fixed:
+  ❌ Before: PUT /api/requests/{id} had NO permission check to approve/reject
+     Vulnerability: Anyone with basic access could approve leave requests
+     Risk: Unauthorized approvals, workflow bypass
+
+  ✅ After: Permission check added with "approve_requests"
+     - All users must have "approve_requests" permission to approve/reject
+     - Additional check: user must be designated as approver1_id or approver2_id
+     - Returns 403 if permission is missing
+     - Secure by default: requires explicit permission
+
+Affected Endpoint:
+  • PUT /api/requests/{id}
+    └─ Action: Approve or reject leave request
+    └─ Old permission: NONE (SECURITY ISSUE!)
+    └─ New permission: "approve_requests" (REQUIRED)
+    └─ Status: ✅ IMPLEMENTED
+
+Code Pattern Implemented:
+  const hasPerm = await checkUserPermission(employeeId, "approve_requests");
+  if (!hasPerm) {
+    return errorResponse("Permission denied: you don't have access to approve requests", 403);
+  }
+
+  // Additional check: verify user is one of the designated approvers
+  if (request.approver1_id !== employeeId && request.approver2_id !== employeeId) {
+    return errorResponse("You are not an approver for this request", 403);
+  }
+
+
+Permission Assignment for Leave Request Approval
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current status: Permission "approve_requests" already exists in the system (ID: 9)
+
+Current role_permission assignments for "approve_requests" (ID 9):
+  ├─ Manager (ID 2): ✅ HAS
+  ├─ Supervisor (ID 4): ✅ HAS
+  ├─ Admin (ID 3): ❓ CHECK NEEDED
+  └─ Employee (ID 1): ❌ CORRECT (employees shouldn't approve)
+
+Verify and update if needed:
+  
+  SELECT rp.role_id, r.name, p.permission_code 
+  FROM role_permission rp
+  JOIN roles r ON rp.role_id = r.id
+  JOIN permissions p ON rp.permission_id = p.id
+  WHERE p.permission_code = 'approve_requests'
+  ORDER BY r.name;
+
+Expected result:
+  ├─ Manager: approve_requests ✅
+  ├─ Supervisor: approve_requests ✅
+  └─ Admin: approve_requests ✅ (should add if missing)
+
+If admin is missing the permission, add it:
+  
+  INSERT INTO role_permission (role_id, permission_id) 
+  SELECT 3, id FROM permissions WHERE permission_code = 'approve_requests'
+  ON DUPLICATE KEY UPDATE role_id = 3;
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
