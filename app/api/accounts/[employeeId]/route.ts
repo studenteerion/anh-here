@@ -112,7 +112,10 @@ function hashPassword(password: string): string {
  *     tags:
  *       - User Accounts
  *     summary: Delete user account
- *     description: Delete a user account (also deletes employee). Only accessible to admins with manage_accounts permission.
+ *     description: |
+ *       Delete a user account (also deletes associated employee). 
+ *       All refresh tokens are invalidated immediately - user cannot access the system.
+ *       Only accessible to admins with manage_accounts permission.
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -125,6 +128,8 @@ function hashPassword(password: string): string {
  *     responses:
  *       200:
  *         description: User account deleted successfully
+ *       400:
+ *         description: Cannot delete own account
  *       403:
  *         description: Permission denied
  *       404:
