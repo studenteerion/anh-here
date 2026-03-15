@@ -5,6 +5,7 @@ import crypto from "crypto";
 import { getUserByEmail } from "@/lib/db/users";
 import { storeRefreshToken, deleteTokensByUser } from "@/lib/db/refreshTokens";
 import { checkPassword } from "@/lib/auth";
+import { updateLastLogin } from "@/lib/db/userAccounts";
 
 const JWT_KEY = process.env.JWT_KEY!;
 
@@ -75,6 +76,9 @@ export async function POST(req: NextRequest) {
     if (!user || !(await checkPassword(password, user.password_hash))) {
       return errorResponse("Invalid credentials", 401);
     }
+
+    // Update last login timestamp
+    await updateLastLogin(user.employee_id);
 
     const accessToken = jwt.sign(
       {
