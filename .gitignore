@@ -65,10 +65,6 @@ tsconfig.tsbuildinfo
 *.iml
 *.iws
 *.ipr
-*.swp
-*.swo
-*~
-.DS_Store
 
 # Sublime Text
 *.sublime-workspace
@@ -81,9 +77,12 @@ tsconfig.tsbuildinfo
 *~
 
 # Emacs
-*~
+.emacs.d/
 .\#*
 \#*\#
+
+# Generic editor files
+.eslintcache
 
 # ============================================================================
 # OPERATING SYSTEM
@@ -96,8 +95,6 @@ tsconfig.tsbuildinfo
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
-Thumbs.db
 
 # Windows
 Thumbs.db
@@ -134,14 +131,13 @@ logs/
 .pid
 .seed
 *.pid.lock
-*.pid
 
 # Temporary files
 tmp/
 temp/
 *.tmp
 *.bak
-.tmp/
+*.backup
 
 # ============================================================================
 # DATABASE
@@ -183,25 +179,4 @@ vercel.json.local
 docker-compose.override.yml
 .dockerignore
 
-# ============================================================================
-# MISC
-# ============================================================================
-
-# IDE-specific
-*.sublime-workspace
-.eslintignore
-
-# OS-specific Finder attributes
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Backup files
-*.backup
-*.bak
-*.swp
-
-# Lock files for tools
-package-lock.json
-pnpm-lock.yaml
 
