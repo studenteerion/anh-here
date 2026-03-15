@@ -113,7 +113,7 @@ function hashPassword(password: string): string {
  *       - User Accounts
  *     summary: Delete user account
  *     description: |
- *       Delete a user account (also deletes associated employee). 
+ *       Delete a user account (access credentials only, employee record remains).
  *       All refresh tokens are invalidated immediately - user cannot access the system.
  *       Only accessible to admins with manage_accounts permission.
  *     security:
