@@ -5,15 +5,15 @@ import {
   getOpenAttendance,
   getTodayAttendance,
   calculateWorkedHours,
-} from "@/lib/db/timesheets";
+} from "@/lib/db/attendances";
 
 /**
  * @swagger
- * /api/timesheets/status:
+ * /api/attendances/status:
  *   get:
  *     tags:
- *       - Timesheets
- *     summary: Get current timesheet status
+ *       - Attendances
+ *     summary: Get current attendance status
  *     description: Retrieve the current clock-in status and worked hours for the authenticated employee
  *     security:
  *       - BearerAuth: []

@@ -6,14 +6,14 @@ import {
   createAttendance,
   closeAttendance,
   getEmployeeShift,
-} from "@/lib/db/timesheets";
+} from "@/lib/db/attendances";
 
 /**
  * @swagger
- * /api/timesheets/punch:
+ * /api/attendances/punch:
  *   post:
  *     tags:
- *       - Timesheets
+ *       - Attendances
  *     summary: Clock in or clock out
  *     description: Toggle clock in/out status. Creates new attendance if clocked out, closes attendance if clocked in
  *     security:

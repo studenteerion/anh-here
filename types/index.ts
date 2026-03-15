@@ -11,5 +11,5 @@ export * from "./departments";
 export * from "./shifts";
 export * from "./roles";
 export * from "./permissions";
-export * from "./timesheets";
+export * from "./attendances";
 export * from "./auth";

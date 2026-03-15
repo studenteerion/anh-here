@@ -4,16 +4,16 @@ import { checkUserPermission } from "@/lib/db/permissions";
 import {
   getAttendanceHistory,
   calculateWorkedHours,
-} from "@/lib/db/timesheets";
+} from "@/lib/db/attendances";
 import { getLeaveRequestsByDateRange } from "@/lib/db/requests";
 
 /**
  * @swagger
- * /api/timesheets/summary:
+ * /api/attendances/summary:
  *   get:
  *     tags:
- *       - Timesheets
- *     summary: Get timesheet summary
+ *       - Attendances
+ *     summary: Get attendance summary
  *     description: Retrieve worked hours, days worked, and leave statistics for a specified period
  *     security:
  *       - BearerAuth: []
