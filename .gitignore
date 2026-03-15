@@ -159,7 +159,6 @@ backups/
 # ============================================================================
 
 # Local documentation (internal use, not for submission)
-/docs
 
 # Session state
 .copilot/
