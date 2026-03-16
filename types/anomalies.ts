@@ -7,6 +7,7 @@ export interface Anomaly {
   description: string;
   created_at: Date;
   reporter_id: number;
+  employee_id: number;
   resolver_id: number | null;
   status: "open" | "in_progress" | "closed";
   resolution_notes: string | null;

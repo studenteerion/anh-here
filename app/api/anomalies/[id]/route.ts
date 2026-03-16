@@ -123,7 +123,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // Check ownership: only allow viewing if anomaly belongs to user OR user is admin with permission
-    if (anomaly.reporter_id !== employeeId) {
+    if (anomaly.employee_id !== employeeId) {
       const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
       if (!hasAdminPerm) {
         return errorResponse("Permission denied: you can only view your own anomalies", 403);
@@ -156,7 +156,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // Only allow modification if anomaly belongs to user OR user is admin
-    if (anomaly.reporter_id !== employeeId) {
+    if (anomaly.employee_id !== employeeId) {
       const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
       if (!hasAdminPerm) {
         return errorResponse("Permission denied: you can only modify your own anomalies", 403);
@@ -220,7 +220,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     // Only allow deletion if anomaly belongs to user OR user is admin
-    if (anomaly.reporter_id !== employeeId) {
+    if (anomaly.employee_id !== employeeId) {
       const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
       if (!hasAdminPerm) {
         return errorResponse("Permission denied: you can only delete your own anomalies", 403);

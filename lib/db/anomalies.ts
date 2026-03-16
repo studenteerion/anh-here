@@ -5,9 +5,9 @@ export async function getEmployeeAnomalies(
   employeeId: number,
   filters?: AnomalyFilter
 ): Promise<Anomaly[]> {
-  let query = `SELECT id, description, created_at, reporter_id, resolver_id, status, resolution_notes, resolved_at
+  let query = `SELECT id, description, created_at, reporter_id, employee_id, resolver_id, status, resolution_notes, resolved_at
      FROM anomalies 
-     WHERE reporter_id = ?`;
+     WHERE employee_id = ?`;
   
   const params: any[] = [employeeId];
 
@@ -31,7 +31,7 @@ export async function getEmployeeAnomaliesCount(
   employeeId: number,
   filters?: { status?: Anomaly["status"] }
 ): Promise<number> {
-  let query = `SELECT COUNT(*) as total FROM anomalies WHERE reporter_id = ?`;
+  let query = `SELECT COUNT(*) as total FROM anomalies WHERE employee_id = ?`;
   const params: any[] = [employeeId];
 
   if (filters?.status) {
@@ -45,19 +45,20 @@ export async function getEmployeeAnomaliesCount(
 
 export async function createAnomaly(
   reporterId: number,
+  employeeId: number,
   description: string
 ): Promise<number> {
   const [result]: any = await pool.query(
-    `INSERT INTO anomalies (reporter_id, description, status, created_at)
-     VALUES (?, ?, 'open', NOW())`,
-    [reporterId, description]
+    `INSERT INTO anomalies (reporter_id, employee_id, description, status, created_at)
+     VALUES (?, ?, ?, 'open', NOW())`,
+    [reporterId, employeeId, description]
   );
   return result.insertId;
 }
 
 export async function getAnomalyById(anomalyId: number): Promise<Anomaly | null> {
   const [rows]: any = await pool.query(
-    `SELECT id, description, created_at, reporter_id, resolver_id, status, resolution_notes, resolved_at
+    `SELECT id, description, created_at, reporter_id, employee_id, resolver_id, status, resolution_notes, resolved_at
      FROM anomalies 
      WHERE id = ?`,
     [anomalyId]
@@ -67,7 +68,7 @@ export async function getAnomalyById(anomalyId: number): Promise<Anomaly | null>
 
 export async function getOpenAnomalies(limit: number = 100) {
   const [rows]: any = await pool.query(
-    `SELECT id, description, created_at, reporter_id, resolver_id, status, resolution_notes, resolved_at
+    `SELECT id, description, created_at, reporter_id, employee_id, resolver_id, status, resolution_notes, resolved_at
      FROM anomalies 
      WHERE status = 'open'
      ORDER BY created_at DESC
@@ -82,9 +83,9 @@ export async function getEmployeeOpenAnomalies(
   limit: number = 100
 ) {
   const [rows]: any = await pool.query(
-    `SELECT id, description, created_at, reporter_id, resolver_id, status, resolution_notes, resolved_at
+    `SELECT id, description, created_at, reporter_id, employee_id, resolver_id, status, resolution_notes, resolved_at
      FROM anomalies 
-     WHERE reporter_id = ? AND status = 'open'
+     WHERE employee_id = ? AND status = 'open'
      ORDER BY created_at DESC
      LIMIT ?`,
     [employeeId, limit]
