@@ -49,6 +49,7 @@ import { Anomaly } from "@/types/anomalies";
  *             example:
  *               anomalies:
  *                 - id: 1
+ *                   reporterId: 5
  *                   description: Missing clock-out
  *                   status: open
  *                   reportedAt: 2024-01-14T15:30:00Z
@@ -165,6 +166,7 @@ export async function GET(req: NextRequest) {
       response = {
         anomalies: anomalies.map((a: any) => ({
           id: a.id,
+          reporterId: a.reporter_id,
           description: a.description,
           status: a.status,
           reportedAt: a.created_at,
@@ -194,6 +196,7 @@ export async function GET(req: NextRequest) {
       response = {
         anomalies: anomalies.map((a: any) => ({
           id: a.id,
+          reporterId: a.reporter_id,
           description: a.description,
           status: a.status,
           reportedAt: a.created_at,
