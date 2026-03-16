@@ -5,7 +5,7 @@ import { getAnomalyById, updateAnomaly, deleteAnomaly } from "@/lib/db/anomalies
 
 /**
  * @swagger
- * /api/notifications/anomalies/{id}:
+ * /api/anomalies/{id}:
  *   get:
  *     tags:
  *       - Anomalies
