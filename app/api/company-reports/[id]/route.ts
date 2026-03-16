@@ -25,7 +25,9 @@ import {
  *           type: integer
  *         description: Report ID
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Company report retrieved successfully
  *         content:
  *           application/json:

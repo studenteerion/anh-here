@@ -26,7 +26,9 @@ import { checkUserPermission, getAllPermissions } from "@/lib/db/permissions";
  *           default: 50
  *         description: Number of items per page. Omit for all results without pagination.
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Permissions retrieved successfully
  *         content:
  *           application/json:

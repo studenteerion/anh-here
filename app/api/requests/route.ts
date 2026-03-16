@@ -42,7 +42,9 @@ import { LeaveRequest } from "@/types/requests";
  *           default: 50
  *         description: Number of items per page. Omit for all results without pagination.
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Leave requests retrieved successfully
  *         content:
  *           application/json:

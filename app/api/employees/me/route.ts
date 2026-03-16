@@ -13,7 +13,9 @@ import { getEmployeeById } from "@/lib/db/employees";
  *     security:
  *       - BearerAuth: []
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Profile retrieved successfully
  *       404:
  *         description: Employee profile not found

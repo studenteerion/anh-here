@@ -56,7 +56,9 @@ function hashPassword(password: string): string {
  *           default: 50
  *         description: Number of items per page. Omit for all results without pagination.
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Employees retrieved successfully (with or without pagination)
  *         content:
  *           application/json:

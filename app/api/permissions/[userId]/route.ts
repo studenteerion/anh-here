@@ -35,7 +35,9 @@ import { checkUserPermission, addPermissionToUser } from "@/lib/db/permissions";
  *                 type: integer
  *                 enum: [0, 1]
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Permission changed successfully
  *       400:
  *         description: Missing required data

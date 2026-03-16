@@ -35,7 +35,9 @@ import { getAllUserAccounts, getUserAccountsCount } from "@/lib/db/userAccounts"
  *           default: 50
  *         description: Number of items per page. Omit for all results without pagination.
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: User accounts retrieved successfully
  *         content:
  *           application/json:
