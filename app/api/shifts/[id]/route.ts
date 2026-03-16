@@ -21,7 +21,9 @@ import { getShiftById, updateShift, deleteShift } from "@/lib/db/shifts";
  *           type: integer
  *         description: Shift ID
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Shift retrieved successfully
  *       403:
  *         description: Permission denied

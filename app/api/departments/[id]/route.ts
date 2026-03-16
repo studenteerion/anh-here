@@ -21,7 +21,9 @@ import { getDepartmentById, updateDepartment, deleteDepartment } from "@/lib/db/
  *           type: integer
  *         description: Department ID
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Department retrieved successfully
  *       403:
  *         description: Permission denied

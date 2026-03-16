@@ -20,7 +20,9 @@ import { checkUserPermission, editRolePermission, getRolePermissions } from "@/l
  *           type: integer
  *         description: Role ID
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Permissions retrieved successfully
  *         content:
  *           application/json:

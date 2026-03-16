@@ -21,7 +21,9 @@ import { getAnomalyById, updateAnomaly, deleteAnomaly } from "@/lib/db/anomalies
  *           type: integer
  *         description: Anomaly ID
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Anomaly retrieved successfully
  *       403:
  *         description: Permission denied

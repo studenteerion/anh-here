@@ -21,7 +21,9 @@ import { getLeaveRequestById, deleteLeaveRequest, assignAndUpdateApproval } from
  *           type: integer
  *         description: Leave request ID
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Leave request retrieved successfully
  *       403:
  *         description: Permission denied or cannot view other users' requests

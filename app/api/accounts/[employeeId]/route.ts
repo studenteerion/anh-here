@@ -41,7 +41,9 @@ function hashPassword(password: string): string {
  *           type: integer
  *         description: Employee ID
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: User account retrieved successfully
  *         content:
  *           application/json:

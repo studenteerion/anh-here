@@ -20,7 +20,9 @@ import { Permission } from "@/types/permissions";
  *           type: integer
  *         description: User ID to get permissions for (defaults to authenticated user)
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Permissions retrieved successfully
  *         content:
  *           application/json:

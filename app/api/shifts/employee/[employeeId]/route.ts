@@ -25,7 +25,9 @@ import { getEmployeeById } from "@/lib/db/employees";
  *           type: integer
  *         description: Employee ID
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Shifts retrieved successfully
  *         content:
  *           application/json:

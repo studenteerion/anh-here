@@ -21,7 +21,9 @@ import { getRoleById, updateRole, deleteRole } from "@/lib/db/roles";
  *           type: integer
  *         description: Role ID
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Role retrieved successfully
  *       403:
  *         description: Permission denied
