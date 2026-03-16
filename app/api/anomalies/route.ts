@@ -49,6 +49,7 @@ import { Anomaly } from "@/types/anomalies";
  *             example:
  *               anomalies:
  *                 - id: 1
+  *                   affectedEmployeeId: 5
  *                   reporterId: 5
  *                   description: Missing clock-out
  *                   status: open
@@ -163,16 +164,23 @@ export async function GET(req: NextRequest) {
         return errorResponse(`Page ${page} does not exist. Total pages: ${totalPages}`, 400);
       }
 
+      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
       response = {
-        anomalies: anomalies.map((a: any) => ({
-          id: a.id,
-          reporterId: a.reporter_id,
-          description: a.description,
-          status: a.status,
-          reportedAt: a.created_at,
-          resolvedAt: a.resolved_at,
-          resolutionNotes: a.resolution_notes,
-        })),
+        anomalies: anomalies.map((a: any) => {
+          const anomaly: any = {
+            id: a.id,
+            affectedEmployeeId: a.reporter_id,
+            description: a.description,
+            status: a.status,
+            reportedAt: a.created_at,
+            resolvedAt: a.resolved_at,
+            resolutionNotes: a.resolution_notes,
+          };
+          if (hasAdminPerm) {
+            anomaly.reporterId = a.reporter_id;
+          }
+          return anomaly;
+        }),
         pagination: {
           page,
           limit,
@@ -193,16 +201,23 @@ export async function GET(req: NextRequest) {
         status: statusFilter as any,
       });
 
+      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
       response = {
-        anomalies: anomalies.map((a: any) => ({
-          id: a.id,
-          reporterId: a.reporter_id,
-          description: a.description,
-          status: a.status,
-          reportedAt: a.created_at,
-          resolvedAt: a.resolved_at,
-          resolutionNotes: a.resolution_notes,
-        })),
+        anomalies: anomalies.map((a: any) => {
+          const anomaly: any = {
+            id: a.id,
+            affectedEmployeeId: a.reporter_id,
+            description: a.description,
+            status: a.status,
+            reportedAt: a.created_at,
+            resolvedAt: a.resolved_at,
+            resolutionNotes: a.resolution_notes,
+          };
+          if (hasAdminPerm) {
+            anomaly.reporterId = a.reporter_id;
+          }
+          return anomaly;
+        }),
         employeeId: targetEmployeeId,
       };
     }
