@@ -122,6 +122,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return errorResponse("Anomaly not found", 404);
     }
 
+    // Check ownership: only allow viewing if anomaly belongs to user OR user is admin with permission
+    if (anomaly.reporter_id !== employeeId) {
+      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      if (!hasAdminPerm) {
+        return errorResponse("Permission denied: you can only view your own anomalies", 403);
+      }
+    }
+
     return successResponse(anomaly, "Anomaly retrieved", 200);
   } catch (error: any) {
     return errorResponse(error.message || "Failed to retrieve anomaly", 500);
@@ -145,6 +153,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     if (!anomaly) {
       return errorResponse("Anomaly not found", 404);
+    }
+
+    // Only allow modification if anomaly belongs to user OR user is admin
+    if (anomaly.reporter_id !== employeeId) {
+      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      if (!hasAdminPerm) {
+        return errorResponse("Permission denied: you can only modify your own anomalies", 403);
+      }
     }
 
     const body = await req.json();
@@ -201,6 +217,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     if (!anomaly) {
       return errorResponse("Anomaly not found", 404);
+    }
+
+    // Only allow deletion if anomaly belongs to user OR user is admin
+    if (anomaly.reporter_id !== employeeId) {
+      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      if (!hasAdminPerm) {
+        return errorResponse("Permission denied: you can only delete your own anomalies", 403);
+      }
     }
 
     await deleteAnomaly(anomalyId);
