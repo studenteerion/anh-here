@@ -20,7 +20,9 @@ import { getEmployeeById, updateEmployee, deleteEmployee } from "@/lib/db/employ
  *         schema:
  *           type: integer
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Employee retrieved successfully
  *       403:
  *         description: Permission denied

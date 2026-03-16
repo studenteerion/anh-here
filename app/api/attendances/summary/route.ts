@@ -38,7 +38,9 @@ import { getLeaveRequestsByDateRange } from "@/lib/db/requests";
  *           format: date
  *         description: End date for custom period (required if period=custom)
  *     responses:
- *       200:
+ *       401:
+*         description: Invalid or missing token
+*       200:
  *         description: Summary retrieved successfully
  *         content:
  *           application/json:
