@@ -6,7 +6,7 @@ import { Anomaly } from "@/types/anomalies";
 
 /**
  * @swagger
- * /api/notifications/anomalies:
+ * /api/anomalies:
  *   get:
  *     tags:
  *       - Anomalies
@@ -208,5 +208,44 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error("Endpoint error:", error);
     return errorResponse("Server error", 500);
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const authResult = verifyAuth(req);
+  if (authResult.error) return authErrorResponse(authResult);
+  const employeeId = authResult.payload!.sub;
+
+  try {
+    // Permission check: report_anomalies
+    const hasPerm = await checkUserPermission(employeeId, "report_anomalies");
+    if (!hasPerm) {
+      return errorResponse("Permission denied: you don't have access to report anomalies", 403);
+    }
+
+    const body = await req.json();
+    const { employeeId: targetEmployeeId, description } = body;
+
+    // Validation
+    if (!targetEmployeeId || typeof targetEmployeeId !== "number") {
+      return errorResponse("employeeId is required and must be a number", 400);
+    }
+
+    if (!description || typeof description !== "string" || description.trim() === "") {
+      return errorResponse("description is required and must be a non-empty string", 400);
+    }
+
+    // Create the anomaly
+    const result = await createAnomaly(targetEmployeeId, description.trim());
+    
+    if (!result) {
+      return errorResponse("Failed to create anomaly", 500);
+    }
+
+    const newAnomaly = await getAnomalyById(result);
+    return successResponse(newAnomaly, "Anomaly created successfully", 201);
+  } catch (error: any) {
+    console.error("POST error:", error);
+    return errorResponse(error.message || "Failed to create anomaly", 500);
   }
 }
