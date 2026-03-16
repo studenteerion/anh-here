@@ -169,7 +169,7 @@ export async function GET(req: NextRequest) {
         anomalies: anomalies.map((a: any) => {
           const anomaly: any = {
             id: a.id,
-            affectedEmployeeId: a.reporter_id,
+            affectedEmployeeId: a.employee_id,
             description: a.description,
             status: a.status,
             reportedAt: a.created_at,
@@ -206,7 +206,7 @@ export async function GET(req: NextRequest) {
         anomalies: anomalies.map((a: any) => {
           const anomaly: any = {
             id: a.id,
-            affectedEmployeeId: a.reporter_id,
+            affectedEmployeeId: a.employee_id,
             description: a.description,
             status: a.status,
             reportedAt: a.created_at,
@@ -254,7 +254,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create the anomaly
-    const result = await createAnomaly(targetEmployeeId, description.trim());
+    const result = await createAnomaly(employeeId, targetEmployeeId, description.trim());
     
     if (!result) {
       return errorResponse("Failed to create anomaly", 500);
