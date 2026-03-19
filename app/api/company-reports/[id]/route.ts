@@ -244,7 +244,7 @@ export async function DELETE(
   const employeeId = authResult.payload!.sub;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "generate_reports");
+    const hasPerm = await checkUserPermission(employeeId, "delete_reports");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",

@@ -5,6 +5,7 @@ import { getEmployeesByDepartment } from "@/lib/db/employees";
 import { getDepartmentById } from "@/lib/db/departments";
 import { countRows } from "@/lib/db/utils";
 import { Employee } from "@/types/employees";
+import { isValidEmployeeStatus, EMPLOYEE_STATUSES } from "@/lib/validation/enums";
 
 /**
  * @swagger
@@ -134,9 +135,8 @@ export async function GET(
     let response: any;
 
     if (hasPagination) {
-      const validStatuses = ["active", "inactive"];
-      if (statusFilter && !validStatuses.includes(statusFilter)) {
-        return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
+      if (statusFilter && !isValidEmployeeStatus(statusFilter)) {
+        return errorResponse(`Status deve essere uno di: ${EMPLOYEE_STATUSES.join(", ")}`, 400);
       }
 
       employees = await getEmployeesByDepartment(departmentId, {
@@ -180,9 +180,8 @@ export async function GET(
         departmentId,
       };
     } else {
-      const validStatuses = ["active", "inactive"];
-      if (statusFilter && !validStatuses.includes(statusFilter)) {
-        return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
+      if (statusFilter && !isValidEmployeeStatus(statusFilter)) {
+        return errorResponse(`Status deve essere uno di: ${EMPLOYEE_STATUSES.join(", ")}`, 400);
       }
 
       employees = await getEmployeesByDepartment(departmentId, {

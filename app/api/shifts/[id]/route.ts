@@ -177,7 +177,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const employeeId = authResult.payload!.sub;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_create");
+    const hasPerm = await checkUserPermission(employeeId, "delete_shifts");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }

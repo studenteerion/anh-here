@@ -4,6 +4,7 @@ import { checkUserPermission } from "@/lib/db/permissions";
 import { getAllEmployees, getEmployeeById, createEmployee } from "@/lib/db/employees";
 import { countRows, exists } from "@/lib/db/utils";
 import { Employee } from "@/types/employees";
+import { isValidEmployeeStatus, EMPLOYEE_STATUSES } from "@/lib/validation/enums";
 import crypto from "crypto";
 
 const PEPPER = process.env.PEPPER || "";
@@ -182,9 +183,8 @@ export async function GET(req: NextRequest) {
     let response: any;
 
     if (hasPagination) {
-      const validStatuses = ["active", "inactive"];
-      if (statusFilter && !validStatuses.includes(statusFilter)) {
-        return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
+      if (statusFilter && !isValidEmployeeStatus(statusFilter)) {
+        return errorResponse(`Status deve essere uno di: ${EMPLOYEE_STATUSES.join(", ")}`, 400);
       }
 
       employees = await getAllEmployees({
@@ -218,9 +218,8 @@ export async function GET(req: NextRequest) {
         },
       };
     } else {
-      const validStatuses = ["active", "inactive"];
-      if (statusFilter && !validStatuses.includes(statusFilter)) {
-        return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
+      if (statusFilter && !isValidEmployeeStatus(statusFilter)) {
+        return errorResponse(`Status deve essere uno di: ${EMPLOYEE_STATUSES.join(", ")}`, 400);
       }
 
       // Restituisci tutti i risultati

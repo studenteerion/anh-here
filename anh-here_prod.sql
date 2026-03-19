@@ -188,6 +188,14 @@ INSERT INTO `permissions` (`id`, `permission_code`, `description`) VALUES
 (21, 'permissions_read_all', 'View all the permissions in the DB'),
 (23, 'roles_permissions_update', 'Update roles permission overrides');
 
+-- New DELETE-specific permissions (IDs will be auto-assigned)
+INSERT INTO `permissions` (`permission_code`, `description`) VALUES
+('delete_departments', 'delete departments'),
+('delete_roles', 'delete roles'),
+('delete_employees', 'delete employees'),
+('delete_shifts', 'delete shifts'),
+('delete_reports', 'delete company reports');
+
 -- --------------------------------------------------------
 
 --
@@ -322,6 +330,22 @@ INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES
 (4, 10),
 (4, 11);
 
+-- Assign new DELETE permissions to Admin role (role_id = 3) using permission_code
+INSERT INTO `role_permission` (`role_id`, `permission_id`)
+SELECT 3, id FROM `permissions` WHERE `permission_code` = 'delete_departments';
+
+INSERT INTO `role_permission` (`role_id`, `permission_id`)
+SELECT 3, id FROM `permissions` WHERE `permission_code` = 'delete_roles';
+
+INSERT INTO `role_permission` (`role_id`, `permission_id`)
+SELECT 3, id FROM `permissions` WHERE `permission_code` = 'delete_employees';
+
+INSERT INTO `role_permission` (`role_id`, `permission_id`)
+SELECT 3, id FROM `permissions` WHERE `permission_code` = 'delete_shifts';
+
+INSERT INTO `role_permission` (`role_id`, `permission_id`)
+SELECT 3, id FROM `permissions` WHERE `permission_code` = 'delete_reports';
+
 -- --------------------------------------------------------
 
 --
@@ -389,7 +413,14 @@ ALTER TABLE `anomalies`
 ALTER TABLE `attendances`
   ADD PRIMARY KEY (`id`),
   ADD KEY `employee_id` (`employee_id`),
-  ADD KEY `shift_id` (`shift_id`);
+  ADD KEY `shift_id` (`shift_id`),
+  ADD KEY `idx_open_attendance` (`employee_id`, `end_datetime`);
+
+-- Note: To prevent duplicate open attendance records (race condition),
+-- we use application-level transaction with SELECT FOR UPDATE
+-- instead of a database constraint, as MySQL doesn't support
+-- unique constraints with NULL conditions efficiently.
+-- The idx_open_attendance index optimizes the lookup query.
 
 --
 -- Indici per le tabelle `company_reports`
