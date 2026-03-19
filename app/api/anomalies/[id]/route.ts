@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import { getAnomalyById, updateAnomaly, deleteAnomaly } from "@/lib/db/anomalies";
+import { isValidAnomalyStatus, ANOMALY_STATUSES } from "@/lib/validation/enums";
 
 /**
  * @swagger
@@ -172,8 +173,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return errorResponse("At least one field to update required: description or status", 400);
     }
 
-    if (status && !["open", "in_progress", "closed"].includes(status)) {
-      return errorResponse("Status must be one of: open, in_progress, closed", 400);
+    if (status && !isValidAnomalyStatus(status)) {
+      return errorResponse(`Status deve essere uno di: ${ANOMALY_STATUSES.join(", ")}`, 400);
     }
 
     // Validate status transitions

@@ -10,6 +10,7 @@ import {
   deleteUserAccount,
 } from "@/lib/db/userAccounts";
 import { getEmployeeById } from "@/lib/db/employees";
+import {validateEmailFormat} from "@/lib/validation/email";
 import crypto from "crypto";
 
 const PEPPER = process.env.PEPPER || "";
@@ -225,9 +226,8 @@ export async function PUT(
 
     // Update email if provided
     if (email) {
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
+      // Validate email format with robust validation
+      if (!validateEmailFormat(email)) {
         return errorResponse("Invalid email format", 400);
       }
 
@@ -297,7 +297,7 @@ export async function DELETE(
   const employeeId = authResult.payload!.sub;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "manage_accounts");
+    const hasPerm = await checkUserPermission(employeeId, "user_permissions_delete");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",

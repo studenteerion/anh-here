@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import { getAllUserAccounts, getUserAccountsCount } from "@/lib/db/userAccounts";
+import { isValidEmployeeStatus, EMPLOYEE_STATUSES } from "@/lib/validation/enums";
 
 /**
  * @swagger
@@ -89,10 +90,9 @@ export async function GET(req: NextRequest) {
     let response: any;
 
     if (hasPagination) {
-      const validStatuses = ["active", "inactive"];
-      if (statusFilter && !validStatuses.includes(statusFilter)) {
+      if (statusFilter && !isValidEmployeeStatus(statusFilter)) {
         return errorResponse(
-          `Status must be one of: ${validStatuses.join(", ")}`,
+          `Status must be one of: ${EMPLOYEE_STATUSES.join(", ")}`,
           400
         );
       }
@@ -140,10 +140,9 @@ export async function GET(req: NextRequest) {
         },
       };
     } else {
-      const validStatuses = ["active", "inactive"];
-      if (statusFilter && !validStatuses.includes(statusFilter)) {
+      if (statusFilter && !isValidEmployeeStatus(statusFilter)) {
         return errorResponse(
-          `Status must be one of: ${validStatuses.join(", ")}`,
+          `Status must be one of: ${EMPLOYEE_STATUSES.join(", ")}`,
           400
         );
       }
