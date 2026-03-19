@@ -160,10 +160,6 @@ backups/
 
 # Local documentation (internal use, not for submission)
 
-# Session state
-.copilot/
-.copilot-session/
-
 # ============================================================================
 # DEPLOYMENT & HOSTING
 # ============================================================================
