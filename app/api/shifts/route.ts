@@ -88,7 +88,9 @@ import { Shift } from "@/types/shifts";
  *       403:
  *         description: Permission denied
  *       400:
- *         description: Invalid request
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (missing fields, invalid date format, invalid time range)
  */
 export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);

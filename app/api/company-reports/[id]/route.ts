@@ -79,7 +79,9 @@ import {
  *       200:
  *         description: Company report updated successfully
  *       400:
- *         description: Invalid input
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (missing link, invalid URL format, failed to update)
  *       403:
  *         description: Permission denied
  *       404:
