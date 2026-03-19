@@ -83,7 +83,9 @@ import { Role } from "@/types/roles";
  *                 roleName:
  *                   type: string
  *       400:
- *         description: Missing required fields
+ *         description: Bad request
+ *       422:
+ *         description: Missing required fields (roleName)
  *       403:
  *         description: Permission denied
  *       409:

@@ -60,7 +60,9 @@ import { getDepartmentById, updateDepartment, deleteDepartment } from "@/lib/db/
  *       200:
  *         description: Department updated successfully
  *       400:
- *         description: Validation failed
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (missing departmentName, failed to update)
  *       403:
  *         description: Permission denied
  *       404:

@@ -100,7 +100,9 @@ import {
  *                   type: string
  *                   format: date-time
  *       400:
- *         description: Missing required fields
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (missing link, invalid URL format)
  *       403:
  *         description: Permission denied
  *       500:

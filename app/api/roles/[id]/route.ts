@@ -60,7 +60,9 @@ import { getRoleById, updateRole, deleteRole } from "@/lib/db/roles";
  *       200:
  *         description: Role updated successfully
  *       400:
- *         description: Validation failed
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (missing roleName, failed to update)
  *       403:
  *         description: Permission denied
  *       404:

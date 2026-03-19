@@ -83,7 +83,9 @@ import { Department } from "@/types/departments";
  *                 departmentName:
  *                   type: string
  *       400:
- *         description: Missing required fields
+ *         description: Bad request
+ *       422:
+ *         description: Missing required fields (departmentName)
  *       403:
  *         description: Permission denied
  *       409:

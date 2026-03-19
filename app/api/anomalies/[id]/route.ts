@@ -72,13 +72,13 @@ import { isValidAnomalyStatus, ANOMALY_STATUSES } from "@/lib/validation/enums";
  *       200:
  *         description: Anomaly updated successfully
  *       400:
- *         description: Validation failed or no fields to update
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (invalid status, no fields to update, invalid transition)
  *       403:
  *         description: Permission denied
  *       404:
  *         description: Anomaly not found
- *       422:
- *         description: Cannot perform this status change
  *       500:
  *         description: Server error
  *   delete:

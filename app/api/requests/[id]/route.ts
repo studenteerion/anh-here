@@ -121,7 +121,9 @@ import { isValidLeaveRequestStatus } from "@/lib/validation/enums";
  *                 approver2_date:
  *                   type: string
  *       400:
- *         description: Missing required fields, validation failed, or modification window passed
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (missing status, invalid status)
  *       403:
  *         description: User lacks approve_requests permission
  *       404:

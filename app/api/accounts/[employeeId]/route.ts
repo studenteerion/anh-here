@@ -104,11 +104,15 @@ function hashPassword(password: string): string {
  *       200:
  *         description: User account updated successfully
  *       400:
- *         description: Invalid input or email already in use
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (invalid email, password too short)
  *       403:
  *         description: Permission denied
  *       404:
  *         description: Account not found
+ *       409:
+ *         description: Email already in use by another account
  *       500:
  *         description: Server error
  *   delete:
@@ -132,6 +136,8 @@ function hashPassword(password: string): string {
  *       200:
  *         description: User account deleted successfully
  *       400:
+ *         description: Bad request
+ *       422:
  *         description: Cannot delete own account
  *       403:
  *         description: Permission denied

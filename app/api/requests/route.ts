@@ -70,7 +70,9 @@ import { isValidLeaveRequestType, isValidLeaveRequestStatus, LEAVE_REQUEST_TYPES
  *                 hasPrevPage: false
  *               employeeId: 5
  *       400:
- *         description: Invalid status filter or request parameters
+ *         description: Invalid pagination parameters
+ *       422:
+ *         description: Invalid status filter
  *       403:
  *         description: Permission denied
  *       500:
@@ -127,7 +129,9 @@ import { isValidLeaveRequestType, isValidLeaveRequestStatus, LEAVE_REQUEST_TYPES
  *                 status:
  *                   type: string
  *       400:
- *         description: Missing required fields or validation failed
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (missing fields, invalid dates, invalid type)
  *       403:
  *         description: Permission denied
  *       500:
