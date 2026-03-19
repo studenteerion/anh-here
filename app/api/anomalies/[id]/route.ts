@@ -170,11 +170,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { description, status } = body;
 
     if (!description && !status) {
-      return errorResponse("At least one field to update required: description or status", 400);
+      return errorResponse("At least one field to update required: description or status", 422);
     }
 
     if (status && !isValidAnomalyStatus(status)) {
-      return errorResponse(`Status deve essere uno di: ${ANOMALY_STATUSES.join(", ")}`, 400);
+      return errorResponse(`Status deve essere uno di: ${ANOMALY_STATUSES.join(", ")}`, 422);
     }
 
     // Validate status transitions
@@ -183,7 +183,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         return errorResponse(`Cannot close anomaly: it is in status "${anomaly.status}"`, 422);
       }
       if (status === "open" && anomaly.status === "open") {
-        return errorResponse("Anomaly is already open", 400);
+        return errorResponse("Anomaly is already open", 422);
       }
     }
 
@@ -193,7 +193,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     });
 
     if (!updated) {
-      return errorResponse("Failed to update anomaly", 400);
+      return errorResponse("Failed to update anomaly", 422);
     }
 
     const updatedAnomaly = await getAnomalyById(anomalyId);

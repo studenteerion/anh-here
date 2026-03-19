@@ -152,7 +152,7 @@ export async function GET(req: NextRequest) {
       endDate = new Date(toParam);
       endDate.setHours(23, 59, 59, 999);
     } else {
-      return errorResponse("Invalid period or missing dates", 400);
+      return errorResponse("Invalid period or missing dates", 422);
     }
 
     // Ottieni presenze nel periodo
