@@ -266,22 +266,22 @@ export async function POST(req: NextRequest) {
     const { startDatetime, endDatetime, type, motivation } = body;
 
     if (!startDatetime || !endDatetime || !type) {
-      return errorResponse("Dati mancanti: startDatetime, endDatetime, type richiesti", 400);
+      return errorResponse("Dati mancanti: startDatetime, endDatetime, type richiesti", 422);
     }
 
     const start = new Date(startDatetime);
     const end = new Date(endDatetime);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return errorResponse("Date non valide. Usa formato ISO: YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss", 400);
+      return errorResponse("Date non valide. Usa formato ISO: YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss", 422);
     }
 
     if (start >= end) {
-      return errorResponse("La data di inizio deve essere prima della data di fine", 400);
+      return errorResponse("La data di inizio deve essere prima della data di fine", 422);
     }
 
     if (!isValidLeaveRequestType(type)) {
-      return errorResponse(`Type deve essere uno di: ${LEAVE_REQUEST_TYPES.join(", ")}`, 400);
+      return errorResponse(`Type deve essere uno di: ${LEAVE_REQUEST_TYPES.join(", ")}`, 422);
     }
 
     const requestId = await createLeaveRequest(

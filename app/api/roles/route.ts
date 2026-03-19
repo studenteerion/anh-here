@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
     const { roleName } = body;
 
     if (!roleName) {
-      return errorResponse("Missing required field: roleName", 400);
+      return errorResponse("Missing required field: roleName", 422);
     }
 
     const roleId = await createRole(roleName);

@@ -164,18 +164,18 @@ export async function POST(req: NextRequest) {
     const { departmentId, name, startTime, endTime } = body;
 
     if (!departmentId || !startTime || !endTime) {
-      return errorResponse("Missing required fields: departmentId, startTime, endTime", 400);
+      return errorResponse("Missing required fields: departmentId, startTime, endTime", 422);
     }
 
     const start = new Date(startTime);
     const end = new Date(endTime);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return errorResponse("Invalid date format. Use ISO format: YYYY-MM-DDTHH:mm:ss", 400);
+      return errorResponse("Invalid date format. Use ISO format: YYYY-MM-DDTHH:mm:ss", 422);
     }
 
     if (start >= end) {
-      return errorResponse("Start time must be before end time", 400);
+      return errorResponse("Start time must be before end time", 422);
     }
 
     const shiftId = await createShift(departmentId, name || null, start, end);

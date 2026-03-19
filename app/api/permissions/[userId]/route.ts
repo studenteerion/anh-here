@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ us
     const isAllowed = Number(body.isAllowed ?? 0);
 
     if (!permissionId) {
-      return errorResponse("Missing data (permissionId)", 400);
+      return errorResponse("Missing data (permissionId)", 422);
     }
 
     if (myUserId === targetUserId) {
