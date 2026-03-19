@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
+import pool from "@/lib/db";
 import {
-  getOpenAttendance,
-  createAttendance,
-  closeAttendance,
+  getOpenAttendanceInTransaction,
+  createAttendanceWithConnection,
+  closeAttendanceWithConnection,
   getEmployeeShift,
 } from "@/lib/db/attendances";
 
@@ -55,6 +56,9 @@ export async function POST(req: NextRequest) {
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
 
+  // Get a connection from the pool for transaction
+  const connection = await pool.getConnection();
+
   try {
     // Verifica permesso
     const hasPerm = await checkUserPermission(employeeId, "clock_in_out");
@@ -64,12 +68,50 @@ export async function POST(req: NextRequest) {
 
     const now = new Date();
 
-    // Cerca se c'è un timbro aperto
-    const openAttendance = await getOpenAttendance(employeeId);
+    // Get employee shift first (before transaction)
+    const shift = await getEmployeeShift(employeeId);
+    if (!shift) {
+      return errorResponse("No shift configured for this employee", 400);
+    }
 
-    if (openAttendance) {
-      // Se esiste, chiudi l'uscita
-      await closeAttendance(openAttendance.id, now);
+    // Start transaction
+    await connection.beginTransaction();
+
+    try {
+      // ATOMIC OPERATION: Try to insert new attendance
+      // This will fail (return null) if an open attendance already exists
+      const attendanceId = await createAttendanceWithConnection(
+        employeeId, 
+        shift.id, 
+        now, 
+        connection
+      );
+
+      if (attendanceId) {
+        // INSERT succeeded - this is a CHECK-IN
+        await connection.commit();
+
+        return successResponse({
+          attendanceId,
+          checkinTime: now,
+          shiftName: shift.name,
+          action: "checkin",
+        }, "Checkin recorded", 200);
+      }
+
+      // INSERT failed because open attendance exists - do CHECK-OUT
+      // Retrieve the existing open attendance
+      const openAttendance = await getOpenAttendanceInTransaction(employeeId, connection);
+
+      if (!openAttendance) {
+        // This should never happen, but handle it gracefully
+        await connection.rollback();
+        return errorResponse("Unexpected error: could not find open attendance", 500);
+      }
+
+      // Close the attendance
+      await closeAttendanceWithConnection(openAttendance.id, now, connection);
+      await connection.commit();
 
       const workedHours = (
         (now.getTime() - new Date(openAttendance.start_datetime).getTime()) /
@@ -83,25 +125,17 @@ export async function POST(req: NextRequest) {
         workedHours: parseFloat(workedHours),
         action: "checkout",
       }, "Checkout recorded", 200);
+
+    } catch (txError) {
+      // Rollback on any error within transaction
+      await connection.rollback();
+      throw txError;
     }
-
-    // Se non esiste, crea l'ingresso
-    const shift = await getEmployeeShift(employeeId);
-
-    if (!shift) {
-      return errorResponse("No shift configured for this employee", 400);
-    }
-
-    const attendanceId = await createAttendance(employeeId, shift.id, now);
-
-    return successResponse({
-      attendanceId,
-      checkinTime: now,
-      shiftName: shift.name,
-      action: "checkin",
-    }, "Checkin recorded", 200);
   } catch (error) {
     console.error("Endpoint error:", error);
     return errorResponse("Server error", 500);
+  } finally {
+    // Always release the connection back to the pool
+    connection.release();
   }
 }

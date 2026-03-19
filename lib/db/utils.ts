@@ -7,8 +7,40 @@
 import pool from './index';
 
 /**
+ * Whitelist of valid table names to prevent SQL injection
+ * Only these table names are allowed in dynamic queries
+ */
+const VALID_TABLES = [
+  'employees',
+  'departments',
+  'roles',
+  'shifts',
+  'attendance',
+  'leave_requests',
+  'anomalies',
+  'company_reports',
+  'user_accounts',
+  'permissions',
+  'permission_exceptions',
+  'role_permission'
+] as const;
+
+type ValidTable = typeof VALID_TABLES[number];
+
+/**
+ * Validates that a table name is in the whitelist
+ * @param table - Table name to validate
+ * @throws Error if table name is not whitelisted
+ */
+function validateTableName(table: string): asserts table is ValidTable {
+  if (!VALID_TABLES.includes(table as ValidTable)) {
+    throw new Error(`Invalid table name: ${table}. Table name must be whitelisted for security.`);
+  }
+}
+
+/**
  * Generic count rows function
- * @param table - Table name to count rows from
+ * @param table - Table name to count rows from (must be whitelisted)
  * @param whereClause - Optional WHERE condition (without WHERE keyword)
  * @param params - Optional parameters for WHERE clause
  * @returns Total count of rows matching criteria
@@ -18,6 +50,7 @@ export async function countRows(
   whereClause?: string,
   params: any[] = []
 ): Promise<number> {
+  validateTableName(table);
   let query = `SELECT COUNT(*) as total FROM ${table}`;
   if (whereClause) {
     query += ` WHERE ${whereClause}`;
@@ -29,7 +62,7 @@ export async function countRows(
 /**
  * Generic get by ID function
  * Returns a single row by primary key (id)
- * @param table - Table name
+ * @param table - Table name (must be whitelisted)
  * @param id - Primary key value
  * @param selectFields - Optional fields to select (default: *)
  * @returns Row object or null if not found
@@ -39,6 +72,7 @@ export async function getById<T = any>(
   id: number,
   selectFields: string = '*'
 ): Promise<T | null> {
+  validateTableName(table);
   const query = `SELECT ${selectFields} FROM ${table} WHERE id = ? LIMIT 1`;
   const [rows]: any = await pool.query(query, [id]);
   return rows[0] || null;
@@ -47,7 +81,7 @@ export async function getById<T = any>(
 /**
  * Generic get by field function
  * Returns a single row matching a field value
- * @param table - Table name
+ * @param table - Table name (must be whitelisted)
  * @param field - Field name to match
  * @param value - Value to match
  * @param selectFields - Optional fields to select (default: *)
@@ -59,6 +93,7 @@ export async function getByField<T = any>(
   value: any,
   selectFields: string = '*'
 ): Promise<T | null> {
+  validateTableName(table);
   const query = `SELECT ${selectFields} FROM ${table} WHERE ${field} = ? LIMIT 1`;
   const [rows]: any = await pool.query(query, [value]);
   return rows[0] || null;
@@ -66,11 +101,12 @@ export async function getByField<T = any>(
 
 /**
  * Check if an entity exists by ID
- * @param table - Table name
+ * @param table - Table name (must be whitelisted)
  * @param id - Primary key value
  * @returns true if entity exists, false otherwise
  */
 export async function exists(table: string, id: number): Promise<boolean> {
+  validateTableName(table);
   const [rows]: any = await pool.query(
     `SELECT id FROM ${table} WHERE id = ? LIMIT 1`,
     [id]
@@ -80,11 +116,12 @@ export async function exists(table: string, id: number): Promise<boolean> {
 
 /**
  * Delete a row by ID
- * @param table - Table name
+ * @param table - Table name (must be whitelisted)
  * @param id - Primary key value
  * @returns true if row was deleted, false otherwise
  */
 export async function deleteById(table: string, id: number): Promise<boolean> {
+  validateTableName(table);
   const [result]: any = await pool.query(`DELETE FROM ${table} WHERE id = ?`, [
     id,
   ]);
@@ -93,7 +130,7 @@ export async function deleteById(table: string, id: number): Promise<boolean> {
 
 /**
  * Delete rows by custom WHERE condition
- * @param table - Table name
+ * @param table - Table name (must be whitelisted)
  * @param whereClause - WHERE condition (without WHERE keyword)
  * @param params - Parameters for WHERE clause
  * @returns Number of rows deleted
@@ -103,6 +140,7 @@ export async function deleteWhere(
   whereClause: string,
   params: any[] = []
 ): Promise<number> {
+  validateTableName(table);
   const query = `DELETE FROM ${table} WHERE ${whereClause}`;
   const [result]: any = await pool.query(query, params);
   return result.affectedRows;
@@ -110,7 +148,7 @@ export async function deleteWhere(
 
 /**
  * Insert a single row
- * @param table - Table name
+ * @param table - Table name (must be whitelisted)
  * @param fields - Object with field:value pairs
  * @returns Insert ID of new row
  */
@@ -118,6 +156,7 @@ export async function insert(
   table: string,
   fields: Record<string, any>
 ): Promise<number> {
+  validateTableName(table);
   const keys = Object.keys(fields);
   const placeholders = keys.map(() => '?').join(',');
   const values = Object.values(fields);
@@ -128,7 +167,7 @@ export async function insert(
 
 /**
  * Update a row by ID with dynamic fields
- * @param table - Table name
+ * @param table - Table name (must be whitelisted)
  * @param id - Primary key value
  * @param updates - Object with field:value pairs to update
  * @returns true if row was updated, false otherwise
@@ -138,6 +177,7 @@ export async function updateById(
   id: number,
   updates: Record<string, any>
 ): Promise<boolean> {
+  validateTableName(table);
   if (Object.keys(updates).length === 0) {
     return false;
   }
@@ -153,7 +193,7 @@ export async function updateById(
 
 /**
  * Update rows by custom WHERE condition
- * @param table - Table name
+ * @param table - Table name (must be whitelisted)
  * @param whereClause - WHERE condition (without WHERE keyword)
  * @param updates - Object with field:value pairs to update
  * @param whereParams - Parameters for WHERE clause
@@ -165,6 +205,7 @@ export async function updateWhere(
   updates: Record<string, any>,
   whereParams: any[] = []
 ): Promise<number> {
+  validateTableName(table);
   if (Object.keys(updates).length === 0) {
     return 0;
   }

@@ -3,6 +3,7 @@ import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@
 import { checkUserPermission } from "@/lib/db/permissions";
 import { createLeaveRequest, getUserLeaveRequests, getUserLeaveRequestsCount } from "@/lib/db/requests";
 import { LeaveRequest } from "@/types/requests";
+import { isValidLeaveRequestType, isValidLeaveRequestStatus, LEAVE_REQUEST_TYPES, LEAVE_REQUEST_STATUSES } from "@/lib/validation/enums";
 
 /**
  * @swagger
@@ -173,10 +174,9 @@ export async function GET(req: NextRequest) {
     let requests: any[];
     let response: any;
 
-    if (hasPagination) {
-      const validStatuses = ["pending", "approved", "rejected"];
-      if (statusFilter && !validStatuses.includes(statusFilter)) {
-        return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
+     if (hasPagination) {
+      if (statusFilter && !isValidLeaveRequestStatus(statusFilter)) {
+        return errorResponse(`Status deve essere uno di: ${LEAVE_REQUEST_STATUSES.join(", ")}`, 400);
       }
 
       requests = await getUserLeaveRequests(targetEmployeeId, {
@@ -218,9 +218,8 @@ export async function GET(req: NextRequest) {
         employeeId: targetEmployeeId,
       };
     } else {
-      const validStatuses = ["pending", "approved", "rejected"];
-      if (statusFilter && !validStatuses.includes(statusFilter)) {
-        return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
+      if (statusFilter && !isValidLeaveRequestStatus(statusFilter)) {
+        return errorResponse(`Status deve essere uno di: ${LEAVE_REQUEST_STATUSES.join(", ")}`, 400);
       }
 
       requests = await getUserLeaveRequests(targetEmployeeId, {
@@ -281,9 +280,8 @@ export async function POST(req: NextRequest) {
       return errorResponse("La data di inizio deve essere prima della data di fine", 400);
     }
 
-    const validTypes = ["sick", "vacation", "personal", "other"];
-    if (!validTypes.includes(type)) {
-      return errorResponse(`Type deve essere uno di: ${validTypes.join(", ")}`, 400);
+    if (!isValidLeaveRequestType(type)) {
+      return errorResponse(`Type deve essere uno di: ${LEAVE_REQUEST_TYPES.join(", ")}`, 400);
     }
 
     const requestId = await createLeaveRequest(

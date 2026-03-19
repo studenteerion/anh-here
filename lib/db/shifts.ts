@@ -1,5 +1,6 @@
 import pool from "@/lib/db";
 import { Shift, ShiftFilter } from "@/types/shifts";
+import { countRows } from "./utils";
 
 export async function getAllShifts(
   filters?: ShiftFilter
@@ -19,8 +20,7 @@ export async function getAllShifts(
 }
 
 export async function getShiftsCount(): Promise<number> {
-  // Using countRows utility
-
+  return await countRows('shifts');
 }
 
 export async function getShiftById(shiftId: number): Promise<Shift | null> {
