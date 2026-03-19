@@ -210,11 +210,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { status } = body;
 
     if (!status) {
-      return errorResponse("Missing required field: status (pending, approved or rejected)", 400);
+      return errorResponse("Missing required field: status (pending, approved or rejected)", 422);
     }
 
     if (!isValidLeaveRequestStatus(status)) {
-      return errorResponse("Status must be 'pending', 'approved' or 'rejected'", 400);
+      return errorResponse("Status must be 'pending', 'approved' or 'rejected'", 422);
     }
 
     const requestId = parseInt(id);
@@ -224,7 +224,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // Use the new auto-assignment function
-    const result = await assignAndUpdateApproval(requestId, employeeId, status as "approved" | "rejected" | "pending");
+    const result = await assignAndUpdateApproval(requestId, employeeId, status as "approved" | "rejected");
 
     if (!result.success) {
       // Determine appropriate HTTP status based on error type

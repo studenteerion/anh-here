@@ -252,7 +252,7 @@ export async function POST(req: NextRequest) {
     const { firstName, lastName, roleId, departmentId, email, password } = body;
 
     if (!firstName || !lastName || !roleId || !departmentId || !email || !password) {
-      return errorResponse("Missing required fields: firstName, lastName, roleId, departmentId, email, password", 400);
+      return errorResponse("Missing required fields: firstName, lastName, roleId, departmentId, email, password", 422);
     }
 
     // Validate foreign keys
@@ -262,11 +262,11 @@ export async function POST(req: NextRequest) {
     ]);
 
     if (!roleValid) {
-      return errorResponse(`Role with ID ${roleId} does not exist`, 400);
+      return errorResponse(`Role with ID ${roleId} does not exist`, 422);
     }
 
     if (!deptValid) {
-      return errorResponse(`Department with ID ${departmentId} does not exist`, 400);
+      return errorResponse(`Department with ID ${departmentId} does not exist`, 422);
     }
 
     const passwordHash = hashPassword(password);

@@ -95,7 +95,7 @@ export async function GET(
     const employeeId = parseInt(employeeIdStr);
 
     if (isNaN(employeeId)) {
-      return errorResponse("Invalid employee ID", 400);
+      return errorResponse("Invalid employee ID", 422);
     }
 
     // Verify employee exists

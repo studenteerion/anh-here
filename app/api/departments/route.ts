@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
     const { departmentName } = body;
 
     if (!departmentName) {
-      return errorResponse("Missing required field: departmentName", 400);
+      return errorResponse("Missing required field: departmentName", 422);
     }
 
     const departmentId = await createDepartment(departmentName);

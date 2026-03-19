@@ -139,13 +139,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { roleName } = body;
 
     if (!roleName) {
-      return errorResponse("Missing required field: roleName", 400);
+      return errorResponse("Missing required field: roleName", 422);
     }
 
     const updated = await updateRole(roleId, roleName);
 
     if (!updated) {
-      return errorResponse("Failed to update role", 400);
+      return errorResponse("Failed to update role", 422);
     }
 
     const updatedRole = await getRoleById(roleId);

@@ -229,14 +229,14 @@ export async function POST(req: NextRequest) {
     const { link } = body;
 
     if (!link) {
-      return errorResponse("Missing required field: link", 400);
+      return errorResponse("Missing required field: link", 422);
     }
 
     // Validazione URL
     try {
       new URL(link);
     } catch {
-      return errorResponse("Invalid URL format for link", 400);
+      return errorResponse("Invalid URL format for link", 422);
     }
 
     const reportId = await createCompanyReport(employeeId, link);

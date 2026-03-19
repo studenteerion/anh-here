@@ -248,11 +248,11 @@ export async function POST(req: NextRequest) {
 
     // Validation
     if (!targetEmployeeId || typeof targetEmployeeId !== "number") {
-      return errorResponse("employeeId is required and must be a number", 400);
+      return errorResponse("employeeId is required and must be a number", 422);
     }
 
     if (!description || typeof description !== "string" || description.trim() === "") {
-      return errorResponse("description is required and must be a non-empty string", 400);
+      return errorResponse("description is required and must be a non-empty string", 422);
     }
 
     // Create the anomaly

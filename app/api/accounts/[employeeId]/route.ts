@@ -220,7 +220,7 @@ export async function PUT(
     if (!email && !password) {
       return errorResponse(
         "At least one field (email or password) must be provided",
-        400
+        422
       );
     }
 
@@ -228,7 +228,7 @@ export async function PUT(
     if (email) {
       // Validate email format with robust validation
       if (!validateEmailFormat(email)) {
-        return errorResponse("Invalid email format", 400);
+        return errorResponse("Invalid email format", 422);
       }
 
       // Check if email already exists for another employee
@@ -249,7 +249,7 @@ export async function PUT(
     // Update password if provided
     if (password) {
       if (password.length < 8) {
-        return errorResponse("Password must be at least 8 characters long", 400);
+        return errorResponse("Password must be at least 8 characters long", 422);
       }
 
       const passwordHash = hashPassword(password);
