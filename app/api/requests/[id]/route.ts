@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import { getLeaveRequestById, deleteLeaveRequest, assignAndUpdateApproval } from "@/lib/db/requests";
-import { isValidLeaveRequestApprovalStatus } from "@/lib/validation/enums";
+import { isValidLeaveRequestStatus } from "@/lib/validation/enums";
 
 /**
  * @swagger
@@ -210,11 +210,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { status } = body;
 
     if (!status) {
-      return errorResponse("Missing required field: status (approved or rejected)", 400);
+      return errorResponse("Missing required field: status (pending, approved or rejected)", 400);
     }
 
-    if (!isValidLeaveRequestApprovalStatus(status)) {
-      return errorResponse("Status must be 'approved' or 'rejected'", 400);
+    if (!isValidLeaveRequestStatus(status)) {
+      return errorResponse("Status must be 'pending', 'approved' or 'rejected'", 400);
     }
 
     const requestId = parseInt(id);
@@ -224,7 +224,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // Use the new auto-assignment function
-    const result = await assignAndUpdateApproval(requestId, employeeId, status as "approved" | "rejected");
+    const result = await assignAndUpdateApproval(requestId, employeeId, status as "approved" | "rejected" | "pending");
 
     if (!result.success) {
       // Determine appropriate HTTP status based on error type

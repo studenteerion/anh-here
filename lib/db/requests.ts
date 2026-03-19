@@ -129,7 +129,7 @@ function calculateLeaveRequestStatus(
 export async function assignAndUpdateApproval(
   requestId: number,
   approverId: number,
-  approvalStatus: "approved" | "rejected"
+  approvalStatus: "pending" | "approved" | "rejected"
 ) {
   const request = await getLeaveRequestById(requestId);
   if (!request) return { success: false, error: "Request not found" };
