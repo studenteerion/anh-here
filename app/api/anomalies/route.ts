@@ -97,7 +97,9 @@ import { Anomaly } from "@/types/anomalies";
  *       201:
  *         description: Anomaly created successfully
  *       400:
- *         description: Validation failed
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (invalid employeeId, invalid description)
  *       403:
  *         description: Permission denied
  *       500:

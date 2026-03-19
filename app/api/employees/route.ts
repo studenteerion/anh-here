@@ -89,7 +89,9 @@ function hashPassword(password: string): string {
  *                 hasNextPage: true
  *                 hasPrevPage: false
  *       400:
- *         description: Invalid pagination parameters or status filter
+ *         description: Invalid pagination parameters
+ *       422:
+ *         description: Invalid status filter
  *       403:
  *         description: Permission denied
  *   post:
@@ -148,7 +150,9 @@ function hashPassword(password: string): string {
  *                 email:
  *                   type: string
  *       400:
- *         description: Missing required fields
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (missing fields, invalid foreign keys)
  *       403:
  *         description: Permission denied
  *       409:
