@@ -100,13 +100,37 @@ export async function POST(req: NextRequest) {
       }
 
       // INSERT failed because open attendance exists - do CHECK-OUT
-      // Retrieve the existing open attendance
+      // Retrieve the existing open attendance with FOR UPDATE lock
+      // This prevents concurrent requests from closing the same attendance
       const openAttendance = await getOpenAttendanceInTransaction(employeeId, connection);
 
       if (!openAttendance) {
-        // This should never happen, but handle it gracefully
+        // This can happen if another concurrent request just closed the attendance
+        // Try to insert a new one (check-in)
         await connection.rollback();
-        return errorResponse("Unexpected error: could not find open attendance", 500);
+        
+        // Start new transaction for check-in
+        await connection.beginTransaction();
+        const newAttendanceId = await createAttendanceWithConnection(
+          employeeId, 
+          shift.id, 
+          now, 
+          connection
+        );
+        
+        if (newAttendanceId) {
+          await connection.commit();
+          return successResponse({
+            attendanceId: newAttendanceId,
+            checkinTime: now,
+            shiftName: shift.name,
+            action: "checkin",
+          }, "Checkin recorded (after concurrent checkout)", 200);
+        } else {
+          // Still can't insert, something is wrong
+          await connection.rollback();
+          return errorResponse("Unable to process punch - please try again", 500);
+        }
       }
 
       // Close the attendance
