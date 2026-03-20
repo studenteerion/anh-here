@@ -64,8 +64,9 @@ export async function createAttendanceWithConnection(
 }
 
 /**
- * Get open attendance within transaction
+ * Get open attendance within transaction with row lock
  * Used after atomic INSERT fails to retrieve the existing open record
+ * Uses FOR UPDATE to lock the row and prevent concurrent modifications
  * @param employeeId - Employee ID
  * @param connection - Database connection (for transaction)
  * @returns Open attendance or null
@@ -78,7 +79,8 @@ export async function getOpenAttendanceInTransaction(
     `SELECT id, employee_id, shift_id, start_datetime 
      FROM attendances 
      WHERE employee_id = ? AND end_datetime IS NULL 
-     ORDER BY start_datetime DESC LIMIT 1`,
+     ORDER BY start_datetime DESC LIMIT 1
+     FOR UPDATE`,
     [employeeId]
   );
   return rows[0] || null;
