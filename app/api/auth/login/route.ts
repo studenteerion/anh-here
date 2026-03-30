@@ -16,7 +16,12 @@ const JWT_KEY = process.env.JWT_KEY!;
  *     tags:
  *       - Authentication
  *     summary: User login (public)
- *     description: Authenticate user with email and password, returns JWT access token and refresh token.
+ *     description: |
+ *       Authenticate user with email and password.
+ *       Returns access token and refresh token as **HttpOnly cookies** (not in response body).
+ *       Tokens are automatically sent by the browser in subsequent requests using `credentials: 'include'`.
+ *       
+ *       **Security**: Both tokens are HttpOnly, preventing JavaScript access (XSS protection).
  *     security: []
  *     requestBody:
  *       required: true
@@ -38,6 +43,15 @@ const JWT_KEY = process.env.JWT_KEY!;
  *     responses:
  *       200:
  *         description: Login successful
+ *         headers:
+ *           Set-Cookie:
+ *             description: |
+ *               Two cookies are set:
+ *               - `access_token`: JWT token (HttpOnly, 10 minutes)
+ *               - `refresh_token`: Refresh token (HttpOnly, 7 days)
+ *             schema:
+ *               type: string
+ *               example: "access_token=eyJhbGc...; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=600"
  *         content:
  *           application/json:
  *             schema:
@@ -46,17 +60,13 @@ const JWT_KEY = process.env.JWT_KEY!;
  *                 status:
  *                   type: string
  *                   example: "success"
- *                 token:
+ *                 message:
  *                   type: string
- *                   description: JWT access token (valid for 10 minutes)
- *                 refresh_token:
- *                   type: string
- *                   description: Refresh token (valid for 7 days)
+ *                   example: "Login successful"
  *                 role:
  *                   type: integer
- *                 expires_in:
- *                   type: integer
- *                   example: 600
+ *                   description: User role ID
+ *                   example: 1
  *       400:
  *         description: Missing credentials
  *       401:
@@ -102,21 +112,31 @@ export async function POST(req: NextRequest) {
 
     const response = NextResponse.json({
       status: "success",
-      token: accessToken,
-      refresh_token: refreshToken,
+      message: "Login successful",
       role: user.role_id,
-      expires_in: 600,
     });
 
+    // Access token in cookie HttpOnly (sicuro!)
+    response.cookies.set("access_token", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 60 * 10, // 10 minuti
+    });
+
+    // Refresh token in cookie HttpOnly
     response.cookies.set("refresh_token", refreshToken, {
       httpOnly: true,
-      secure: true,
-      path: "/api/auth/refresh",
-      maxAge: 60 * 60 * 24 * 30,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 giorni
     });
 
     return response;
   } catch (error) {
+    console.error("Login error:", error);
     return errorResponse("Server error", 500);
   }
 }

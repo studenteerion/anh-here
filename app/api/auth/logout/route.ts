@@ -12,12 +12,26 @@ import { deleteTokensByUser } from "@/lib/db/refreshTokens";
  *     summary: User logout
  *     description: |
  *       Logout user and invalidate all refresh tokens.
- *       The client must also delete the local access token.
+ *       Clears both access_token and refresh_token cookies.
+ *       
+ *       The access token is read from the **HttpOnly cookie** automatically.
+ *       
+ *       **Client Usage**: Use `credentials: 'include'` in fetch to send cookies.
+ *       After logout, redirect to /login.
  *     security:
  *       - BearerAuth: []
+ *       - CookieAuth: []
  *     responses:
  *       200:
  *         description: Logout successful
+ *         headers:
+ *           Set-Cookie:
+ *             description: |
+ *               Cookies are cleared:
+ *               - `access_token`: Expired
+ *               - `refresh_token`: Expired
+ *             schema:
+ *               type: string
  *         content:
  *           application/json:
  *             schema:
@@ -51,16 +65,26 @@ export async function POST(req: NextRequest) {
     // Invalidate all refresh tokens for this user
     await deleteTokensByUser(employeeId);
 
-    // Clear refresh token cookie
     const response = NextResponse.json({
       status: "success",
       message: "Logged out successfully"
     });
 
+    // Clear access token cookie
+    response.cookies.set("access_token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 0, // Expire immediately
+    });
+
+    // Clear refresh token cookie
     response.cookies.set("refresh_token", "", {
       httpOnly: true,
-      secure: true,
-      path: "/api/auth/refresh",
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
       maxAge: 0, // Expire immediately
     });
 

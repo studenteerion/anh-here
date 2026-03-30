@@ -16,30 +16,44 @@ const JWT_KEY = process.env.JWT_KEY!;
  *     summary: Refresh access token (public)
  *     description: |
  *       Generate a new access token using a valid refresh token.
- *       The refresh token is obtained from the login response and is valid for 7 days.
- *       Each refresh invalidates the old token (rotation).
+ *       The refresh token is read from the **HttpOnly cookie** automatically sent by the browser.
+ *       
+ *       **Token Rotation**: Each refresh invalidates the old refresh token and issues a new one (rotation for security).
+ *       
+ *       **Client Usage**: Use `credentials: 'include'` in fetch to send cookies.
+ *       
+ *       **Fallback**: Can also accept refresh token in request body for compatibility.
  *     security: []
  *     requestBody:
- *       required: true
+ *       required: false
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - refresh_token
  *             properties:
  *               refresh_token:
  *                 type: string
- *                 description: Refresh token obtained from login response
+ *                 description: Optional. Refresh token (if not using cookies)
  *                 example: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
  *           examples:
- *             refreshExample:
- *               summary: Refresh token example
+ *             withCookie:
+ *               summary: Using cookie (recommended)
+ *               value: {}
+ *             withBody:
+ *               summary: Using request body (fallback)
  *               value:
  *                 refresh_token: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
  *     responses:
  *       200:
  *         description: New tokens issued successfully
+ *         headers:
+ *           Set-Cookie:
+ *             description: |
+ *               New cookies are set (token rotation):
+ *               - `access_token`: New JWT token (HttpOnly, 10 minutes)
+ *               - `refresh_token`: New refresh token (HttpOnly, 7 days)
+ *             schema:
+ *               type: string
  *         content:
  *           application/json:
  *             schema:
@@ -48,15 +62,9 @@ const JWT_KEY = process.env.JWT_KEY!;
  *                 status:
  *                   type: string
  *                   example: "success"
- *                 token:
+ *                 message:
  *                   type: string
- *                   description: New JWT access token (valid for 10 minutes)
- *                 refresh_token:
- *                   type: string
- *                   description: New refresh token (valid for 7 days)
- *                 expires_in:
- *                   type: integer
- *                   example: 600
+ *                   example: "Token refreshed"
  *       400:
  *         description: Missing refresh token
  *       401:
@@ -102,15 +110,35 @@ export async function POST(req: NextRequest) {
       { expiresIn: "10m" }
     );
 
-    // Optionally issue a new refresh token (rotazione)
+    // Issue new refresh token (rotazione)
     const newRefreshToken = crypto.randomBytes(32).toString("hex");
     await import("@/lib/db/refreshTokens").then(m => m.storeRefreshToken({
       user_id: user.employee_id,
       refresh_token: crypto.createHash("sha256").update(newRefreshToken).digest("hex"),
     }));
 
-    const response = NextResponse.json({ status: "success", token: accessToken, refresh_token: newRefreshToken, expires_in: 600 });
-    response.cookies.set("refresh_token", newRefreshToken, { httpOnly: true, secure: true, path: "/api/auth/refresh", maxAge: 60 * 60 * 24 * 30 });
+    const response = NextResponse.json({ 
+      status: "success",
+      message: "Token refreshed"
+    });
+
+    // Access token in cookie HttpOnly
+    response.cookies.set("access_token", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 60 * 10, // 10 minuti
+    });
+
+    // Refresh token in cookie HttpOnly
+    response.cookies.set("refresh_token", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 giorni
+    });
 
     return response;
   } catch (error) {
