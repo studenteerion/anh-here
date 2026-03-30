@@ -8,9 +8,16 @@ import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@
  *     tags:
  *       - Authentication
  *     summary: Validate token
- *     description: Verify that the provided JWT token is valid
+ *     description: |
+ *       Verify that the provided JWT token is valid.
+ *       The token is read from the **HttpOnly cookie** automatically.
+ *       
+ *       **Client Usage**: Use `credentials: 'include'` in fetch to send cookies.
+ *       
+ *       **Fallback**: Can also read from Authorization header (Bearer token) for API compatibility.
  *     security:
  *       - BearerAuth: []
+ *       - CookieAuth: []
  *     responses:
  *       200:
  *         description: Token is valid
@@ -19,12 +26,34 @@ import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@
  *             schema:
  *               type: object
  *               properties:
- *                 iss:
+ *                 status:
  *                   type: string
- *                 sub:
- *                   type: integer
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Token valid"
  *                 data:
  *                   type: object
+ *                   properties:
+ *                     iss:
+ *                       type: string
+ *                       example: "ANH-here"
+ *                     sub:
+ *                       type: integer
+ *                       description: User employee_id
+ *                       example: 123
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         role_id:
+ *                           type: integer
+ *                           example: 1
+ *                     iat:
+ *                       type: integer
+ *                       description: Issued at timestamp
+ *                     exp:
+ *                       type: integer
+ *                       description: Expiration timestamp
  *       401:
  *         description: Invalid or expired token
  */

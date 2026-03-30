@@ -15,12 +15,21 @@ export interface AuthPayload {
 
 export function verifyAuth(req: NextRequest): { payload?: AuthPayload; error?: string; status?: number; token_expired?: boolean } {
   try {
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    // Prima prova a leggere dal cookie (metodo sicuro)
+    let token = req.cookies.get("access_token")?.value;
+    
+    // Fallback: leggi dall'header Authorization (per compatibilità con API esterne)
+    if (!token) {
+      const authHeader = req.headers.get("authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        token = authHeader.slice(7);
+      }
+    }
+
+    if (!token) {
       return { error: "Missing or malformed token", status: 401 };
     }
 
-    const token = authHeader.slice(7);
     const decoded = jwt.verify(token, JWT_KEY) as AuthPayload;
 
     return { payload: decoded };

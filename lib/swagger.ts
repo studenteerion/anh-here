@@ -8,7 +8,7 @@ export const getApiDocs = async () => {
       info: {
         title: 'ANH-here - Sistema di Gestione Presenze',
         version: '1.0.0',
-        description: 'API completa per la gestione del sistema di presenze, dipendenti, turni e permessi.',
+        description: 'Documentazione ufficiale delle API ANH-here.',
         contact: {
           name: 'ANH-here API Support',
           email: 'support@anhere.local',
@@ -26,14 +26,19 @@ export const getApiDocs = async () => {
             type: 'http',
             scheme: 'bearer',
             bearerFormat: 'JWT',
-            description: 'JWT Token from /api/auth/login',
+            description: 'JWT Token (fallback for API compatibility). Prefer using cookies.',
+          },
+          CookieAuth: {
+            type: 'apiKey',
+            in: 'cookie',
+            name: 'access_token',
+            description: 'HttpOnly cookie containing JWT access token (recommended)',
           },
         },
       },
       security: [
-        {
-          BearerAuth: [],
-        },
+        { CookieAuth: [] },
+        { BearerAuth: [] },
       ],
     },
   });
