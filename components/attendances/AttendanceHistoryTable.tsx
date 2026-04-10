@@ -17,7 +17,7 @@ interface AttendanceHistoryTableProps {
 }
 
 export function AttendanceHistoryTable({ 
-  defaultPeriod = 'month',
+  defaultPeriod = 'all',
   defaultLimit = 15,
   autoRefresh = true,
   refreshInterval = 60000,
