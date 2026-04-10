@@ -2,8 +2,14 @@
 
 import { Shift } from '@/types/shifts';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, Eye } from 'lucide-react';
+import { Pencil, Trash2, Eye, MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface ShiftsListProps {
   items: Shift[];
@@ -55,32 +61,30 @@ export function ShiftsList({ items, loading, departments, onEdit, onDelete }: Sh
               <td className="py-3 px-3">{toTimeInputValue(item.start_time) || item.start_time}</td>
               <td className="py-3 px-3">{toTimeInputValue(item.end_time) || item.end_time}</td>
               <td className="py-3 px-3 text-right" onClick={(e) => e.stopPropagation()}>
-                <div className="inline-flex items-center gap-1">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => router.push(`/dashboard/shifts/${item.id}`)}
-                    title="Visualizza dettagli"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => onEdit(item)}
-                    title="Modifica"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    onClick={() => onDelete(item)}
-                    title="Elimina"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => router.push(`/dashboard/shifts/${item.id}`)}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Visualizza
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit(item)}>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Modifica
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => onDelete(item)}
+                      className="text-red-600 dark:text-red-400"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Elimina
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </td>
             </tr>
           ))}
