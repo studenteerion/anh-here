@@ -13,10 +13,8 @@ type Anomaly = {
   reportedAt: string;
   resolvedAt: string | null;
   resolutionNotes: string | null;
-  employee_id: number;
   reporterId?: number;
   resolverId?: number;
-  employeeName?: string;
   reporterName?: string;
   resolverName?: string;
 };
@@ -49,7 +47,6 @@ export default function AnomaliesPage() {
       result = result.filter(item =>
         item.description.toLowerCase().includes(term) ||
         item.id.toString().includes(term) ||
-        (item.employeeName?.toLowerCase().includes(term) ?? false) ||
         (item.reporterName?.toLowerCase().includes(term) ?? false)
       );
     }
@@ -161,7 +158,6 @@ export default function AnomaliesPage() {
             <thead>
               <tr className="text-left text-muted-foreground border-b">
                 <th className="py-2 pr-2">ID</th>
-                <th className="py-2 pr-2">Dipendente</th>
                 <th className="py-2 pr-2">Descrizione</th>
                 <th className="py-2 pr-2">Segnalata da</th>
                 <th className="py-2 pr-2">Stato</th>
@@ -173,13 +169,12 @@ export default function AnomaliesPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={9} className="py-4 text-muted-foreground">Caricamento...</td></tr>
+                <tr><td colSpan={8} className="py-4 text-muted-foreground">Caricamento...</td></tr>
               ) : filteredItems.length === 0 ? (
-                <tr><td colSpan={9} className="py-4 text-muted-foreground">Nessuna anomalia trovata</td></tr>
+                <tr><td colSpan={8} className="py-4 text-muted-foreground">Nessuna anomalia trovata</td></tr>
               ) : filteredItems.map((item) => (
                 <tr key={item.id} className="border-t">
                   <td className="py-2 pr-2 font-mono text-xs text-muted-foreground">#{item.id}</td>
-                  <td className="py-2 pr-2 text-sm">{item.employeeName || `#${item.employee_id}`}</td>
                   <td className="py-2 pr-2">{item.description}</td>
                   <td className="py-2 pr-2 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
                   <td className="py-2 pr-2">
