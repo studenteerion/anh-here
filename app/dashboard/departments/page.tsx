@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Building2, MoreHorizontal, Trash2, X, Plus, RefreshCw } from 'lucide-react';
+import { Building2, MoreHorizontal, Trash2, X, Plus, RefreshCw, Eye, Edit } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -189,9 +189,11 @@ export default function DepartmentsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
                         <DropdownMenuItem onClick={() => router.push(`/dashboard/departments/${item.id}`)}>
-                          Informazioni aggiuntive
+                          <Eye className="h-4 w-4 mr-2" />
+                          Visualizza
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => router.push(`/dashboard/departments/${item.id}`)}>
+                          <Edit className="h-4 w-4 mr-2" />
                           Modifica
                         </DropdownMenuItem>
                         <DropdownMenuItem variant="destructive" onClick={() => setDeleting(item)}>
