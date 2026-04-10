@@ -5,7 +5,12 @@ import { countRows } from "./utils";
 export async function getAllShifts(
   filters?: ShiftFilter
 ): Promise<Shift[]> {
-  let query = `SELECT id, department_id, name, start_time, end_time
+  let query = `SELECT 
+    id, 
+    department_id, 
+    name, 
+    DATE_FORMAT(start_time, '%Y-%m-%d %H:%i:%s') as start_time,
+    DATE_FORMAT(end_time, '%Y-%m-%d %H:%i:%s') as end_time
     FROM shifts`;
   
   const params: any[] = [];
@@ -25,7 +30,9 @@ export async function getShiftsCount(): Promise<number> {
 
 export async function getShiftById(shiftId: number): Promise<Shift | null> {
   const [rows]: any = await pool.query(
-    `SELECT id, department_id, name, start_time, end_time
+    `SELECT id, department_id, name, 
+      DATE_FORMAT(start_time, '%Y-%m-%d %H:%i:%s') as start_time,
+      DATE_FORMAT(end_time, '%Y-%m-%d %H:%i:%s') as end_time
      FROM shifts WHERE id = ? LIMIT 1`,
     [shiftId]
   );
@@ -34,7 +41,9 @@ export async function getShiftById(shiftId: number): Promise<Shift | null> {
 
 export async function getShiftsByDepartment(departmentId: number): Promise<Shift[]> {
   const [rows]: any = await pool.query(
-    `SELECT id, department_id, name, start_time, end_time
+    `SELECT id, department_id, name, 
+      DATE_FORMAT(start_time, '%Y-%m-%d %H:%i:%s') as start_time,
+      DATE_FORMAT(end_time, '%Y-%m-%d %H:%i:%s') as end_time
      FROM shifts WHERE department_id = ?
      ORDER BY name ASC`,
     [departmentId]
@@ -111,7 +120,9 @@ export async function deleteShift(shiftId: number): Promise<boolean> {
 
 export async function getShiftsByEmployee(employeeId: number): Promise<Shift[]> {
   const [rows]: any = await pool.query(
-    `SELECT s.id, s.department_id, s.name, s.start_time, s.end_time
+    `SELECT s.id, s.department_id, s.name, 
+      DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') as start_time,
+      DATE_FORMAT(s.end_time, '%Y-%m-%d %H:%i:%s') as end_time
      FROM shifts s
      JOIN employees e ON s.department_id = e.department_id
      WHERE e.id = ?
