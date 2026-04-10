@@ -282,10 +282,6 @@ export function Sidebar() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800">
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">{fullName}</p>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 break-all">{email}</p>
-            </div>
             <DropdownMenuItem asChild className="cursor-pointer">
               <Link href="/dashboard/settings" className="flex items-center">
                 <Settings className="mr-2 h-4 w-4" />
