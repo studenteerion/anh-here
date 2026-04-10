@@ -107,25 +107,6 @@ export default function ReportsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="border rounded-lg bg-card p-4"><p className="text-xs text-muted-foreground">Totale report</p><p className="text-2xl font-semibold">{allItems.length}</p></div>
-        <div className="border rounded-lg bg-card p-4"><p className="text-xs text-muted-foreground">Report questo mese</p><p className="text-2xl font-semibold">{reportsThisMonth}</p></div>
-        <div className="border rounded-lg bg-card p-4"><p className="text-xs text-muted-foreground">Ultimo report</p><p className="text-sm font-medium">{latestReportDate ? new Date(latestReportDate).toLocaleDateString('it-IT') : '-'}</p></div>
-      </div>
-
-      <div className="border rounded-lg bg-card p-4 sm:p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <FileText className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-lg sm:text-xl font-semibold">Report</h1>
-        </div>
-        <div className="flex gap-2">
-          <Input placeholder="Link report (URL)" value={newLink} onChange={(e) => setNewLink(e.target.value)} />
-          <Button onClick={handleCreateReport} disabled={creating || !newLink.trim()}>
-            <Plus className="h-4 w-4 mr-2" />
-            {creating ? 'Creazione...' : 'Aggiungi'}
-          </Button>
-        </div>
-      </div>
 
       {error && <div className="text-sm text-red-600">{error}</div>}
       {success && <div className="text-sm text-green-600">{success}</div>}
