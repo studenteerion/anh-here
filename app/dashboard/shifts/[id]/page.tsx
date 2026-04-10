@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, Clock, Save, Users, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Clock, Save, Users, AlertCircle } from 'lucide-react';
 import ShiftEmployeeTable from '@/components/shifts/ShiftEmployeeTable';
 
 type Shift = {
@@ -47,7 +47,6 @@ export default function ShiftDetailPage() {
   const [shiftDepartmentId, setShiftDepartmentId] = useState('');
 
   const [employees, setEmployees] = useState<EmployeeAssignment[]>([]);
-  const [employeesLoading, setEmployeesLoading] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
 
   const departmentNameById = useMemo(() => {
@@ -162,22 +161,9 @@ export default function ShiftDetailPage() {
   if (loading) {
     return (
       <div className="p-4 sm:p-6 lg:p-8">
-        <div className="text-center text-muted-foreground">Caricamento...</div>
-      </div>
-    );
-  }
-
-  if (error && !shift) {
-    return (
-      <div className="p-4 sm:p-6 lg:p-8">
-        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg mb-4 flex gap-2">
-          <AlertCircle className="h-5 w-5 flex-shrink-0" />
-          {error}
+        <div className="border rounded-lg bg-card p-8 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
-        <Button variant="outline" onClick={() => router.back()}>
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Indietro
-        </Button>
       </div>
     );
   }
@@ -185,64 +171,55 @@ export default function ShiftDetailPage() {
   if (!shift) {
     return (
       <div className="p-4 sm:p-6 lg:p-8">
-        <div className="text-muted-foreground">Turno non trovato</div>
+        <div className="border rounded-lg bg-card p-6 text-sm text-muted-foreground">
+          Turno non trovato.
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <Button variant="outline" onClick={() => router.back()}>
-        <ChevronLeft className="h-4 w-4 mr-2" />
-        Indietro
-      </Button>
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/shifts')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Torna all'elenco
+        </Button>
+      </div>
 
+      {error && (
+        <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800 flex gap-2">
+          <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="p-3 rounded-md bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800">
+          {success}
+        </div>
+      )}
+
+      {/* Shift Info Section */}
       <div className="border rounded-lg bg-card">
-        {/* Header */}
-        <div className="p-4 sm:p-6 border-b">
-          <div className="flex items-center gap-3 mb-4">
-            <Clock className="h-6 w-6 text-muted-foreground" />
-            <h1 className="text-2xl sm:text-3xl font-bold">
-              {shiftName || `Turno #${shift.id}`}
-            </h1>
-          </div>
-          <p className="text-sm text-muted-foreground">ID: #{shift.id}</p>
+        <div className="p-4 sm:p-6 border-b flex items-center gap-2">
+          <Clock className="h-5 w-5 text-muted-foreground" />
+          <h1 className="text-lg sm:text-xl font-semibold">Informazioni turno #{shift.id}</h1>
         </div>
 
-        {/* Shift Info - Editable */}
-        <div className="p-4 sm:p-6 border-b space-y-4">
-          <h2 className="text-lg font-semibold">Informazioni Turno</h2>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-md flex gap-2 text-sm">
-              <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-md text-sm">
-              {success}
-            </div>
-          )}
-
+        <div className="p-4 sm:p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                Nome Turno
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Nome turno</label>
               <Input
                 value={shiftName}
                 onChange={(e) => setShiftName(e.target.value)}
                 placeholder="Es: Turno Mattina"
-                className="h-9 text-sm"
+                className="h-9"
               />
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                Dipartimento
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Dipartimento</label>
               <select
                 value={shiftDepartmentId}
                 onChange={(e) => setShiftDepartmentId(e.target.value)}
@@ -257,52 +234,45 @@ export default function ShiftDetailPage() {
               </select>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                Orario Inizio
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Orario Inizio</label>
               <Input
                 type="time"
                 value={shiftStartTime}
                 onChange={(e) => setShiftStartTime(e.target.value)}
-                className="h-9 text-sm"
+                className="h-9"
               />
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                Orario Fine
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Orario Fine</label>
               <Input
                 type="time"
                 value={shiftEndTime}
                 onChange={(e) => setShiftEndTime(e.target.value)}
-                className="h-9 text-sm"
+                className="h-9"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => fetchData()} disabled={saving}>
-              Annulla
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
+          <div className="flex flex-wrap justify-end gap-2 pt-2">
+            <Button onClick={handleSave} disabled={saving || !shiftName.trim()}>
               <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Salvataggio...' : 'Salva'}
+              {saving ? 'Salvataggio...' : 'Salva modifiche'}
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Assigned Employees */}
-        <div className="p-4 sm:p-6 border-t">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-lg font-semibold">
-              Dipendenti Assegnati ({employees.length})
-            </h2>
-          </div>
+      {/* Employees Section */}
+      <div className="border rounded-lg bg-card">
+        <div className="p-4 sm:p-6 border-b flex items-center gap-2">
+          <Users className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold">Dipendenti assegnati</h2>
+        </div>
 
-          <ShiftEmployeeTable employees={employees} loading={employeesLoading} />
+        <div className="overflow-x-auto p-4 sm:p-6 pt-4">
+          <ShiftEmployeeTable employees={employees} loading={false} />
         </div>
       </div>
     </div>
