@@ -15,8 +15,10 @@ type Anomaly = {
   resolutionNotes: string | null;
   employee_id: number;
   reporterId?: number;
+  resolverId?: number;
   employeeName?: string;
   reporterName?: string;
+  resolverName?: string;
 };
 
 export default function AnomaliesPage() {
@@ -161,27 +163,31 @@ export default function AnomaliesPage() {
                 <th className="py-2 pr-2">ID</th>
                 <th className="py-2 pr-2">Dipendente</th>
                 <th className="py-2 pr-2">Descrizione</th>
+                <th className="py-2 pr-2">Segnalata da</th>
                 <th className="py-2 pr-2">Stato</th>
                 <th className="py-2 pr-2">Segnalata</th>
-                <th className="py-2 pr-2">Risolta</th>
+                <th className="py-2 pr-2">Risolta da</th>
+                <th className="py-2 pr-2">Risolta il</th>
                 <th className="py-2">Note Risoluzione</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="py-4 text-muted-foreground">Caricamento...</td></tr>
+                <tr><td colSpan={9} className="py-4 text-muted-foreground">Caricamento...</td></tr>
               ) : filteredItems.length === 0 ? (
-                <tr><td colSpan={7} className="py-4 text-muted-foreground">Nessuna anomalia trovata</td></tr>
+                <tr><td colSpan={9} className="py-4 text-muted-foreground">Nessuna anomalia trovata</td></tr>
               ) : filteredItems.map((item) => (
                 <tr key={item.id} className="border-t">
                   <td className="py-2 pr-2 font-mono text-xs text-muted-foreground">#{item.id}</td>
                   <td className="py-2 pr-2 text-sm">{item.employeeName || `#${item.employee_id}`}</td>
                   <td className="py-2 pr-2">{item.description}</td>
+                  <td className="py-2 pr-2 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
                   <td className="py-2 pr-2">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
                   </td>
-                  <td className="py-2 pr-2">{new Date(item.reportedAt).toLocaleDateString()}</td>
-                  <td className="py-2 pr-2">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
+                  <td className="py-2 pr-2 text-xs">{new Date(item.reportedAt).toLocaleDateString()}</td>
+                  <td className="py-2 pr-2 text-sm">{item.resolverName ? `${item.resolverName}` : (item.resolverId ? `#${item.resolverId}` : '-')}</td>
+                  <td className="py-2 pr-2 text-xs">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
                   <td className="py-2 text-xs">{item.resolutionNotes || '-'}</td>
                 </tr>
               ))}
