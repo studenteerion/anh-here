@@ -167,34 +167,34 @@ export default function AnomaliesPage() {
         <div className="overflow-x-auto p-4 sm:p-6 pt-4">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-muted-foreground border-b">
-                <th className="py-2 pr-2">ID</th>
-                <th className="py-2 pr-2">Descrizione</th>
-                <th className="py-2 pr-2">Segnalata da</th>
-                <th className="py-2 pr-2">Stato</th>
-                <th className="py-2 pr-2">Segnalata</th>
-                <th className="py-2 pr-2">Risolta da</th>
-                <th className="py-2 pr-2">Risolta il</th>
-                <th className="py-2">Note Risoluzione</th>
+              <tr className="text-left text-muted-foreground border-b bg-muted/40">
+                <th className="py-3 px-3 font-semibold">ID</th>
+                <th className="py-3 px-3 font-semibold">Descrizione</th>
+                <th className="py-3 px-3 font-semibold">Segnalata da</th>
+                <th className="py-3 px-3 font-semibold">Stato</th>
+                <th className="py-3 px-3 font-semibold">Segnalata</th>
+                <th className="py-3 px-3 font-semibold">Risolta da</th>
+                <th className="py-3 px-3 font-semibold">Risolta il</th>
+                <th className="py-3 px-3 font-semibold">Note</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="py-4 text-muted-foreground">Caricamento...</td></tr>
+                <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
               ) : filteredItems.length === 0 ? (
-                <tr><td colSpan={8} className="py-4 text-muted-foreground">Nessuna anomalia trovata</td></tr>
+                <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
               ) : filteredItems.map((item) => (
-                <tr key={item.id} className="border-t">
-                  <td className="py-2 pr-2 font-mono text-xs text-muted-foreground">#{item.id}</td>
-                  <td className="py-2 pr-2">{item.description}</td>
-                  <td className="py-2 pr-2 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
-                  <td className="py-2 pr-2">
-                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
+                <tr key={item.id} className="border-t hover:bg-muted/40 transition-colors">
+                  <td className="py-3 px-3 font-mono text-xs text-muted-foreground">#{item.id}</td>
+                  <td className="py-3 px-3 max-w-xs truncate">{item.description}</td>
+                  <td className="py-3 px-3 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
+                  <td className="py-3 px-3">
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
                   </td>
-                  <td className="py-2 pr-2 text-xs">{new Date(item.reportedAt).toLocaleDateString()}</td>
-                  <td className="py-2 pr-2 text-sm">{item.resolverName ? `${item.resolverName}` : (item.resolverId ? `#${item.resolverId}` : '-')}</td>
-                  <td className="py-2 pr-2 text-xs">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
-                  <td className="py-2 text-xs">{item.resolutionNotes || '-'}</td>
+                  <td className="py-3 px-3 text-xs text-muted-foreground">{new Date(item.reportedAt).toLocaleDateString()}</td>
+                  <td className="py-3 px-3 text-sm">{item.resolverName ? `${item.resolverName}` : (item.resolverId ? `#${item.resolverId}` : '-')}</td>
+                  <td className="py-3 px-3 text-xs text-muted-foreground">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
+                  <td className="py-3 px-3 max-w-xs truncate text-xs">{item.resolutionNotes || '-'}</td>
                 </tr>
               ))}
             </tbody>
