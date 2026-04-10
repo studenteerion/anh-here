@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Clock, RefreshCw, Plus } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { ShiftsList } from '@/components/shifts/ShiftsList';
@@ -206,6 +206,26 @@ export default function ShiftsPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
       <div className="border rounded-lg bg-card">
+        <div className="p-4 sm:p-6 border-b space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-lg sm:text-xl font-semibold">Elenco turni</h2>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={() => setShowCreateModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuovo turno
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => fetchShifts(page, true)} disabled={refreshing}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                Aggiorna
+              </Button>
+            </div>
+          </div>
+        </div>
+
         <ShiftsFilter
           departmentFilter={departmentFilter}
           onDepartmentChange={setDepartmentFilter}
@@ -220,9 +240,6 @@ export default function ShiftsPage() {
           sortOrder={sortOrder}
           onSortOrderChange={setSortOrder}
           total={total}
-          onRefresh={() => fetchShifts(page, true)}
-          refreshing={refreshing}
-          onAdd={() => setShowCreateModal(true)}
         />
 
         <ShiftsList
