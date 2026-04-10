@@ -60,6 +60,14 @@ export function ShiftsFilter({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <Input
+            type="text"
+            placeholder="Cerca per nome turno..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="h-9 text-sm"
+        />
+
         <select
           value={departmentFilter}
           onChange={(e) => onDepartmentChange(e.target.value === 'all' ? 'all' : Number(e.target.value))}
@@ -70,14 +78,6 @@ export function ShiftsFilter({
             <option key={department.id} value={department.id}>{department.department_name}</option>
           ))}
         </select>
-
-        <Input
-          type="text"
-          placeholder="Cerca per nome turno..."
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="h-9 text-sm"
-        />
 
         <select
           value={sortBy}

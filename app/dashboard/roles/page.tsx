@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Shield, MoreHorizontal, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Shield, MoreHorizontal, Trash2, X } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { RoleCreateForm } from '@/components/roles/RoleCreateForm';
+import { RolesFilter } from '@/components/roles/RolesFilter';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,17 +22,29 @@ type Role = {
 export default function RolesPage() {
   const router = useRouter();
   const authFetch = useAuthFetch();
+  const [allItems, setAllItems] = useState<Role[]>([]);
   const [items, setItems] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
   const [total, setTotal] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [deleting, setDeleting] = useState<Role | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
+
+  // Filtra elementi client-side in base alla ricerca
+  const filteredItems = useMemo(() => {
+    if (!searchTerm.trim()) return items;
+    const term = searchTerm.toLowerCase();
+    return items.filter(item =>
+      item.role_name.toLowerCase().includes(term) ||
+      item.id.toString().includes(term)
+    );
+  }, [items, searchTerm]);
 
   const fetchRoles = async (targetPage = page, isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -89,25 +102,17 @@ export default function RolesPage() {
             <Shield className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-lg sm:text-xl font-semibold">Elenco ruoli</h2>
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuovo ruolo
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => fetchRoles(page, true)} disabled={refreshing}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Aggiorna
-            </Button>
-            <select
-              value={limit}
-              onChange={(e) => setLimit(Number(e.target.value))}
-              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-            >
-              <option value={10}>10</option>
-              <option value={15}>15</option>
-              <option value={30}>30</option>
-            </select>
-          </div>
+        </div>
+
+        <div className="p-4 sm:p-6 border-b">
+          <RolesFilter
+            onFilterChange={setSearchTerm}
+            onRefresh={() => fetchRoles(page, true)}
+            onCreateClick={() => setShowCreateModal(true)}
+            refreshing={refreshing}
+            limit={limit}
+            onLimitChange={(newLimit) => setLimit(newLimit)}
+          />
         </div>
 
         <div className="overflow-x-auto p-4 sm:p-6 pt-4">
@@ -122,9 +127,9 @@ export default function RolesPage() {
             <tbody>
               {loading ? (
                 <tr><td colSpan={3} className="py-4 text-muted-foreground">Caricamento...</td></tr>
-              ) : items.length === 0 ? (
+              ) : filteredItems.length === 0 ? (
                 <tr><td colSpan={3} className="py-4 text-muted-foreground">Nessun ruolo trovato</td></tr>
-              ) : items.map((item) => (
+              ) : filteredItems.map((item) => (
                 <tr
                   key={item.id}
                   className="border-t hover:bg-muted/40 cursor-pointer"
