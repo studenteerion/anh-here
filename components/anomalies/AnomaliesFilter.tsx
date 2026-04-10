@@ -1,8 +1,14 @@
 'use client';
 
-import { RefreshCw, Search } from 'lucide-react';
+import { RefreshCw, Search, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type AnomaliesFilterProps = {
   onFilterChange: (searchTerm: string, statusFilter: string) => void;
@@ -12,6 +18,10 @@ type AnomaliesFilterProps = {
   onStatusChange: (status: 'all' | 'open' | 'in_progress' | 'closed') => void;
   limit: number;
   onLimitChange: (limit: number) => void;
+  sortBy: 'id' | 'date';
+  onSortChange: (sort: 'id' | 'date') => void;
+  sortOrder: 'asc' | 'desc';
+  onSortOrderChange: (order: 'asc' | 'desc') => void;
 };
 
 export function AnomaliesFilter({
@@ -22,6 +32,10 @@ export function AnomaliesFilter({
   onStatusChange,
   limit,
   onLimitChange,
+  sortBy,
+  onSortChange,
+  sortOrder,
+  onSortOrderChange,
 }: AnomaliesFilterProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -41,6 +55,7 @@ export function AnomaliesFilter({
           className="w-full h-9 pl-10 pr-3 rounded-md border border-input bg-background text-sm"
         />
       </div>
+
       <select
         value={statusFilter}
         onChange={(e) => onStatusChange(e.target.value as any)}
@@ -51,6 +66,25 @@ export function AnomaliesFilter({
         <option value="in_progress">In lavorazione</option>
         <option value="closed">Chiuse</option>
       </select>
+
+      <select
+        value={sortBy}
+        onChange={(e) => onSortChange(e.target.value as 'id' | 'date')}
+        className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+      >
+        <option value="id">Ordina per ID</option>
+        <option value="date">Ordina per data</option>
+      </select>
+
+      <select
+        value={sortOrder}
+        onChange={(e) => onSortOrderChange(e.target.value as 'asc' | 'desc')}
+        className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+      >
+        <option value="asc">Crescente</option>
+        <option value="desc">Decrescente</option>
+      </select>
+
       <select
         value={limit}
         onChange={(e) => onLimitChange(Number(e.target.value))}
@@ -61,9 +95,9 @@ export function AnomaliesFilter({
         <option value={20}>20</option>
         <option value={30}>30</option>
       </select>
-      <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
-        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-        Aggiorna
+
+      <Button variant="outline" size="icon-sm" onClick={onRefresh} disabled={refreshing}>
+        <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
       </Button>
     </div>
   );
