@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Clock } from 'lucide-react';
+import { ChevronLeft, Clock, Users } from 'lucide-react';
+import ShiftEmployeeTable from '@/components/shifts/ShiftEmployeeTable';
 
 type Shift = {
   id: number;
@@ -158,55 +159,15 @@ export default function ShiftDetailPage() {
         </div>
 
         {/* Assigned Employees */}
-        <div className="p-4 sm:p-6">
-          <h2 className="text-lg font-semibold mb-4">
-            Dipendenti Assegnati ({employees.length})
-          </h2>
+        <div className="p-4 sm:p-6 border-t">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">
+              Dipendenti Assegnati ({employees.length})
+            </h2>
+          </div>
 
-          {employees.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nessun dipendente assegnato a questo turno
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-muted-foreground border-b bg-muted/40">
-                    <th className="py-3 px-3 font-semibold">ID</th>
-                    <th className="py-3 px-3 font-semibold">Nome</th>
-                    <th className="py-3 px-3 font-semibold">Cognome</th>
-                    <th className="py-3 px-3 font-semibold">Stato</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {employees.map((emp) => (
-                    <tr
-                      key={emp.id}
-                      className="border-t hover:bg-muted/40 transition-colors cursor-pointer"
-                      onClick={() => router.push(`/dashboard/employees/${emp.id}`)}
-                    >
-                      <td className="py-3 px-3 font-mono text-xs text-muted-foreground">
-                        #{emp.id}
-                      </td>
-                      <td className="py-3 px-3">{emp.first_name}</td>
-                      <td className="py-3 px-3">{emp.last_name}</td>
-                      <td className="py-3 px-3">
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            emp.status === 'active'
-                              ? 'bg-green-50 text-green-700'
-                              : 'bg-gray-50 text-gray-700'
-                          }`}
-                        >
-                          {emp.status === 'active' ? 'Attivo' : 'Inattivo'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <ShiftEmployeeTable employees={employees} loading={loading} />
         </div>
       </div>
     </div>
