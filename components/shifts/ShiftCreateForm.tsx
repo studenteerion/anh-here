@@ -16,6 +16,22 @@ const toIsoToday = (time: string) => {
   return `${today}T${time}:00`;
 };
 
+const toIsoTodayWithNextDayIfNeeded = (startTime: string, endTime: string) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const startIso = `${today}T${startTime}:00`;
+  let endIso = `${today}T${endTime}:00`;
+  
+  // If end time is before start time, assume it's next day (midnight crossing)
+  if (endTime < startTime) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    endIso = `${tomorrowStr}T${endTime}:00`;
+  }
+  
+  return { startIso, endIso };
+};
+
 export function ShiftCreateForm({ departments, onCreated, embedded }: ShiftCreateFormProps) {
   const authFetch = useAuthFetch();
   const [departmentId, setDepartmentId] = useState(departments[0]?.id || '');
@@ -34,14 +50,16 @@ export function ShiftCreateForm({ departments, onCreated, embedded }: ShiftCreat
 
     setCreating(true);
     try {
+      const { startIso, endIso } = toIsoTodayWithNextDayIfNeeded(startTime, endTime);
+      
       const res = await authFetch('/api/shifts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           departmentId: Number(departmentId),
           name: name.trim() || null,
-          startTime: toIsoToday(startTime),
-          endTime: toIsoToday(endTime),
+          startTime: startIso,
+          endTime: endIso,
         }),
       });
       const json = await res.json();

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { X, Clock, RefreshCw, Plus } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
+import { PaginationSection } from '@/components/ui/pagination-section';
 import { ShiftsList } from '@/components/shifts/ShiftsList';
 import { ShiftsFilter } from '@/components/shifts/ShiftsFilter';
 import { ShiftCreateForm } from '@/components/shifts/ShiftCreateForm';
@@ -30,6 +31,22 @@ const toTimeInputValue = (value: string) => {
 const toIsoToday = (time: string) => {
   const today = new Date().toISOString().slice(0, 10);
   return `${today}T${time}:00`;
+};
+
+const toIsoTodayWithNextDayIfNeeded = (startTime: string, endTime: string) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const startIso = `${today}T${startTime}:00`;
+  let endIso = `${today}T${endTime}:00`;
+  
+  // If end time is before start time, assume it's next day (midnight crossing)
+  if (endTime < startTime) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    endIso = `${tomorrowStr}T${endTime}:00`;
+  }
+  
+  return { startIso, endIso };
 };
 
 export default function ShiftsPage() {
@@ -158,14 +175,16 @@ export default function ShiftsPage() {
 
     setSaving(true);
     try {
+      const { startIso, endIso } = toIsoTodayWithNextDayIfNeeded(editingStartTime, editingEndTime);
+      
       const res = await authFetch(`/api/shifts/${editing.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           departmentId: editingDepartmentId,
           name: editingName.trim() || null,
-          startTime: toIsoToday(editingStartTime),
-          endTime: toIsoToday(editingEndTime),
+          startTime: startIso,
+          endTime: endIso,
         }),
       });
       const json = await res.json();
@@ -250,13 +269,16 @@ export default function ShiftsPage() {
           onDelete={setDeleting}
         />
 
-        <div className="px-4 sm:px-6 py-4 border-t flex items-center justify-between">
-          <span className="text-xs sm:text-sm text-muted-foreground">Pagina {page} di {departmentFilter === 'all' ? totalPages : 1}</span>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => fetchShifts(page - 1)} disabled={departmentFilter !== 'all' || page <= 1}>Precedente</Button>
-            <Button variant="outline" size="sm" onClick={() => fetchShifts(page + 1)} disabled={departmentFilter !== 'all' || page >= totalPages}>Successiva</Button>
-          </div>
-        </div>
+        <PaginationSection
+          currentPage={page}
+          totalPages={totalPages}
+          total={total}
+          hasPrevPage={page > 1}
+          hasNextPage={page < totalPages}
+          onPageChange={(newPage) => fetchShifts(newPage)}
+          position="bottom"
+          label="turni"
+        />
       </div>
 
       {showCreateModal && (
