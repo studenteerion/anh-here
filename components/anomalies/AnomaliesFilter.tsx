@@ -1,13 +1,10 @@
 'use client';
 
-import { RefreshCw, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 type AnomaliesFilterProps = {
   onFilterChange: (searchTerm: string, statusFilter: string) => void;
-  onRefresh: () => void;
-  refreshing: boolean;
   statusFilter: 'all' | 'open' | 'in_progress' | 'closed';
   onStatusChange: (status: 'all' | 'open' | 'in_progress' | 'closed') => void;
   limit: number;
@@ -20,8 +17,6 @@ type AnomaliesFilterProps = {
 
 export function AnomaliesFilter({
   onFilterChange,
-  onRefresh,
-  refreshing,
   statusFilter,
   onStatusChange,
   limit,
@@ -92,11 +87,6 @@ export function AnomaliesFilter({
           <option value={20}>20</option>
           <option value={30}>30</option>
         </select>
-
-        <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing} className="whitespace-nowrap">
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Aggiorna
-        </Button>
       </div>
     </div>
   );

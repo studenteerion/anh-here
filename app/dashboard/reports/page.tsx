@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { FileText, X } from 'lucide-react';
+import { FileText, X, Plus, RefreshCw } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { ReportCreateForm } from '@/components/reports/ReportCreateForm';
@@ -125,14 +125,22 @@ export default function ReportsPage() {
             <FileText className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-lg sm:text-xl font-semibold">Elenco report</h2>
           </div>
+
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuovo report
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => fetchReports(page, true)} disabled={refreshing}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Aggiorna
+            </Button>
+          </div>
         </div>
 
         <div className="p-4 sm:p-6 border-b">
           <ReportsFilter
             onFilterChange={setSearchTerm}
-            onRefresh={() => fetchReports(page, true)}
-            onCreateClick={() => setShowCreateModal(true)}
-            refreshing={refreshing}
             limit={limit}
             onLimitChange={(newLimit) => setLimit(newLimit)}
             sortBy={sortBy}

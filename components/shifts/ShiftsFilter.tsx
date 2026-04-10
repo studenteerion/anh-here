@@ -18,9 +18,6 @@ interface ShiftsFilterProps {
   sortOrder: 'asc' | 'desc';
   onSortOrderChange: (value: 'asc' | 'desc') => void;
   total: number;
-  onRefresh: () => void;
-  refreshing: boolean;
-  onAdd?: () => void;
 }
 
 export function ShiftsFilter({
@@ -37,9 +34,6 @@ export function ShiftsFilter({
   sortOrder,
   onSortOrderChange,
   total,
-  onRefresh,
-  refreshing,
-  onAdd,
 }: ShiftsFilterProps) {
   return (
     <div className="p-4 sm:p-6 border-b space-y-3">
@@ -47,7 +41,7 @@ export function ShiftsFilter({
         <div className="text-sm text-muted-foreground">Totale turni: {total}</div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
         <Input
             type="text"
             placeholder="Cerca per nome turno..."
@@ -95,19 +89,6 @@ export function ShiftsFilter({
           <option value={15}>15</option>
           <option value={30}>30</option>
         </select>
-
-        <div className="flex gap-2">
-          {onAdd && (
-            <Button size="sm" onClick={onAdd}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuovo
-            </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Aggiorna
-          </Button>
-        </div>
       </div>
     </div>
   );

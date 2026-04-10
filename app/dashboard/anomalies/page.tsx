@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { AnomaliesFilter } from '@/components/anomalies/AnomaliesFilter';
@@ -133,13 +133,16 @@ export default function AnomaliesPage() {
             <AlertTriangle className="h-5 w-5 text-muted-foreground" />
             <h1 className="text-lg sm:text-xl font-semibold">Anomalie</h1>
           </div>
+
+          <Button variant="outline" size="sm" onClick={() => fetchAnomalies(page, true)} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Aggiorna
+          </Button>
         </div>
 
         <div className="p-4 sm:p-6 border-b">
           <AnomaliesFilter
             onFilterChange={(search, status) => setSearchTerm(search)}
-            onRefresh={() => fetchAnomalies(page, true)}
-            refreshing={refreshing}
             statusFilter={statusFilter}
             onStatusChange={setStatusFilter}
             limit={limit}

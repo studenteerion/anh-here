@@ -1,14 +1,10 @@
 'use client';
 
-import { Plus, RefreshCw, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 type RolesFilterProps = {
   onFilterChange: (searchTerm: string) => void;
-  onRefresh: () => void;
-  onCreateClick: () => void;
-  refreshing: boolean;
   limit: number;
   onLimitChange: (limit: number) => void;
   sortBy: 'name' | 'id';
@@ -19,9 +15,6 @@ type RolesFilterProps = {
 
 export function RolesFilter({
   onFilterChange,
-  onRefresh,
-  onCreateClick,
-  refreshing,
   limit,
   onLimitChange,
   sortBy,
@@ -78,16 +71,6 @@ export function RolesFilter({
           <option value={15}>15</option>
           <option value={30}>30</option>
         </select>
-
-        <Button size="sm" onClick={onCreateClick} className="whitespace-nowrap">
-          <Plus className="h-4 w-4 mr-2" />
-          Nuovo
-        </Button>
-
-        <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing} className="whitespace-nowrap">
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Aggiorna
-        </Button>
       </div>
     </div>
   );
