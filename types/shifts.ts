@@ -4,8 +4,8 @@
 
 export interface Shift {
   id: number;
-  department_id?: number;
-  name: string;
+  department_id: number;
+  name: string | null;
   start_time: string;
   end_time: string;
   created_at?: Date;

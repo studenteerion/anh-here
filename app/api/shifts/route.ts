@@ -176,8 +176,13 @@ export async function POST(req: NextRequest) {
       return errorResponse("Invalid date format. Use ISO format: YYYY-MM-DDTHH:mm:ss", 422);
     }
 
-    if (start >= end) {
-      return errorResponse("Start time must be before end time", 422);
+    // Allow shifts that cross midnight (end time on next day)
+    // Only reject if end is before or equal to start on the same day
+    const durationMs = end.getTime() - start.getTime();
+    const minDurationMs = 15 * 60 * 1000; // 15 minutes minimum
+    
+    if (durationMs < minDurationMs) {
+      return errorResponse("Shift duration must be at least 15 minutes", 422);
     }
 
     const shiftId = await createShift(departmentId, name || null, start, end);

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getAllEmployees, getEmployeeById, createEmployee } from "@/lib/db/employees";
-import { countRows, exists } from "@/lib/db/utils";
+import { getAllEmployees, getEmployeeById, createEmployee, getEmployeesCount } from "@/lib/db/employees";
+import { exists } from "@/lib/db/utils";
 import { Employee } from "@/types/employees";
 import { isValidEmployeeStatus, EMPLOYEE_STATUSES } from "@/lib/validation/enums";
 import crypto from "crypto";
@@ -173,8 +173,20 @@ export async function GET(req: NextRequest) {
 
     const url = new URL(req.url);
     const statusFilter = url.searchParams.get("status");
+    const searchFilter = (url.searchParams.get("search") || "").trim();
+    const sortByParam = (url.searchParams.get("sortBy") || "created_at").trim();
+    const sortOrderParam = (url.searchParams.get("sortOrder") || "desc").trim().toLowerCase();
     const pageParam = url.searchParams.get("page");
     const limitParam = url.searchParams.get("limit");
+
+    const allowedSortBy = ["created_at", "first_name", "last_name", "id"] as const;
+    const allowedSortOrder = ["asc", "desc"] as const;
+    const sortBy = allowedSortBy.includes(sortByParam as any)
+      ? (sortByParam as (typeof allowedSortBy)[number])
+      : "created_at";
+    const sortOrder = allowedSortOrder.includes(sortOrderParam as any)
+      ? (sortOrderParam as (typeof allowedSortOrder)[number])
+      : "desc";
     
     // Se non specifici pagination parameters, restituisci tutto
     const hasPagination = pageParam || limitParam;
@@ -193,20 +205,22 @@ export async function GET(req: NextRequest) {
 
       employees = await getAllEmployees({
         status: statusFilter as any,
+        search: searchFilter || undefined,
+        sortBy,
+        sortOrder,
         limit,
         offset,
       });
-      let whereClause = '';
-      const params: any[] = [];
-      if (statusFilter) {
-        whereClause = 'status = ?';
-        params.push(statusFilter);
-      }
-      total = await countRows('employees', whereClause || undefined, params);
+
+      total = await getEmployeesCount({
+        status: statusFilter as any,
+        search: searchFilter || undefined,
+      });
+
       const totalPages = Math.ceil(total / limit) || 1;
 
       // Valida pagina fuori range
-      if (page > totalPages) {
+      if (page > totalPages && total > 0) {
         return errorResponse(`Page ${page} does not exist. Total pages: ${totalPages}`, 400);
       }
 
@@ -229,6 +243,9 @@ export async function GET(req: NextRequest) {
       // Restituisci tutti i risultati
       employees = await getAllEmployees({
         status: statusFilter as any,
+        search: searchFilter || undefined,
+        sortBy,
+        sortOrder,
       });
       response = {
         employees,
