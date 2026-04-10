@@ -169,6 +169,7 @@ export async function POST(req: NextRequest) {
       return errorResponse("Missing required fields: departmentId, startTime, endTime", 422);
     }
 
+    // Parse ISO strings to validate format and check duration
     const start = new Date(startTime);
     const end = new Date(endTime);
 
@@ -176,8 +177,7 @@ export async function POST(req: NextRequest) {
       return errorResponse("Invalid date format. Use ISO format: YYYY-MM-DDTHH:mm:ss", 422);
     }
 
-    // Allow shifts that cross midnight (end time on next day)
-    // Only reject if end is before or equal to start on the same day
+    // Check duration (end time on next day is allowed)
     const durationMs = end.getTime() - start.getTime();
     const minDurationMs = 15 * 60 * 1000; // 15 minutes minimum
     
@@ -185,7 +185,11 @@ export async function POST(req: NextRequest) {
       return errorResponse("Shift duration must be at least 15 minutes", 422);
     }
 
-    const shiftId = await createShift(departmentId, name || null, start, end);
+    // Convert ISO strings to MySQL datetime format (remove 'Z' if present, use local time as-is)
+    const startTimeStr = startTime.replace('Z', '').replace('T', ' ').slice(0, 19);
+    const endTimeStr = endTime.replace('Z', '').replace('T', ' ').slice(0, 19);
+
+    const shiftId = await createShift(departmentId, name || null, startTimeStr as any, endTimeStr as any);
 
     return successResponse({
       id: shiftId,
