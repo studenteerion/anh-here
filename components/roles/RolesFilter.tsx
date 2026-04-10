@@ -1,14 +1,8 @@
 'use client';
 
-import { Plus, RefreshCw, Search, MoreHorizontal } from 'lucide-react';
+import { Plus, RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 type RolesFilterProps = {
   onFilterChange: (searchTerm: string) => void;
@@ -82,23 +76,15 @@ export function RolesFilter({
         <option value={30}>30</option>
       </select>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon-sm">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onCreateClick}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nuovo ruolo
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onRefresh} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Aggiorna
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button size="sm" onClick={onCreateClick}>
+        <Plus className="h-4 w-4 mr-2" />
+        Nuovo
+      </Button>
+
+      <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
+        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+        Aggiorna
+      </Button>
     </div>
   );
 }
