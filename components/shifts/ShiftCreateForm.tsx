@@ -11,13 +11,21 @@ interface ShiftCreateFormProps {
   embedded?: boolean;
 }
 
+const getLocalDateStr = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const toIsoToday = (time: string) => {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateStr();
   return `${today}T${time}:00`;
 };
 
 const toIsoTodayWithNextDayIfNeeded = (startTime: string, endTime: string) => {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateStr();
   const startIso = `${today}T${startTime}:00`;
   let endIso = `${today}T${endTime}:00`;
   
@@ -25,7 +33,10 @@ const toIsoTodayWithNextDayIfNeeded = (startTime: string, endTime: string) => {
   if (endTime < startTime) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    const tomorrowYear = tomorrow.getFullYear();
+    const tomorrowMonth = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const tomorrowDay = String(tomorrow.getDate()).padStart(2, '0');
+    const tomorrowStr = `${tomorrowYear}-${tomorrowMonth}-${tomorrowDay}`;
     endIso = `${tomorrowStr}T${endTime}:00`;
   }
   
