@@ -31,9 +31,9 @@ import { Attendance } from "@/types/attendances";
  *         in: query
  *         schema:
  *           type: string
- *           enum: [today, week, month, custom]
- *         default: month
- *         description: Time period to retrieve
+ *           enum: [today, week, month, all, custom]
+ *         default: all
+ *         description: Time period to retrieve. If not specified, defaults to "all" (entire history)
  *       - name: from
  *         in: query
  *         schema:
@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-  const period = searchParams.get("period") || "month";
+  const period = searchParams.get("period") || "all";
     const fromParam = searchParams.get("from");
     const toParam = searchParams.get("to");
 
@@ -146,6 +146,12 @@ export async function GET(req: NextRequest) {
         new Date().getMonth() + 1,
         0
       );
+      endDate.setHours(23, 59, 59, 999);
+    } else if (period === "all") {
+      // Retrieve all data: set start to year 1900 and end to year 2100
+      startDate = new Date(1900, 0, 1);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(2100, 11, 31);
       endDate.setHours(23, 59, 59, 999);
     } else if (period === "custom" && fromParam && toParam) {
       startDate = new Date(fromParam);
