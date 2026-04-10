@@ -5,8 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Clock, Save, Users, AlertCircle } from 'lucide-react';
-import ShiftEmployeeTable from '@/components/shifts/ShiftEmployeeTable';
+import { ArrowLeft, Clock, Save, AlertCircle } from 'lucide-react';
+import EmployeeList from '@/components/employees/EmployeeList';
 
 type Shift = {
   id: number;
@@ -16,12 +16,16 @@ type Shift = {
   department_id: number;
 };
 
-type EmployeeAssignment = {
+type EmployeeRow = {
   id: number;
   first_name: string;
   last_name: string;
+  role_id: number;
+  role_name?: string | null;
+  department_id: number;
+  department_name?: string | null;
   status: 'active' | 'inactive';
-  attendance_count?: number;
+  created_at: string;
 };
 
 type Department = {
@@ -46,7 +50,7 @@ export default function ShiftDetailPage() {
   const [shiftEndTime, setShiftEndTime] = useState('');
   const [shiftDepartmentId, setShiftDepartmentId] = useState('');
 
-  const [employees, setEmployees] = useState<EmployeeAssignment[]>([]);
+  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
 
   const departmentNameById = useMemo(() => {
@@ -95,7 +99,18 @@ export default function ShiftDetailPage() {
       }
 
       if (empJson.status === 'success') {
-        setEmployees(empJson.data.employees || []);
+        const emps = empJson.data.employees || [];
+        // Convert employees to EmployeeRow format
+        const convertedEmps: EmployeeRow[] = emps.map((emp: any) => ({
+          id: emp.id,
+          first_name: emp.first_name,
+          last_name: emp.last_name,
+          role_id: 0,
+          department_id: 0,
+          status: emp.status || 'active',
+          created_at: new Date().toISOString(),
+        }));
+        setEmployees(convertedEmps);
       }
     } catch (err: any) {
       setError(err?.message || 'Errore durante il caricamento');
@@ -264,17 +279,8 @@ export default function ShiftDetailPage() {
         </div>
       </div>
 
-      {/* Employees Section */}
-      <div className="border rounded-lg bg-card">
-        <div className="p-4 sm:p-6 border-b flex items-center gap-2">
-          <Users className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold">Dipendenti assegnati</h2>
-        </div>
-
-        <div className="overflow-x-auto p-4 sm:p-6 pt-4">
-          <ShiftEmployeeTable employees={employees} loading={false} />
-        </div>
-      </div>
+      {/* Employees Section - Using EmployeeList Component */}
+      <EmployeeList staticData={employees} />
     </div>
   );
 }
