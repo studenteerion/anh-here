@@ -44,14 +44,18 @@ export default function ShiftDetailPage() {
         // Fetch shift details
         const shiftRes = await authFetch(`/api/shifts`);
         const shiftJson = await shiftRes.json();
+        let foundShift: Shift | null = null;
+
         if (shiftJson.status === 'success') {
-          const foundShift = (shiftJson.data.shifts || []).find(
+          foundShift = (shiftJson.data.shifts || []).find(
             (s: Shift) => s.id === shiftId
           );
           if (foundShift) {
             setShift(foundShift);
           } else {
             setError('Turno non trovato');
+            setLoading(false);
+            return;
           }
         }
 
@@ -66,19 +70,11 @@ export default function ShiftDetailPage() {
           setDepartments(deptMap);
         }
 
-        // Fetch employees assigned to this shift (through attendances)
-        const empRes = await authFetch('/api/employees?limit=999');
+        // Fetch employees assigned to this shift via dedicated endpoint
+        const empRes = await authFetch(`/api/shifts/${shiftId}/employees`);
         const empJson = await empRes.json();
         if (empJson.status === 'success') {
-          // For now, show all active employees in the shift's department
-          // In a real app, you'd have a specific endpoint to get employees by shift
-          const allEmployees = empJson.data.employees || [];
-          if (shift) {
-            const filteredEmployees = allEmployees.filter(
-              (e: any) => e.department_id === shift.department_id && e.status === 'active'
-            );
-            setEmployees(filteredEmployees);
-          }
+          setEmployees(empJson.data.employees || []);
         }
       } catch (err: any) {
         setError(err?.message || 'Errore durante il caricamento');
@@ -89,7 +85,7 @@ export default function ShiftDetailPage() {
     };
 
     fetchData();
-  }, [shiftId]);
+  }, [shiftId, authFetch]);
 
   if (loading) {
     return (
