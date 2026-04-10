@@ -5,15 +5,13 @@ export async function getEmployeeAnomalies(
   employeeId: number,
   filters?: AnomalyFilter
 ): Promise<Anomaly[]> {
-  let query = `SELECT a.id, a.description, a.created_at, a.reporter_id, a.employee_id, a.resolver_id, a.status, a.resolution_notes, a.resolved_at,
-      e.full_name as employee_name,
-      r.full_name as reporter_name,
-      res.full_name as resolver_name
+  let query = `SELECT a.id, a.description, a.created_at, a.reporter_id, a.resolver_id, a.status, a.resolution_notes, a.resolved_at,
+      CONCAT(r.first_name, ' ', r.last_name) as reporter_name,
+      CONCAT(res.first_name, ' ', res.last_name) as resolver_name
       FROM anomalies a
-      LEFT JOIN employees e ON a.employee_id = e.id
       LEFT JOIN employees r ON a.reporter_id = r.id
       LEFT JOIN employees res ON a.resolver_id = res.id
-      WHERE a.employee_id = ?`;
+      WHERE a.reporter_id = ?`;
   
   const params: any[] = [employeeId];
 

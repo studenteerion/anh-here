@@ -173,8 +173,6 @@ export async function GET(req: NextRequest) {
         anomalies: anomalies.map((a: any) => {
           const anomaly: any = {
             id: a.id,
-            employee_id: a.employee_id,
-            employeeName: a.employee_name,
             description: a.description,
             status: a.status,
             reportedAt: a.created_at,
@@ -214,8 +212,6 @@ export async function GET(req: NextRequest) {
         anomalies: anomalies.map((a: any) => {
           const anomaly: any = {
             id: a.id,
-            employee_id: a.employee_id,
-            employeeName: a.employee_name,
             description: a.description,
             status: a.status,
             reportedAt: a.created_at,
