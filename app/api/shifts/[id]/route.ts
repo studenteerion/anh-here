@@ -156,10 +156,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       }
     }
 
+    // Convert ISO strings to MySQL datetime format (remove 'Z' if present, use local time as-is)
+    const startTimeStr = startTime ? startTime.replace('Z', '').replace('T', ' ').slice(0, 19) : undefined;
+    const endTimeStr = endTime ? endTime.replace('Z', '').replace('T', ' ').slice(0, 19) : undefined;
+
     const updated = await updateShift(shiftId, {
       name,
-      startTime: startTime ? new Date(startTime) : undefined,
-      endTime: endTime ? new Date(endTime) : undefined,
+      startTime: startTimeStr as any,
+      endTime: endTimeStr as any,
       departmentId,
     });
 

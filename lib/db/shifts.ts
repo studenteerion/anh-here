@@ -44,9 +44,9 @@ export async function getShiftsByDepartment(departmentId: number): Promise<Shift
 
 export async function createShift(
   departmentId: number,
-  name: string,
-  startTime: Date,
-  endTime: Date
+  name: string | null,
+  startTime: Date | string,
+  endTime: Date | string
 ): Promise<number> {
   const [result]: any = await pool.query(
     `INSERT INTO shifts (department_id, name, start_time, end_time)
@@ -61,8 +61,8 @@ export async function updateShift(
   shiftId: number,
   updates: {
     name?: string;
-    startTime?: Date;
-    endTime?: Date;
+    startTime?: Date | string;
+    endTime?: Date | string;
     departmentId?: number;
   }
 ): Promise<boolean> {
