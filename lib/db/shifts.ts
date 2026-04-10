@@ -120,3 +120,21 @@ export async function getShiftsByEmployee(employeeId: number): Promise<Shift[]> 
   );
   return rows as Shift[];
 }
+
+export async function getEmployeesByShift(shiftId: number): Promise<any[]> {
+  const [rows]: any = await pool.query(
+    `SELECT DISTINCT
+      e.id,
+      e.first_name,
+      e.last_name,
+      e.status,
+      COUNT(a.id) as attendance_count
+    FROM employees e
+    INNER JOIN attendances a ON e.id = a.employee_id
+    WHERE a.shift_id = ?
+    GROUP BY e.id, e.first_name, e.last_name, e.status
+    ORDER BY e.first_name, e.last_name`,
+    [shiftId]
+  );
+  return rows || [];
+}
