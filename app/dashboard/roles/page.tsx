@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Shield, MoreHorizontal, Trash2, X, Plus, RefreshCw, Eye, Edit } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
+import { PaginationSection } from '@/components/ui/pagination-section';
 import { useRouter } from 'next/navigation';
 import { RoleCreateForm } from '@/components/roles/RoleCreateForm';
 import { RolesFilter } from '@/components/roles/RolesFilter';
@@ -209,14 +210,16 @@ export default function RolesPage() {
           </table>
         </div>
 
-        <div className="px-4 sm:px-6 py-4 border-t flex items-center justify-between">
-          <span className="text-xs sm:text-sm text-muted-foreground">Totale ruoli: {total}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm text-muted-foreground">Pagina {page} di {totalPages}</span>
-            <Button variant="outline" size="sm" onClick={() => fetchRoles(page - 1)} disabled={page <= 1}>Precedente</Button>
-            <Button variant="outline" size="sm" onClick={() => fetchRoles(page + 1)} disabled={page >= totalPages}>Successiva</Button>
-          </div>
-        </div>
+        <PaginationSection
+          currentPage={page}
+          totalPages={totalPages}
+          total={total}
+          hasPrevPage={page > 1}
+          hasNextPage={page < totalPages}
+          onPageChange={(newPage) => fetchRoles(newPage)}
+          position="bottom"
+          label="ruoli"
+        />
       </div>
 
       {showCreateModal && (
