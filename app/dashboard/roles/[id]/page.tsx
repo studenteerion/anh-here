@@ -216,7 +216,8 @@ export default function RoleDetailPage() {
 
       const json = await res.json();
       if (json.status !== 'success') {
-        throw new Error(json.message || 'Errore durante la modifica');
+        setError(json.message || 'Errore durante la modifica del permesso');
+        return;
       }
 
       setRolePermissions((prev) =>
@@ -224,8 +225,11 @@ export default function RoleDetailPage() {
           p.id === permissionId ? { ...p, assigned: isAllowed } : p
         )
       );
+      setSuccess('Permesso modificato con successo');
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      console.error('Errore durante la modifica del permesso:', err?.message);
+      setError(err?.message || 'Errore durante la modifica del permesso');
     }
   };
 
@@ -270,8 +274,16 @@ export default function RoleDetailPage() {
         </Button>
       </div>
 
-      {error && <div className="text-sm text-red-600">{error}</div>}
-      {success && <div className="text-sm text-green-600">{success}</div>}
+      {error && (
+        <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="p-3 rounded-md bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800">
+          {success}
+        </div>
+      )}
 
       <div className="border rounded-lg bg-card">
         <div className="p-4 sm:p-6 border-b flex items-center gap-2">
