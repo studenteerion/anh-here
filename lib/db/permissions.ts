@@ -114,12 +114,21 @@ export async function createPermission(permissionCode: string, description: stri
 
 export async function editRolePermission(roleId: number, permissionId: number, allowed: number): Promise<boolean> {
   try {
-    await pool.query(
-      `INSERT INTO role_permission (role_id, permission_id, allowed) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE allowed = ?`,
-      [roleId, permissionId, allowed ? 1 : 0, allowed ? 1 : 0]
-    );
+    if (allowed) {
+      await pool.query(
+        `INSERT INTO role_permission (role_id, permission_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE permission_id = permission_id`,
+        [roleId, permissionId]
+      );
+    } else {
+      // Se allowed = 0, elimina il record (il permesso non è più assegnato)
+      await pool.query(
+        `DELETE FROM role_permission WHERE role_id = ? AND permission_id = ?`,
+        [roleId, permissionId]
+      );
+    }
     return true;
   } catch (e) {
+    console.error("Error editing role permission:", e);
     return false;
   }
 }
@@ -130,7 +139,7 @@ export async function getRolePermissions(roleId: number): Promise<Permission[]> 
       `SELECT p.id, p.permission_code, p.description
        FROM permissions p
        JOIN role_permission rp ON p.id = rp.permission_id
-       WHERE rp.role_id = ? AND rp.allowed = 1
+       WHERE rp.role_id = ?
        ORDER BY p.permission_code`,
       [roleId]
     );

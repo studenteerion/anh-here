@@ -45,3 +45,43 @@ export async function updateRole(roleId: number, roleName: string): Promise<bool
 export async function deleteRole(roleId: number): Promise<boolean> {
   return await deleteById('roles', roleId);
 }
+
+export async function getEmployeesByRole(
+  roleId: number,
+  filters?: {
+    status?: 'active' | 'inactive';
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }
+) {
+  let query = `SELECT id, first_name, last_name, role_id, department_id, status, created_at, updated_at
+    FROM employees WHERE role_id = ?`;
+  const params: any[] = [roleId];
+
+  if (filters?.status) {
+    query += ` AND status = ?`;
+    params.push(filters.status);
+  }
+
+  if (filters?.search?.trim()) {
+    const term = `%${filters.search.trim()}%`;
+    query += ` AND (
+      first_name LIKE ? OR
+      last_name LIKE ? OR
+      CONCAT(first_name, ' ', last_name) LIKE ? OR
+      CAST(id AS CHAR) LIKE ?
+    )`;
+    params.push(term, term, term, term);
+  }
+
+  query += ` ORDER BY first_name ASC, last_name ASC`;
+
+  if (filters?.limit) {
+    query += ` LIMIT ? OFFSET ?`;
+    params.push(filters.limit, filters.offset || 0);
+  }
+
+  const [rows]: any = await pool.query(query, params);
+  return rows;
+}

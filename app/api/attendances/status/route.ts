@@ -56,41 +56,28 @@ export async function GET(req: NextRequest) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
-    // Ottieni timbro aperto
+    // Ottieni timbro aperto (DB fornisce hours_open)
     const openAttendance = await getOpenAttendance(employeeId);
 
-    // Ottieni tutti i timbri di oggi
+    // Ottieni tutti i timbri di oggi (DB fornisce "hours" per ciascuna riga)
     const todayAttendances = await getTodayAttendance(employeeId);
 
-    // Calcola ore lavorate oggi
+    // Somma ore calcolate dal DB
     let totalHoursToday = 0;
     for (const attendance of todayAttendances) {
-      if (attendance.end_datetime) {
-        const hours = await calculateWorkedHours(
-          attendance.start_datetime,
-          attendance.end_datetime
-        );
-        totalHoursToday += hours;
+      if (attendance.hours !== null && attendance.hours !== undefined) {
+        totalHoursToday += Number(attendance.hours);
       }
     }
 
-    // Se c'è un timbro aperto, aggiungi ore fino ad ora
-    if (openAttendance) {
-      const hoursOpen = await calculateWorkedHours(
-        openAttendance.start_datetime,
-        new Date()
-      );
-      totalHoursToday += hoursOpen;
-    }
-
-    const lastAttendance =
-      todayAttendances.length > 0 ? todayAttendances[0] : null;
+    // Cerca l'ultima uscita (primo record con end_datetime)
+    const lastClosedAttendance = todayAttendances.find((att: any) => att.end_datetime);
 
     return successResponse({
-      clockedIn: openAttendance ? true : false,
+      clockedIn: !!openAttendance,
       checkinTime: openAttendance ? openAttendance.start_datetime : null,
       hoursWorkedToday: parseFloat(totalHoursToday.toFixed(2)),
-      lastCheckout: lastAttendance?.end_datetime || null,
+      lastCheckout: lastClosedAttendance?.end_datetime || null,
       attendancesToday: todayAttendances.length,
     }, undefined, 200);
   } catch (error) {

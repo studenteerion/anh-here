@@ -3,6 +3,7 @@ import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@
 import { checkUserPermission } from "@/lib/db/permissions";
 import {
   getAttendanceHistory,
+  getAttendanceHistoryCount,
   calculateWorkedHours,
 } from "@/lib/db/attendances";
 import { getLeaveRequestsByDateRange } from "@/lib/db/requests";
@@ -118,7 +119,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const period = searchParams.get("period") || "month";
+  const period = searchParams.get("period") || "month";
     const fromParam = searchParams.get("from");
     const toParam = searchParams.get("to");
 
@@ -155,137 +156,209 @@ export async function GET(req: NextRequest) {
       return errorResponse("Invalid period or missing dates", 422);
     }
 
-    // Ottieni presenze nel periodo
-    const attendances = await getAttendanceHistory(
-      requestedEmployeeId,
-      startDate,
-      endDate
-    );
-
-    // Ottieni permessi approvati nel periodo
+    // Ottieni permessi approvati nel periodo (una sola volta)
     const leaveRequests = await getLeaveRequestsByDateRange(
       requestedEmployeeId,
       startDate,
       endDate
     );
 
-    // Raggruppa presenze per giorno
-    const daysByDate: Record<
-      string,
-      {
-        date: string;
-        attendances: any[];
-        totalHours: number;
-        leaves: any[];
-      }
-    > = {};
-
-    for (const attendance of attendances) {
-      const date = new Date(attendance.start_datetime)
-        .toISOString()
-        .split("T")[0];
-
-      if (!daysByDate[date]) {
-        daysByDate[date] = {
-          date,
-          attendances: [],
-          totalHours: 0,
-          leaves: [],
-        };
-      }
-
-      daysByDate[date].attendances.push({
-        id: attendance.id,
-        checkin: attendance.start_datetime,
-        checkout: attendance.end_datetime,
-        hours: attendance.end_datetime
-          ? await calculateWorkedHours(
-              attendance.start_datetime,
-              attendance.end_datetime
-            )
-          : null,
-      });
-
-      if (attendance.end_datetime) {
-        const hours = await calculateWorkedHours(
-          attendance.start_datetime,
-          attendance.end_datetime
-        );
-        daysByDate[date].totalHours += hours;
-      }
-    }
-
-    // Aggiungi permessi al giorno corrispondente
-    for (const leave of leaveRequests) {
-      const date = new Date(leave.start_datetime)
-        .toISOString()
-        .split("T")[0];
-
-      if (!daysByDate[date]) {
-        daysByDate[date] = {
-          date,
-          attendances: [],
-          totalHours: 0,
-          leaves: [],
-        };
-      }
-
-      daysByDate[date].leaves.push({
-        id: leave.id,
-        type: leave.type,
-        startDate: leave.start_datetime,
-        endDate: leave.end_datetime,
-      });
-    }
-
-    // Converti in array e ordina
-    const history = Object.values(daysByDate)
-      .map((day) => ({
-        ...day,
-        totalHours: parseFloat(day.totalHours.toFixed(2)),
-      }))
-      .sort(
-        (a, b) =>
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-
-    // Handle optional pagination
+    // Gestisci paginazione (coerente con /api/anomalies)
     const pageParam = searchParams.get("page");
     const limitParam = searchParams.get("limit");
-    const hasPagination = pageParam || limitParam;
-    
+    const hasPagination = pageParam !== null || limitParam !== null;
+
+    let attendances: any[];
     let response: any;
 
     if (hasPagination) {
       const page = pageParam ? parseInt(pageParam) : 1;
       const limit = limitParam ? parseInt(limitParam) : 50;
       const offset = (page - 1) * limit;
-      const total = history.length;
-      const totalPages = Math.ceil(total / limit) || 1;
+
+      // Build filters object same as anomalies pattern
+      const filters: any = {};
+      if (limit && limit > 0) filters.limit = limit;
+      if (offset && offset > 0) filters.offset = offset;
+
+      // Ottieni count totale delle attendances
+      const totalAttendances = await getAttendanceHistoryCount(
+        requestedEmployeeId,
+        startDate,
+        endDate
+      );
+      const totalPages = Math.ceil(totalAttendances / limit) || 1;
 
       // Valida pagina fuori range
-      if (page > totalPages) {
+      if (page > totalPages && totalAttendances > 0) {
         return errorResponse(`Page ${page} does not exist. Total pages: ${totalPages}`, 400);
       }
 
-      const paginatedHistory = history.slice(offset, offset + limit);
+      // Ottieni attendances PAGINATE dal database
+      attendances = await getAttendanceHistory(
+        requestedEmployeeId,
+        startDate,
+        endDate,
+        filters
+      );
+
+      // Raggruppa le attendances paginate per giorno
+      const daysByDate: Record<string, {
+        date: string;
+        attendances: any[];
+        totalHours: number;
+        leaves: any[];
+      }> = {};
+
+      for (const attendance of attendances) {
+        const date = new Date(attendance.start_datetime)
+          .toISOString()
+          .split("T")[0];
+
+        if (!daysByDate[date]) {
+          daysByDate[date] = {
+            date,
+            attendances: [],
+            totalHours: 0,
+            leaves: [],
+          };
+        }
+
+        // DB returns a numeric 'hours' field (rounded to 2 decimals) or null for open
+        const hours = attendance.hours !== undefined ? Number(attendance.hours) : null;
+
+        daysByDate[date].attendances.push({
+          id: attendance.id,
+          checkin: attendance.start_datetime,
+          checkout: attendance.end_datetime,
+          hours,
+        });
+
+        if (hours !== null) {
+          daysByDate[date].totalHours += hours;
+        }
+      }
+
+      // Aggiungi permessi ai giorni presenti
+      for (const leave of leaveRequests) {
+        const date = new Date(leave.start_datetime)
+          .toISOString()
+          .split("T")[0];
+
+        if (daysByDate[date]) {
+          daysByDate[date].leaves.push({
+            id: leave.id,
+            type: leave.type,
+            startDate: leave.start_datetime,
+            endDate: leave.end_datetime,
+          });
+        }
+      }
+
+      // Converti in array e ordina per data
+      const history = Object.values(daysByDate)
+        .map((day) => ({
+          ...day,
+          totalHours: parseFloat(day.totalHours.toFixed(2)),
+        }))
+        .sort(
+          (a, b) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
 
       response = {
         period,
         startDate,
         endDate,
-        history: paginatedHistory,
-        totalDays: total,
+        history,
+        totalDays: history.length,
         pagination: {
           page,
           limit,
-          total,
+          total: totalAttendances,
           totalPages,
           hasNextPage: page < totalPages,
           hasPrevPage: page > 1,
         },
       };
     } else {
+      // Nessuna paginazione - ottieni tutto (pass no filters)
+      attendances = await getAttendanceHistory(
+        requestedEmployeeId,
+        startDate,
+        endDate
+      );
+
+      // Raggruppa per giorno
+      const daysByDate: Record<string, {
+        date: string;
+        attendances: any[];
+        totalHours: number;
+        leaves: any[];
+      }> = {};
+
+      for (const attendance of attendances) {
+        const date = new Date(attendance.start_datetime)
+          .toISOString()
+          .split("T")[0];
+
+        if (!daysByDate[date]) {
+          daysByDate[date] = {
+            date,
+            attendances: [],
+            totalHours: 0,
+            leaves: [],
+          };
+        }
+
+        const hours = attendance.hours !== undefined ? Number(attendance.hours) : null;
+
+        daysByDate[date].attendances.push({
+          id: attendance.id,
+          checkin: attendance.start_datetime,
+          checkout: attendance.end_datetime,
+          hours,
+        });
+
+        if (hours !== null) {
+          daysByDate[date].totalHours += hours;
+        }
+      }
+
+      // Aggiungi permessi
+      for (const leave of leaveRequests) {
+        const date = new Date(leave.start_datetime)
+          .toISOString()
+          .split("T")[0];
+
+        if (!daysByDate[date]) {
+          daysByDate[date] = {
+            date,
+            attendances: [],
+            totalHours: 0,
+            leaves: [],
+          };
+        }
+
+        daysByDate[date].leaves.push({
+          id: leave.id,
+          type: leave.type,
+          startDate: leave.start_datetime,
+          endDate: leave.end_datetime,
+        });
+      }
+
+      // Converti in array e ordina per data
+      const history = Object.values(daysByDate)
+        .map((day) => ({
+          ...day,
+          totalHours: parseFloat(day.totalHours.toFixed(2)),
+        }))
+        .sort(
+          (a, b) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+
       response = {
         period,
         startDate,
