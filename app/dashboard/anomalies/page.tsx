@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, X, Plus } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { AnomaliesFilter } from '@/components/anomalies/AnomaliesFilter';
+import { AnomalyCreateForm } from '@/components/anomalies/AnomalyCreateForm';
 
 type Anomaly = {
   id: number;
@@ -35,6 +36,7 @@ export default function AnomaliesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'id' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -134,10 +136,16 @@ export default function AnomaliesPage() {
             <h1 className="text-lg sm:text-xl font-semibold">Anomalie</h1>
           </div>
 
-          <Button variant="outline" size="sm" onClick={() => fetchAnomalies(page, true)} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Aggiorna
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuova anomalia
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => fetchAnomalies(page, true)} disabled={refreshing}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Aggiorna
+            </Button>
+          </div>
         </div>
 
         <div className="p-4 sm:p-6 border-b">
@@ -201,6 +209,44 @@ export default function AnomaliesPage() {
           </div>
         </div>
       </div>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Chiudi popup aggiunta anomalia"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCreateModal(false)}
+          />
+
+          <div className="relative z-10 w-full max-w-2xl rounded-xl border bg-card shadow-2xl">
+            <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
+              <h2 className="text-lg sm:text-xl font-semibold">
+                Segnala anomalia
+              </h2>
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => setShowCreateModal(false)}
+                aria-label="Chiudi"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="p-4 sm:p-6 max-h-[80vh] overflow-y-auto">
+              <AnomalyCreateForm 
+                onCreated={() => {
+                  setShowCreateModal(false);
+                  fetchAnomalies(1, true);
+                }}
+                embedded
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
