@@ -30,21 +30,38 @@ export default function DepartmentsPage() {
   const [limit, setLimit] = useState(15);
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'id'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [deleting, setDeleting] = useState<Department | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
 
-  // Filtra elementi client-side in base alla ricerca
+  // Filtra e ordina elementi client-side
   const filteredItems = useMemo(() => {
-    if (!searchTerm.trim()) return items;
-    const term = searchTerm.toLowerCase();
-    return items.filter(item =>
-      item.department_name.toLowerCase().includes(term) ||
-      item.id.toString().includes(term)
-    );
-  }, [items, searchTerm]);
+    let result = items;
+    
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(item =>
+        item.department_name.toLowerCase().includes(term) ||
+        item.id.toString().includes(term)
+      );
+    }
+
+    result.sort((a, b) => {
+      let compareValue = 0;
+      if (sortBy === 'name') {
+        compareValue = a.department_name.localeCompare(b.department_name);
+      } else {
+        compareValue = a.id - b.id;
+      }
+      return sortOrder === 'asc' ? compareValue : -compareValue;
+    });
+
+    return result;
+  }, [items, searchTerm, sortBy, sortOrder]);
 
   const fetchDepartments = async (targetPage = page, isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -112,6 +129,10 @@ export default function DepartmentsPage() {
             refreshing={refreshing}
             limit={limit}
             onLimitChange={(newLimit) => setLimit(newLimit)}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            sortOrder={sortOrder}
+            onSortOrderChange={setSortOrder}
           />
         </div>
 

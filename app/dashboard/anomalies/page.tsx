@@ -33,20 +33,39 @@ export default function AnomaliesPage() {
   const [closedCount, setClosedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'id' | 'date'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  // Filtra elementi client-side in base alla ricerca
+  // Filtra e ordina elementi client-side
   const filteredItems = useMemo(() => {
-    if (!searchTerm.trim()) return items;
-    const term = searchTerm.toLowerCase();
-    return items.filter(item =>
-      item.description.toLowerCase().includes(term) ||
-      item.id.toString().includes(term) ||
-      (item.employeeName?.toLowerCase().includes(term) ?? false) ||
-      (item.reporterName?.toLowerCase().includes(term) ?? false)
-    );
-  }, [items, searchTerm]);
+    let result = items;
+    
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(item =>
+        item.description.toLowerCase().includes(term) ||
+        item.id.toString().includes(term) ||
+        (item.employeeName?.toLowerCase().includes(term) ?? false) ||
+        (item.reporterName?.toLowerCase().includes(term) ?? false)
+      );
+    }
+
+    result.sort((a, b) => {
+      let compareValue = 0;
+      if (sortBy === 'id') {
+        compareValue = a.id - b.id;
+      } else {
+        const dateA = new Date(a.reportedAt).getTime();
+        const dateB = new Date(b.reportedAt).getTime();
+        compareValue = dateA - dateB;
+      }
+      return sortOrder === 'asc' ? compareValue : -compareValue;
+    });
+
+    return result;
+  }, [items, searchTerm, sortBy, sortOrder]);
 
   const fetchAnomalies = async (targetPage = page, isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -126,6 +145,10 @@ export default function AnomaliesPage() {
             onStatusChange={setStatusFilter}
             limit={limit}
             onLimitChange={(newLimit) => setLimit(newLimit)}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            sortOrder={sortOrder}
+            onSortOrderChange={setSortOrder}
           />
         </div>
 
