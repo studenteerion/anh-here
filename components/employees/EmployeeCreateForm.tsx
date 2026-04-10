@@ -47,16 +47,10 @@ export default function EmployeeCreateForm({ onCreated, embedded = false }: { on
 
         if (rolesJson.status === 'success') {
           setRoles(rolesJson.data.roles || []);
-          if (rolesJson.data.roles?.length > 0) {
-            setRoleId(String(rolesJson.data.roles[0].id));
-          }
         }
 
         if (depsJson.status === 'success') {
           setDepartments(depsJson.data.departments || []);
-          if (depsJson.data.departments?.length > 0) {
-            setDepartmentId(String(depsJson.data.departments[0].id));
-          }
         }
       } catch (err) {
         console.error('Errore nel caricamento dei dati', err);
@@ -66,7 +60,7 @@ export default function EmployeeCreateForm({ onCreated, embedded = false }: { on
     };
 
     fetchOptions();
-  }, [authFetch]);
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +91,7 @@ export default function EmployeeCreateForm({ onCreated, embedded = false }: { on
       if (json.status !== 'success') {
         setError(json.message || 'Errore nella creazione');
       } else {
-        setFirstName(''); setLastName(''); setEmail(''); setRoleId(String(roles[0]?.id || '')); setDepartmentId(String(departments[0]?.id || '')); setPassword('');
+        setFirstName(''); setLastName(''); setEmail(''); setRoleId(''); setDepartmentId(''); setPassword('');
         setSuccess('Dipendente creato con successo');
         onCreated && onCreated();
       }
