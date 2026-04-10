@@ -28,16 +28,19 @@ type EmployeeRow = {
 export default function EmployeeList({
   onAddEmployee,
   onRefreshed,
+  staticData,
 }: {
   onAddEmployee?: () => void;
   onRefreshed?: () => void;
+  staticData?: EmployeeRow[];
 }) {
   const router = useRouter();
   const authFetch = useAuthFetch();
-  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
+  const isStatic = staticData !== undefined;
+  const [employees, setEmployees] = useState<EmployeeRow[]>(staticData || []);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
-  const [total, setTotal] = useState<number | null>(null);
+  const [total, setTotal] = useState<number | null>(staticData?.length || null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchInput, setSearchInput] = useState('');
@@ -49,6 +52,13 @@ export default function EmployeeList({
   const [deleting, setDeleting] = useState(false);
 
   const fetchPage = async (p = page, isRefresh = false) => {
+    // If using static data, don't fetch
+    if (isStatic) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+
     if (isRefresh) {
       setRefreshing(true);
     } else {
