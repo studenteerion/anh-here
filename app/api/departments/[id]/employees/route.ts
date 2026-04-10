@@ -123,6 +123,7 @@ export async function GET(
 
     const searchParams = req.nextUrl.searchParams;
     const statusFilter = searchParams.get("status");
+  const searchFilter = (searchParams.get("search") || "").trim();
     const pageParam = searchParams.get("page");
     const limitParam = searchParams.get("limit");
 
@@ -141,6 +142,7 @@ export async function GET(
 
       employees = await getEmployeesByDepartment(departmentId, {
         status: statusFilter as any,
+        search: searchFilter || undefined,
         limit,
         offset,
       });
@@ -149,6 +151,16 @@ export async function GET(
       if (statusFilter) {
         whereClause += ' AND status = ?';
         params.push(statusFilter);
+      }
+      if (searchFilter) {
+        whereClause += ` AND (
+          first_name LIKE ? OR
+          last_name LIKE ? OR
+          CONCAT(first_name, ' ', last_name) LIKE ? OR
+          CAST(id AS CHAR) LIKE ?
+        )`;
+        const term = `%${searchFilter}%`;
+        params.push(term, term, term, term);
       }
       let total = await countRows('employees', whereClause, params);
 
@@ -186,6 +198,7 @@ export async function GET(
 
       employees = await getEmployeesByDepartment(departmentId, {
         status: statusFilter as any,
+        search: searchFilter || undefined,
       });
 
       response = {

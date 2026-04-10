@@ -147,8 +147,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (startTime && endTime) {
       const start = new Date(startTime);
       const end = new Date(endTime);
-      if (start >= end) {
-        return errorResponse("Start time must be before end time", 400);
+      
+      const durationMs = end.getTime() - start.getTime();
+      const minDurationMs = 15 * 60 * 1000; // 15 minutes minimum
+      
+      if (durationMs < minDurationMs) {
+        return errorResponse("Shift duration must be at least 15 minutes", 400);
       }
     }
 

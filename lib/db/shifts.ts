@@ -6,7 +6,7 @@ export async function getAllShifts(
   filters?: ShiftFilter
 ): Promise<Shift[]> {
   let query = `SELECT id, department_id, name, start_time, end_time
-    FROM shifts ORDER BY created_at DESC`;
+    FROM shifts`;
   
   const params: any[] = [];
 

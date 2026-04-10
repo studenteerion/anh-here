@@ -3,6 +3,7 @@ import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@
 import crypto from "crypto";
 import { findTokenByHash, deleteTokenByHash } from "@/lib/db/refreshTokens";
 import { getUserById } from "@/lib/db/users";
+import { updateLastLogin } from "@/lib/db/userAccounts";
 import jwt from "jsonwebtoken";
 
 const JWT_KEY = process.env.JWT_KEY!;
@@ -95,6 +96,9 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return errorResponse("User not found", 404);
     }
+
+    // Update last_login timestamp
+    await updateLastLogin(dbToken.user_id);
 
     // Invalidate used refresh token
     await deleteTokenByHash(tokenHash);
