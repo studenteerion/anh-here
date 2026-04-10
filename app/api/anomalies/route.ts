@@ -184,6 +184,8 @@ export async function GET(req: NextRequest) {
           if (hasAdminPerm) {
             anomaly.reporterId = a.reporter_id;
             anomaly.reporterName = a.reporter_name;
+            anomaly.resolverId = a.resolver_id;
+            anomaly.resolverName = a.resolver_name;
           }
           return anomaly;
         }),
@@ -223,6 +225,8 @@ export async function GET(req: NextRequest) {
           if (hasAdminPerm) {
             anomaly.reporterId = a.reporter_id;
             anomaly.reporterName = a.reporter_name;
+            anomaly.resolverId = a.resolver_id;
+            anomaly.resolverName = a.resolver_name;
           }
           return anomaly;
         }),
