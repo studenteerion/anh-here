@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { FileText, Plus, RefreshCw, X } from 'lucide-react';
+import { FileText, X } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { ReportCreateForm } from '@/components/reports/ReportCreateForm';
+import { ReportsFilter } from '@/components/reports/ReportsFilter';
 
 type CompanyReport = {
   id: number;
@@ -23,10 +24,22 @@ export default function ReportsPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
   const [total, setTotal] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  // Filtra elementi client-side in base alla ricerca
+  const filteredItems = useMemo(() => {
+    if (!searchTerm.trim()) return items;
+    const term = searchTerm.toLowerCase();
+    return items.filter(item =>
+      item.link.toLowerCase().includes(term) ||
+      item.id.toString().includes(term) ||
+      item.employeeId.toString().includes(term)
+    );
+  }, [items, searchTerm]);
 
   const reportsThisMonth = useMemo(() => {
     const now = new Date();
@@ -93,22 +106,17 @@ export default function ReportsPage() {
             <FileText className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-lg sm:text-xl font-semibold">Elenco report</h2>
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuovo report
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => fetchReports(page, true)} disabled={refreshing}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Aggiorna
-            </Button>
-            <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm">
-              <option value={10}>10</option>
-              <option value={15}>15</option>
-              <option value={20}>20</option>
-              <option value={30}>30</option>
-            </select>
-          </div>
+        </div>
+
+        <div className="p-4 sm:p-6 border-b">
+          <ReportsFilter
+            onFilterChange={setSearchTerm}
+            onRefresh={() => fetchReports(page, true)}
+            onCreateClick={() => setShowCreateModal(true)}
+            refreshing={refreshing}
+            limit={limit}
+            onLimitChange={(newLimit) => setLimit(newLimit)}
+          />
         </div>
 
         <div className="overflow-x-auto p-4 sm:p-6 pt-4">
@@ -123,9 +131,9 @@ export default function ReportsPage() {
             <tbody>
               {loading ? (
                 <tr><td colSpan={3} className="py-4 text-muted-foreground">Caricamento...</td></tr>
-              ) : items.length === 0 ? (
+              ) : filteredItems.length === 0 ? (
                 <tr><td colSpan={3} className="py-4 text-muted-foreground">Nessun report trovato</td></tr>
-              ) : items.map((item) => (
+              ) : filteredItems.map((item) => (
                 <tr key={item.id} className="border-t">
                   <td className="py-2 pr-2 font-mono text-xs text-muted-foreground">#{item.id}</td>
                   <td className="py-2 pr-2">
