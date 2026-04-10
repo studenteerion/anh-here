@@ -64,6 +64,7 @@ export default function DocsPage() {
           box-sizing: border-box;
           overflow: -moz-scrollbars-vertical;
           overflow-y: scroll;
+          height: 100%;
         }
         *,
         *:before,
@@ -74,6 +75,11 @@ export default function DocsPage() {
           margin: 0;
           padding: 0;
           background: #fafafa;
+          height: 100%;
+          overflow: auto;
+        }
+        #swagger-ui {
+          display: block;
         }
       `}</style>
       <div

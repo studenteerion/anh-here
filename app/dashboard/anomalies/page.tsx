@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
+import { AnomaliesFilter } from '@/components/anomalies/AnomaliesFilter';
 
 type Anomaly = {
   id: number;
@@ -11,6 +12,11 @@ type Anomaly = {
   status: 'open' | 'in_progress' | 'closed';
   reportedAt: string;
   resolvedAt: string | null;
+  resolutionNotes: string | null;
+  employee_id: number;
+  reporterId?: number;
+  employeeName?: string;
+  reporterName?: string;
 };
 
 export default function AnomaliesPage() {
@@ -26,8 +32,21 @@ export default function AnomaliesPage() {
   const [inProgressCount, setInProgressCount] = useState(0);
   const [closedCount, setClosedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  // Filtra elementi client-side in base alla ricerca
+  const filteredItems = useMemo(() => {
+    if (!searchTerm.trim()) return items;
+    const term = searchTerm.toLowerCase();
+    return items.filter(item =>
+      item.description.toLowerCase().includes(term) ||
+      item.id.toString().includes(term) ||
+      (item.employeeName?.toLowerCase().includes(term) ?? false) ||
+      (item.reporterName?.toLowerCase().includes(term) ?? false)
+    );
+  }, [items, searchTerm]);
 
   const fetchAnomalies = async (targetPage = page, isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -91,28 +110,23 @@ export default function AnomaliesPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
       <div className="border rounded-lg bg-card">
-        <div className="p-4 sm:p-6 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="p-4 sm:p-6 border-b flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-muted-foreground" />
             <h1 className="text-lg sm:text-xl font-semibold">Anomalie</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm">
-              <option value="all">Tutti gli stati</option>
-              <option value="open">Aperte</option>
-              <option value="in_progress">In lavorazione</option>
-              <option value="closed">Chiuse</option>
-            </select>
-            <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm">
-              <option value={10}>10</option>
-              <option value={15}>15</option>
-              <option value={20}>20</option>
-              <option value={30}>30</option>
-            </select>
-            <Button variant="outline" size="sm" onClick={() => fetchAnomalies(page, true)} disabled={refreshing}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />Aggiorna
-            </Button>
-          </div>
+        </div>
+
+        <div className="p-4 sm:p-6 border-b">
+          <AnomaliesFilter
+            onFilterChange={(search, status) => setSearchTerm(search)}
+            onRefresh={() => fetchAnomalies(page, true)}
+            refreshing={refreshing}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            limit={limit}
+            onLimitChange={(newLimit) => setLimit(newLimit)}
+          />
         </div>
 
         {error && <div className="px-4 sm:px-6 pt-4 text-sm text-red-600">{error}</div>}
@@ -122,26 +136,30 @@ export default function AnomaliesPage() {
             <thead>
               <tr className="text-left text-muted-foreground border-b">
                 <th className="py-2 pr-2">ID</th>
+                <th className="py-2 pr-2">Dipendente</th>
                 <th className="py-2 pr-2">Descrizione</th>
                 <th className="py-2 pr-2">Stato</th>
                 <th className="py-2 pr-2">Segnalata</th>
-                <th className="py-2">Risolta</th>
+                <th className="py-2 pr-2">Risolta</th>
+                <th className="py-2">Note Risoluzione</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="py-4 text-muted-foreground">Caricamento...</td></tr>
-              ) : items.length === 0 ? (
-                <tr><td colSpan={5} className="py-4 text-muted-foreground">Nessuna anomalia trovata</td></tr>
-              ) : items.map((item) => (
+                <tr><td colSpan={7} className="py-4 text-muted-foreground">Caricamento...</td></tr>
+              ) : filteredItems.length === 0 ? (
+                <tr><td colSpan={7} className="py-4 text-muted-foreground">Nessuna anomalia trovata</td></tr>
+              ) : filteredItems.map((item) => (
                 <tr key={item.id} className="border-t">
                   <td className="py-2 pr-2 font-mono text-xs text-muted-foreground">#{item.id}</td>
+                  <td className="py-2 pr-2 text-sm">{item.employeeName || `#${item.employee_id}`}</td>
                   <td className="py-2 pr-2">{item.description}</td>
                   <td className="py-2 pr-2">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
                   </td>
                   <td className="py-2 pr-2">{new Date(item.reportedAt).toLocaleDateString()}</td>
-                  <td className="py-2">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
+                  <td className="py-2 pr-2">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
+                  <td className="py-2 text-xs">{item.resolutionNotes || '-'}</td>
                 </tr>
               ))}
             </tbody>

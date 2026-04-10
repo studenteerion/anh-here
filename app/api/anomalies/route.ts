@@ -174,6 +174,7 @@ export async function GET(req: NextRequest) {
           const anomaly: any = {
             id: a.id,
             employee_id: a.employee_id,
+            employeeName: a.employee_name,
             description: a.description,
             status: a.status,
             reportedAt: a.created_at,
@@ -182,6 +183,7 @@ export async function GET(req: NextRequest) {
           };
           if (hasAdminPerm) {
             anomaly.reporterId = a.reporter_id;
+            anomaly.reporterName = a.reporter_name;
           }
           return anomaly;
         }),
@@ -211,6 +213,7 @@ export async function GET(req: NextRequest) {
           const anomaly: any = {
             id: a.id,
             employee_id: a.employee_id,
+            employeeName: a.employee_name,
             description: a.description,
             status: a.status,
             reportedAt: a.created_at,
@@ -219,6 +222,7 @@ export async function GET(req: NextRequest) {
           };
           if (hasAdminPerm) {
             anomaly.reporterId = a.reporter_id;
+            anomaly.reporterName = a.reporter_name;
           }
           return anomaly;
         }),
