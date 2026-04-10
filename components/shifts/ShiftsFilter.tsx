@@ -2,7 +2,13 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { RefreshCw, Plus } from 'lucide-react';
+import { RefreshCw, Plus, MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface ShiftsFilterProps {
   departmentFilter: 'all' | number;
@@ -45,21 +51,9 @@ export function ShiftsFilter({
     <div className="p-4 sm:p-6 border-b space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="text-sm text-muted-foreground">Totale turni: {total}</div>
-        <div className="flex flex-wrap items-center gap-2">
-          {onAdd && (
-            <Button size="sm" onClick={onAdd}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuovo turno
-            </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Aggiorna
-          </Button>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
         <Input
             type="text"
             placeholder="Cerca per nome turno..."
@@ -88,26 +82,46 @@ export function ShiftsFilter({
           <option value="start_time">Ordina per inizio</option>
         </select>
 
-        <div className="flex gap-2">
-          <select
-            value={sortOrder}
-            onChange={(e) => onSortOrderChange(e.target.value as 'asc' | 'desc')}
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm flex-1"
-          >
-            <option value="asc">Crescente</option>
-            <option value="desc">Decrescente</option>
-          </select>
+        <select
+          value={sortOrder}
+          onChange={(e) => onSortOrderChange(e.target.value as 'asc' | 'desc')}
+          className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+        >
+          <option value="asc">Crescente</option>
+          <option value="desc">Decrescente</option>
+        </select>
 
-          <select
-            value={limit}
-            onChange={(e) => onLimitChange(Number(e.target.value))}
-            disabled={departmentFilterActive}
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm disabled:opacity-50"
-          >
-            <option value={10}>10</option>
-            <option value={15}>15</option>
-            <option value={30}>30</option>
-          </select>
+        <select
+          value={limit}
+          onChange={(e) => onLimitChange(Number(e.target.value))}
+          disabled={departmentFilterActive}
+          className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm disabled:opacity-50"
+        >
+          <option value={10}>10</option>
+          <option value={15}>15</option>
+          <option value={30}>30</option>
+        </select>
+
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon-sm" onClick={onRefresh} disabled={refreshing} className="flex-shrink-0">
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon-sm" className="flex-shrink-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onAdd && (
+                <DropdownMenuItem onClick={onAdd}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nuovo turno
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

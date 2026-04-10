@@ -25,21 +25,40 @@ export default function ReportsPage() {
   const [limit, setLimit] = useState(15);
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'id' | 'date'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  // Filtra elementi client-side in base alla ricerca
+  // Filtra e ordina elementi client-side
   const filteredItems = useMemo(() => {
-    if (!searchTerm.trim()) return items;
-    const term = searchTerm.toLowerCase();
-    return items.filter(item =>
-      item.link.toLowerCase().includes(term) ||
-      item.id.toString().includes(term) ||
-      item.employeeId.toString().includes(term)
-    );
-  }, [items, searchTerm]);
+    let result = items;
+    
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(item =>
+        item.link.toLowerCase().includes(term) ||
+        item.id.toString().includes(term) ||
+        item.employeeId.toString().includes(term)
+      );
+    }
+
+    result.sort((a, b) => {
+      let compareValue = 0;
+      if (sortBy === 'id') {
+        compareValue = a.id - b.id;
+      } else {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        compareValue = dateA - dateB;
+      }
+      return sortOrder === 'asc' ? compareValue : -compareValue;
+    });
+
+    return result;
+  }, [items, searchTerm, sortBy, sortOrder]);
 
   const reportsThisMonth = useMemo(() => {
     const now = new Date();
@@ -116,6 +135,10 @@ export default function ReportsPage() {
             refreshing={refreshing}
             limit={limit}
             onLimitChange={(newLimit) => setLimit(newLimit)}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            sortOrder={sortOrder}
+            onSortOrderChange={setSortOrder}
           />
         </div>
 
