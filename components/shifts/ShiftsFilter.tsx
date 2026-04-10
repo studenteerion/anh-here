@@ -2,13 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { RefreshCw, Plus, MoreHorizontal } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { RefreshCw, Plus } from 'lucide-react';
 
 interface ShiftsFilterProps {
   departmentFilter: 'all' | number;
@@ -53,7 +47,7 @@ export function ShiftsFilter({
         <div className="text-sm text-muted-foreground">Totale turni: {total}</div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
         <Input
             type="text"
             placeholder="Cerca per nome turno..."
@@ -103,25 +97,16 @@ export function ShiftsFilter({
         </select>
 
         <div className="flex gap-2">
-          <Button variant="outline" size="icon-sm" onClick={onRefresh} disabled={refreshing} className="flex-shrink-0">
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          {onAdd && (
+            <Button size="sm" onClick={onAdd}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuovo
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Aggiorna
           </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon-sm" className="flex-shrink-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {onAdd && (
-                <DropdownMenuItem onClick={onAdd}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuovo turno
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
     </div>

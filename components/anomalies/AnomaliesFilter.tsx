@@ -1,14 +1,8 @@
 'use client';
 
-import { RefreshCw, Search, MoreHorizontal } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 type AnomaliesFilterProps = {
   onFilterChange: (searchTerm: string, statusFilter: string) => void;
@@ -96,8 +90,9 @@ export function AnomaliesFilter({
         <option value={30}>30</option>
       </select>
 
-      <Button variant="outline" size="icon-sm" onClick={onRefresh} disabled={refreshing}>
-        <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+      <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
+        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+        Aggiorna
       </Button>
     </div>
   );
