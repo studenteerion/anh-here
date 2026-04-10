@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Plus } from 'lucide-react';
 
 interface ShiftsFilterProps {
   departmentFilter: 'all' | number;
@@ -20,6 +20,7 @@ interface ShiftsFilterProps {
   total: number;
   onRefresh: () => void;
   refreshing: boolean;
+  onAdd?: () => void;
 }
 
 export function ShiftsFilter({
@@ -38,12 +39,19 @@ export function ShiftsFilter({
   total,
   onRefresh,
   refreshing,
+  onAdd,
 }: ShiftsFilterProps) {
   return (
     <div className="p-4 sm:p-6 border-b space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="text-sm text-muted-foreground">Totale turni: {total}</div>
         <div className="flex flex-wrap items-center gap-2">
+          {onAdd && (
+            <Button size="sm" onClick={onAdd}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuovo turno
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Aggiorna

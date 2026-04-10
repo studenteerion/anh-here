@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ShiftsList } from '@/components/shifts/ShiftsList';
 import { ShiftsFilter } from '@/components/shifts/ShiftsFilter';
+import { ShiftCreateForm } from '@/components/shifts/ShiftCreateForm';
 
 type Shift = {
   id: number;
@@ -48,10 +48,8 @@ export default function ShiftsPage() {
   const [sortBy, setSortBy] = useState<'name' | 'start_time'>('start_time');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  const [newDepartmentId, setNewDepartmentId] = useState<number | null>(null);
-  const [newName, setNewName] = useState('');
-  const [newStartTime, setNewStartTime] = useState('08:00');
-  const [newEndTime, setNewEndTime] = useState('17:00');
+  // Modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [editing, setEditing] = useState<Shift | null>(null);
   const [editingDepartmentId, setEditingDepartmentId] = useState<number | null>(null);
@@ -63,17 +61,12 @@ export default function ShiftsPage() {
   const [deleting, setDeleting] = useState<Shift | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
 
-  const [creating, setCreating] = useState(false);
-
   const fetchDepartments = async () => {
     const res = await authFetch('/api/departments');
     const json = await res.json();
     if (json.status === 'success') {
       const data = json.data.departments || [];
       setDepartments(data);
-      if (data.length > 0 && !newDepartmentId) {
-        setNewDepartmentId(data[0].id);
-      }
     }
   };
 
@@ -112,7 +105,9 @@ export default function ShiftsPage() {
             const nameB = (b.name || '').toLowerCase();
             compareValue = nameA.localeCompare(nameB);
           } else {
-            compareValue = a.start_time.localeCompare(b.start_time);
+            const timeA = (a.start_time || '').toString();
+            const timeB = (b.start_time || '').toString();
+            compareValue = timeA.localeCompare(timeB);
           }
           return sortOrder === 'asc' ? compareValue : -compareValue;
         });
@@ -143,42 +138,12 @@ export default function ShiftsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [limit, departmentFilter]);
 
-  // Refetch when filters change (but not page/limit)
   useEffect(() => {
     fetchShifts(1, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, sortBy, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
-
-  const handleCreate = async () => {
-    if (!newDepartmentId || !newStartTime || !newEndTime) return;
-
-    setCreating(true);
-    try {
-      const res = await authFetch('/api/shifts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          departmentId: newDepartmentId,
-          name: newName.trim() || null,
-          startTime: toIsoToday(newStartTime),
-          endTime: toIsoToday(newEndTime),
-        }),
-      });
-      const json = await res.json();
-      if (json.status === 'success') {
-        setNewName('');
-        setNewStartTime('08:00');
-        setNewEndTime('17:00');
-        fetchShifts(1, true);
-      } else {
-        alert('Errore: ' + (json.message || 'Impossibile creare il turno'));
-      }
-    } finally {
-      setCreating(false);
-    }
-  };
 
   const openEdit = (item: Shift) => {
     setEditing(item);
@@ -233,6 +198,11 @@ export default function ShiftsPage() {
     }
   };
 
+  const onShiftCreated = () => {
+    setShowCreateModal(false);
+    fetchShifts(1, true);
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
       <div className="border rounded-lg bg-card">
@@ -252,6 +222,7 @@ export default function ShiftsPage() {
           total={total}
           onRefresh={() => fetchShifts(page, true)}
           refreshing={refreshing}
+          onAdd={() => setShowCreateModal(true)}
         />
 
         <ShiftsList
@@ -271,30 +242,35 @@ export default function ShiftsPage() {
         </div>
       </div>
 
-      <div className="border rounded-lg bg-card p-4 sm:p-6 space-y-3">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Plus className="h-5 w-5" />
-          Crea nuovo turno
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <select
-            value={newDepartmentId ?? ''}
-            onChange={(e) => setNewDepartmentId(Number(e.target.value))}
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-          >
-            <option value="">Seleziona dipartimento</option>
-            {departments.map((department) => (
-              <option key={department.id} value={department.id}>{department.department_name}</option>
-            ))}
-          </select>
-          <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nome turno (opzionale)" className="h-9 text-sm" />
-          <Input type="time" value={newStartTime} onChange={(e) => setNewStartTime(e.target.value)} className="h-9 text-sm" />
-          <Input type="time" value={newEndTime} onChange={(e) => setNewEndTime(e.target.value)} className="h-9 text-sm" />
-          <Button onClick={handleCreate} disabled={creating || !newDepartmentId}>
-            {creating ? 'Creazione...' : 'Crea'}
-          </Button>
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCreateModal(false)}
+          />
+          <div className="relative z-10 w-full max-w-lg rounded-xl border bg-card shadow-2xl">
+            <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
+              <h2 className="text-lg sm:text-xl font-semibold">Crea nuovo turno</h2>
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => setShowCreateModal(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-4 sm:p-6">
+              <ShiftCreateForm
+                departments={departments}
+                onCreated={onShiftCreated}
+                embedded
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -312,9 +288,25 @@ export default function ShiftsPage() {
                   <option key={department.id} value={department.id}>{department.department_name}</option>
                 ))}
               </select>
-              <Input value={editingName} onChange={(e) => setEditingName(e.target.value)} placeholder="Nome turno" />
-              <Input type="time" value={editingStartTime} onChange={(e) => setEditingStartTime(e.target.value)} />
-              <Input type="time" value={editingEndTime} onChange={(e) => setEditingEndTime(e.target.value)} />
+              <input
+                type="text"
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                placeholder="Nome turno"
+                className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+              />
+              <input
+                type="time"
+                value={editingStartTime}
+                onChange={(e) => setEditingStartTime(e.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+              />
+              <input
+                type="time"
+                value={editingEndTime}
+                onChange={(e) => setEditingEndTime(e.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+              />
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setEditing(null)}>Annulla</Button>

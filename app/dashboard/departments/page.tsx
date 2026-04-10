@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Building2, MoreHorizontal, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Building2, MoreHorizontal, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
+import { DepartmentCreateForm } from '@/components/departments/DepartmentCreateForm';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,8 +28,7 @@ export default function DepartmentsPage() {
   const [limit, setLimit] = useState(15);
   const [total, setTotal] = useState(0);
 
-  const [newName, setNewName] = useState('');
-  const [creating, setCreating] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [deleting, setDeleting] = useState<Department | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
@@ -59,26 +58,6 @@ export default function DepartmentsPage() {
   }, [limit]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
-  const visibleOnPage = items.length;
-
-  const handleCreate = async () => {
-    if (!newName.trim()) return;
-    setCreating(true);
-    try {
-      const res = await authFetch('/api/departments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ departmentName: newName.trim() }),
-      });
-      const json = await res.json();
-      if (json.status === 'success') {
-        setNewName('');
-        fetchDepartments(1, true);
-      }
-    } finally {
-      setCreating(false);
-    }
-  };
 
   const handleDelete = async () => {
     if (!deleting) return;
@@ -97,26 +76,28 @@ export default function DepartmentsPage() {
     }
   };
 
+  const onDepartmentCreated = () => {
+    setShowCreateModal(false);
+    fetchDepartments(1, true);
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
-      <div className="border rounded-lg bg-card p-4 sm:p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Building2 className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-lg sm:text-xl font-semibold">Gestione dipartimenti</h1>
-        </div>
-        <div className="flex gap-2">
-          <Input placeholder="Nuovo dipartimento" value={newName} onChange={(e) => setNewName(e.target.value)} />
-          <Button onClick={handleCreate} disabled={creating || !newName.trim()}>
-            <Plus className="h-4 w-4 mr-2" />
-            {creating ? 'Creazione...' : 'Aggiungi'}
-          </Button>
-        </div>
-      </div>
-
       <div className="border rounded-lg bg-card">
         <div className="p-4 sm:p-6 border-b flex items-center justify-between gap-2">
-          <div className="text-sm text-muted-foreground">Totale dipartimenti: {total}</div>
           <div className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg sm:text-xl font-semibold">Elenco dipartimenti</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuovo dipartimento
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => fetchDepartments(page, true)} disabled={refreshing}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Aggiorna
+            </Button>
             <select
               value={limit}
               onChange={(e) => setLimit(Number(e.target.value))}
@@ -126,10 +107,6 @@ export default function DepartmentsPage() {
               <option value={15}>15</option>
               <option value={30}>30</option>
             </select>
-            <Button variant="outline" size="sm" onClick={() => fetchDepartments(page, true)} disabled={refreshing}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Aggiorna
-            </Button>
           </div>
         </div>
 
@@ -197,13 +174,40 @@ export default function DepartmentsPage() {
         </div>
 
         <div className="px-4 sm:px-6 py-4 border-t flex items-center justify-between">
-          <span className="text-xs sm:text-sm text-muted-foreground">Pagina {page} di {totalPages}</span>
+          <span className="text-xs sm:text-sm text-muted-foreground">Totale dipartimenti: {total}</span>
           <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm text-muted-foreground">Pagina {page} di {totalPages}</span>
             <Button variant="outline" size="sm" onClick={() => fetchDepartments(page - 1)} disabled={page <= 1}>Precedente</Button>
             <Button variant="outline" size="sm" onClick={() => fetchDepartments(page + 1)} disabled={page >= totalPages}>Successiva</Button>
           </div>
         </div>
       </div>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCreateModal(false)}
+          />
+          <div className="relative z-10 w-full max-w-lg rounded-xl border bg-card shadow-2xl">
+            <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
+              <h2 className="text-lg sm:text-xl font-semibold">Crea nuovo dipartimento</h2>
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => setShowCreateModal(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-4 sm:p-6">
+              <DepartmentCreateForm onCreated={onDepartmentCreated} embedded />
+            </div>
+          </div>
+        </div>
+      )}
 
       {deleting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
