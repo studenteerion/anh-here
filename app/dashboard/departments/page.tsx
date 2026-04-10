@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Building2, MoreHorizontal, Trash2, X } from 'lucide-react';
+import { Building2, MoreHorizontal, Trash2, X, Plus, RefreshCw } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -119,14 +119,22 @@ export default function DepartmentsPage() {
             <Building2 className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-lg sm:text-xl font-semibold">Elenco dipartimenti</h2>
           </div>
+
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuovo dipartimento
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => fetchDepartments(page, true)} disabled={refreshing}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Aggiorna
+            </Button>
+          </div>
         </div>
 
         <div className="p-4 sm:p-6 border-b">
           <DepartmentsFilter
             onFilterChange={setSearchTerm}
-            onRefresh={() => fetchDepartments(page, true)}
-            onCreateClick={() => setShowCreateModal(true)}
-            refreshing={refreshing}
             limit={limit}
             onLimitChange={(newLimit) => setLimit(newLimit)}
             sortBy={sortBy}
