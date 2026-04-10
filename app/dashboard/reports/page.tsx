@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { FileText, Plus, RefreshCw } from 'lucide-react';
+import { FileText, Plus, RefreshCw, X } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { ReportCreateForm } from '@/components/reports/ReportCreateForm';
 
 type CompanyReport = {
   id: number;
@@ -19,13 +19,12 @@ export default function ReportsPage() {
   const [allItems, setAllItems] = useState<CompanyReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [newLink, setNewLink] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
   const [total, setTotal] = useState(0);
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -78,53 +77,37 @@ export default function ReportsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [limit]);
 
-  const handleCreateReport = async () => {
-    if (!newLink.trim()) return;
-    setCreating(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const res = await authFetch('/api/company-reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ link: newLink.trim() }),
-      });
-      const json = await res.json();
-      if (json.status !== 'success') {
-        throw new Error(json.message || 'Errore creazione report');
-      }
-
-      setSuccess('Report creato con successo');
-      setNewLink('');
-      await fetchReports(1, true);
-    } catch (err: any) {
-      setError(err?.message || 'Errore creazione report');
-    } finally {
-      setCreating(false);
-    }
+  const onReportCreated = () => {
+    setShowCreateModal(false);
+    fetchReports(1, true);
   };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
 
       {error && <div className="text-sm text-red-600">{error}</div>}
-      {success && <div className="text-sm text-green-600">{success}</div>}
 
       <div className="border rounded-lg bg-card">
         <div className="p-4 sm:p-6 border-b flex items-center justify-between gap-2">
-          <div className="text-sm text-muted-foreground">Totale risultati: {total}</div>
           <div className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg sm:text-xl font-semibold">Elenco report</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuovo report
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => fetchReports(page, true)} disabled={refreshing}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Aggiorna
+            </Button>
             <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm">
               <option value={10}>10</option>
               <option value={15}>15</option>
               <option value={20}>20</option>
               <option value={30}>30</option>
             </select>
-            <Button variant="outline" size="sm" onClick={() => fetchReports(page, true)} disabled={refreshing}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Aggiorna
-            </Button>
           </div>
         </div>
 
@@ -158,13 +141,40 @@ export default function ReportsPage() {
         </div>
 
         <div className="px-4 sm:px-6 py-4 border-t flex items-center justify-between">
-          <span className="text-xs sm:text-sm text-muted-foreground">Pagina {page} di {totalPages}</span>
+          <span className="text-xs sm:text-sm text-muted-foreground">Totale report: {total}</span>
           <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm text-muted-foreground">Pagina {page} di {totalPages}</span>
             <Button variant="outline" size="sm" onClick={() => fetchReports(page - 1)} disabled={page <= 1}>Precedente</Button>
             <Button variant="outline" size="sm" onClick={() => fetchReports(page + 1)} disabled={page >= totalPages}>Successiva</Button>
           </div>
         </div>
       </div>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCreateModal(false)}
+          />
+          <div className="relative z-10 w-full max-w-lg rounded-xl border bg-card shadow-2xl">
+            <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
+              <h2 className="text-lg sm:text-xl font-semibold">Crea nuovo report</h2>
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => setShowCreateModal(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-4 sm:p-6">
+              <ReportCreateForm onCreated={onReportCreated} embedded />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
