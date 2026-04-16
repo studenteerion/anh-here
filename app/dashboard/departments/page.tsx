@@ -8,6 +8,7 @@ import { PaginationSection } from '@/components/ui/pagination-section';
 import { useRouter } from 'next/navigation';
 import { DepartmentCreateForm } from '@/components/departments/DepartmentCreateForm';
 import { DepartmentsFilter } from '@/components/departments/DepartmentsFilter';
+import type { DepartmentOption } from '@/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,16 +16,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-type Department = {
-  id: number;
-  department_name: string;
-};
-
 export default function DepartmentsPage() {
   const router = useRouter();
   const authFetch = useAuthFetch();
-  const [allItems, setAllItems] = useState<Department[]>([]);
-  const [items, setItems] = useState<Department[]>([]);
+  const [allItems, setAllItems] = useState<DepartmentOption[]>([]);
+  const [items, setItems] = useState<DepartmentOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
@@ -36,7 +32,7 @@ export default function DepartmentsPage() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const [deleting, setDeleting] = useState<Department | null>(null);
+  const [deleting, setDeleting] = useState<DepartmentOption | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
 
   // Filtra e ordina elementi client-side

@@ -5,17 +5,11 @@ import { ChevronDown, ChevronUp, Search, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-
-interface RolePermission {
-  id: number;
-  permission_code: string;
-  description: string;
-  assigned: boolean;
-}
+import type { RolePermissionView } from '@/types';
 
 interface RolePermissionsProps {
   roleId: number;
-  permissions: RolePermission[];
+  permissions: RolePermissionView[];
   onTogglePermission: (permissionId: number, isAllowed: boolean) => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;

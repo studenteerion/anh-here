@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import type { DepartmentOption } from '@/types';
 
 interface ShiftCreateFormProps {
-  departments: { id: number; department_name: string }[];
+  departments: DepartmentOption[];
   onCreated: () => void;
   embedded?: boolean;
 }

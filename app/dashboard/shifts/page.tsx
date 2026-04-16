@@ -8,19 +8,7 @@ import { PaginationSection } from '@/components/ui/pagination-section';
 import { ShiftsList } from '@/components/shifts/ShiftsList';
 import { ShiftsFilter } from '@/components/shifts/ShiftsFilter';
 import { ShiftCreateForm } from '@/components/shifts/ShiftCreateForm';
-
-type Shift = {
-  id: number;
-  department_id: number;
-  name: string | null;
-  start_time: string;
-  end_time: string;
-};
-
-type Department = {
-  id: number;
-  department_name: string;
-};
+import type { DepartmentOption, Shift } from '@/types';
 
 const toTimeInputValue = (value: string) => {
   if (!value) return '';
@@ -52,7 +40,7 @@ const toIsoTodayWithNextDayIfNeeded = (startTime: string, endTime: string) => {
 export default function ShiftsPage() {
   const authFetch = useAuthFetch();
   const [items, setItems] = useState<Shift[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);

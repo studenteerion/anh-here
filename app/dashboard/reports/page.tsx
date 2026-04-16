@@ -7,18 +7,12 @@ import { Button } from '@/components/ui/button';
 import { PaginationSection } from '@/components/ui/pagination-section';
 import { ReportCreateForm } from '@/components/reports/ReportCreateForm';
 import { ReportsFilter } from '@/components/reports/ReportsFilter';
-
-type CompanyReport = {
-  id: number;
-  employeeId: number;
-  link: string;
-  createdAt: string;
-};
+import type { CompanyReportListItem } from '@/types';
 
 export default function ReportsPage() {
   const authFetch = useAuthFetch();
-  const [items, setItems] = useState<CompanyReport[]>([]);
-  const [allItems, setAllItems] = useState<CompanyReport[]>([]);
+  const [items, setItems] = useState<CompanyReportListItem[]>([]);
+  const [allItems, setAllItems] = useState<CompanyReportListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -9,25 +9,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-type ShiftEmployee = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  status: 'active' | 'inactive';
-  attendance_count?: number;
-};
+import type { ShiftEmployeeSummary } from '@/types';
 
 export default function ShiftEmployeeTable({
   employees,
   loading = false,
 }: {
-  employees: ShiftEmployee[];
+  employees: ShiftEmployeeSummary[];
   loading?: boolean;
 }) {
   const router = useRouter();
 
-  const statusBadgeClass = (status: ShiftEmployee['status']) =>
+  const statusBadgeClass = (status: ShiftEmployeeSummary['status']) =>
     status === 'active'
       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
       : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
