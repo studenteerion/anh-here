@@ -7,32 +7,20 @@ import { Button } from '@/components/ui/button';
 import { PaginationSection } from '@/components/ui/pagination-section';
 import { AnomaliesFilter } from '@/components/anomalies/AnomaliesFilter';
 import { AnomalyCreateForm } from '@/components/anomalies/AnomalyCreateForm';
+import type { AnomalyListItem } from '@/types';
 
-type Anomaly = {
-  id: number;
-  description: string;
-  status: 'open' | 'in_progress' | 'closed';
-  reportedAt: string;
-  resolvedAt: string | null;
-  resolutionNotes: string | null;
-  reporterId?: number;
-  resolverId?: number;
-  reporterName?: string;
-  resolverName?: string;
-};
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 export default function AnomaliesPage() {
   const authFetch = useAuthFetch();
-  const [items, setItems] = useState<Anomaly[]>([]);
+  const [items, setItems] = useState<AnomalyListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in_progress' | 'closed'>('all');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
   const [total, setTotal] = useState(0);
-  const [openCount, setOpenCount] = useState(0);
-  const [inProgressCount, setInProgressCount] = useState(0);
-  const [closedCount, setClosedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'id' | 'date'>('date');
@@ -80,19 +68,8 @@ export default function AnomaliesPage() {
       params.append('limit', limit.toString());
       if (statusFilter !== 'all') params.append('status', statusFilter);
 
-      const [listRes, openRes, progressRes, closedRes] = await Promise.all([
-        authFetch(`/api/anomalies?${params.toString()}`),
-        authFetch('/api/anomalies?status=open&page=1&limit=1'),
-        authFetch('/api/anomalies?status=in_progress&page=1&limit=1'),
-        authFetch('/api/anomalies?status=closed&page=1&limit=1'),
-      ]);
-
-      const [listJson, openJson, progressJson, closedJson] = await Promise.all([
-        listRes.json(),
-        openRes.json(),
-        progressRes.json(),
-        closedRes.json(),
-      ]);
+      const listRes = await authFetch(`/api/anomalies?${params.toString()}`);
+      const listJson = await listRes.json();
 
       if (listJson.status !== 'success') {
         throw new Error(listJson.message || 'Errore caricamento anomalie');
@@ -102,11 +79,8 @@ export default function AnomaliesPage() {
       setTotal(listJson.data.pagination?.total || (listJson.data.anomalies?.length ?? 0));
       setPage(listJson.data.pagination?.page || 1);
 
-      if (openJson.status === 'success') setOpenCount(openJson.data.pagination?.total || 0);
-      if (progressJson.status === 'success') setInProgressCount(progressJson.data.pagination?.total || 0);
-      if (closedJson.status === 'success') setClosedCount(closedJson.data.pagination?.total || 0);
-    } catch (err: any) {
-      setError(err?.message || 'Errore durante il caricamento anomalie');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Errore durante il caricamento anomalie'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -118,14 +92,14 @@ export default function AnomaliesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, limit]);
 
-  const statusBadgeClass = (status: Anomaly['status']) =>
+  const statusBadgeClass = (status: AnomalyListItem['status']) =>
     status === 'closed'
       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
       : status === 'in_progress'
       ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
       : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
 
-  const statusLabel = (status: Anomaly['status']) =>
+  const statusLabel = (status: AnomalyListItem['status']) =>
     status === 'closed' ? 'Chiusa' : status === 'in_progress' ? 'In lavorazione' : 'Aperta';
 
   return (
@@ -151,7 +125,7 @@ export default function AnomaliesPage() {
 
         <div className="p-4 sm:p-6 border-b">
           <AnomaliesFilter
-            onFilterChange={(search, status) => setSearchTerm(search)}
+            onFilterChange={(search) => setSearchTerm(search)}
             statusFilter={statusFilter}
             onStatusChange={setStatusFilter}
             limit={limit}

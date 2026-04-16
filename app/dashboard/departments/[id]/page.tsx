@@ -6,25 +6,7 @@ import { ArrowLeft, Building2, ChevronLeft, ChevronRight, ChevronsLeft, Chevrons
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-type Department = {
-  id: number;
-  department_name: string;
-};
-
-type DepartmentEmployee = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  roleId: number;
-  status: 'active' | 'inactive';
-  createdAt: string;
-};
-
-type Role = {
-  id: number;
-  role_name: string;
-};
+import type { DepartmentEmployeeItem, DepartmentOption, RoleOption } from '@/types';
 
 export default function DepartmentDetailPage() {
   const params = useParams<{ id: string }>();
@@ -39,17 +21,17 @@ export default function DepartmentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const [department, setDepartment] = useState<Department | null>(null);
+  const [department, setDepartment] = useState<DepartmentOption | null>(null);
   const [departmentName, setDepartmentName] = useState('');
 
-  const [employees, setEmployees] = useState<DepartmentEmployee[]>([]);
+  const [employees, setEmployees] = useState<DepartmentEmployeeItem[]>([]);
   const [employeeTotal, setEmployeeTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
 
   const totalPages = Math.max(1, Math.ceil(employeeTotal / limit));
 
@@ -92,7 +74,7 @@ export default function DepartmentDetailPage() {
         throw new Error(departmentJson.message || 'Errore caricamento dipartimento');
       }
 
-      const loadedDepartment = departmentJson.data as Department;
+      const loadedDepartment = departmentJson.data as DepartmentOption;
       setDepartment(loadedDepartment);
       setDepartmentName(loadedDepartment.department_name);
 
@@ -154,7 +136,7 @@ export default function DepartmentDetailPage() {
     }
   };
 
-  const statusBadgeClass = (status: DepartmentEmployee['status']) =>
+  const statusBadgeClass = (status: DepartmentEmployeeItem['status']) =>
     status === 'active'
       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
       : status === 'inactive'

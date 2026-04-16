@@ -3,11 +3,12 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RefreshCw, Plus } from 'lucide-react';
+import type { DepartmentOption } from '@/types';
 
 interface ShiftsFilterProps {
   departmentFilter: 'all' | number;
   onDepartmentChange: (value: 'all' | number) => void;
-  departments: { id: number; department_name: string }[];
+  departments: DepartmentOption[];
   limit: number;
   onLimitChange: (value: number) => void;
   departmentFilterActive: boolean;

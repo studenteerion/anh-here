@@ -1,6 +1,7 @@
 'use client';
 
 import { Shift } from '@/types/shifts';
+import type { DepartmentOption } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, Eye, MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +15,7 @@ import {
 interface ShiftsListProps {
   items: Shift[];
   loading: boolean;
-  departments: { id: number; department_name: string }[];
+  departments: DepartmentOption[];
   onEdit: (item: Shift) => void;
   onDelete: (item: Shift) => void;
 }
@@ -25,7 +26,7 @@ const toTimeInputValue = (value: string) => {
   return match ? match[1] : '';
 };
 
-const getDepartmentName = (departmentId: number, departments: { id: number; department_name: string }[]) =>
+const getDepartmentName = (departmentId: number, departments: DepartmentOption[]) =>
   departments.find((d) => d.id === departmentId)?.department_name || '-';
 
 export function ShiftsList({ items, loading, departments, onEdit, onDelete }: ShiftsListProps) {

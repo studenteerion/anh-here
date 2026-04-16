@@ -12,4 +12,8 @@ export * from "./shifts";
 export * from "./roles";
 export * from "./permissions";
 export * from "./attendances";
+export * from "./attendanceHistory";
+export * from "./companyReports";
+export * from "./userAccounts";
+export * from "./dashboard";
 export * from "./auth";
