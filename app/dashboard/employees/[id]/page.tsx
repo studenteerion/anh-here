@@ -8,46 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AttendanceHistoryTable } from '@/components/attendances/AttendanceHistoryTable';
-
-type EmployeeDetail = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  role_id: number;
-  department_id: number;
-  status: 'active' | 'inactive';
-  created_at: string;
-  updated_at: string;
-};
-
-type Role = {
-  id: number;
-  role_name: string;
-};
-
-type Department = {
-  id: number;
-  department_name: string;
-};
-
-type LeaveRequest = {
-  id: number;
-  type: string;
-  startDate: string;
-  endDate: string;
-  motivation?: string;
-  status: 'pending' | 'approved' | 'rejected';
-  requestedAt: string;
-};
-
-type EmployeeAnomaly = {
-  id: number;
-  description: string;
-  status: 'open' | 'in_progress' | 'closed';
-  reportedAt: string;
-  resolvedAt: string | null;
-  resolutionNotes: string | null;
-};
+import type {
+  AnomalyListItem,
+  DepartmentOption,
+  EmployeeDetailItem,
+  LeaveRequestSummary,
+  RoleOption,
+} from '@/types';
 
 export default function EmployeeDetailPage() {
   const params = useParams<{ id: string }>();
@@ -61,9 +28,9 @@ export default function EmployeeDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const [employee, setEmployee] = useState<EmployeeDetail | null>(null);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [employee, setEmployee] = useState<EmployeeDetailItem | null>(null);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -71,8 +38,8 @@ export default function EmployeeDetailPage() {
   const [departmentId, setDepartmentId] = useState<number | null>(null);
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
 
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-  const [anomalies, setAnomalies] = useState<EmployeeAnomaly[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequestSummary[]>([]);
+  const [anomalies, setAnomalies] = useState<AnomalyListItem[]>([]);
   const [activeHistoryTab, setActiveHistoryTab] = useState<'attendance' | 'anomalies' | 'requests'>('attendance');
 
   const loadAll = async () => {
@@ -106,7 +73,7 @@ export default function EmployeeDetailPage() {
         throw new Error(employeeJson.message || 'Errore caricamento dipendente');
       }
 
-      const loadedEmployee = employeeJson.data as EmployeeDetail;
+      const loadedEmployee = employeeJson.data as EmployeeDetailItem;
       setEmployee(loadedEmployee);
       setFirstName(loadedEmployee.first_name);
       setLastName(loadedEmployee.last_name);
@@ -183,14 +150,14 @@ export default function EmployeeDetailPage() {
       ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
       : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
 
-  const anomalyStatusBadgeClass = (value: EmployeeAnomaly['status']) =>
+  const anomalyStatusBadgeClass = (value: AnomalyListItem['status']) =>
     value === 'closed'
       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
       : value === 'in_progress'
       ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
       : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
 
-  const anomalyStatusLabel = (value: EmployeeAnomaly['status']) =>
+  const anomalyStatusLabel = (value: AnomalyListItem['status']) =>
     value === 'closed' ? 'Chiusa' : value === 'in_progress' ? 'In lavorazione' : 'Aperta';
 
   if (loading) {

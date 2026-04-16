@@ -3,11 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Users, UserCheck, UserX } from 'lucide-react';
-
-interface EmployeeRow {
-  id: number;
-  status: 'active' | 'inactive';
-}
+import type { EmployeeTableRow } from '@/types';
 
 interface StatsCardProps {
   title: string;
@@ -44,7 +40,7 @@ export default function EmployeeStats({ refreshKey = 0 }: { refreshKey?: number 
         const res = await authFetch('/api/employees');
         const json = await res.json();
         if (json.status !== 'success') return;
-        const employees: EmployeeRow[] = json.data.employees || [];
+        const employees: Pick<EmployeeTableRow, 'id' | 'status'>[] = json.data.employees || [];
         if (!mounted) return;
         setTotal(employees.length);
         let a = 0;

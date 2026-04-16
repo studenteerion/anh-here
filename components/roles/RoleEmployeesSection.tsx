@@ -4,20 +4,12 @@ import { useState, useMemo } from 'react';
 import { ChevronUp, ChevronDown, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-type RoleEmployee = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  departmentId: number;
-  status: 'active' | 'inactive';
-  createdAt: string;
-};
+import type { RoleEmployeeItem } from '@/types';
 
 type RoleEmployeesSectionProps = {
   isExpanded: boolean;
   onToggleExpand: () => void;
-  employees: RoleEmployee[];
+  employees: RoleEmployeeItem[];
   departmentNameById: Record<number, string>;
   onEmployeeClick: (id: number) => void;
   currentPage: number;
@@ -51,7 +43,7 @@ export function RoleEmployeesSection({
   hasNextPage,
   hasPrevPage,
 }: RoleEmployeesSectionProps) {
-  const statusBadgeClass = (status: RoleEmployee['status']) =>
+  const statusBadgeClass = (status: RoleEmployeeItem['status']) =>
     status === 'active'
       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
       : status === 'inactive'

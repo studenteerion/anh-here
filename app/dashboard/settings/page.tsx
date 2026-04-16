@@ -5,24 +5,12 @@ import { KeyRound, Settings, UserCircle2 } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-type CurrentUser = {
-  employeeId: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  roleId: number;
-  roleName: string | null;
-  departmentId: number;
-  departmentName: string | null;
-  status: 'active' | 'inactive';
-  lastLogin: string | null;
-};
+import type { CurrentUserProfile } from '@/types';
 
 export default function SettingsPage() {
   const authFetch = useAuthFetch();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [user, setUser] = useState<CurrentUserProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 

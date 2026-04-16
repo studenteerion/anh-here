@@ -6,24 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal, RefreshCw, UserPlus, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import type { EmployeeTableRow } from '@/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-type EmployeeRow = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  role_id: number;
-  role_name?: string | null;
-  department_id: number;
-  department_name?: string | null;
-  status: 'active' | 'inactive';
-  created_at: string;
-};
 
 export default function EmployeeList({
   onAddEmployee,
@@ -32,12 +21,12 @@ export default function EmployeeList({
 }: {
   onAddEmployee?: () => void;
   onRefreshed?: () => void;
-  staticData?: EmployeeRow[];
+  staticData?: EmployeeTableRow[];
 }) {
   const router = useRouter();
   const authFetch = useAuthFetch();
   const isStatic = staticData !== undefined;
-  const [employees, setEmployees] = useState<EmployeeRow[]>(staticData || []);
+  const [employees, setEmployees] = useState<EmployeeTableRow[]>(staticData || []);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
   const [total, setTotal] = useState<number | null>(staticData?.length || null);
@@ -48,7 +37,7 @@ export default function EmployeeList({
   const [sortBy, setSortBy] = useState<'created_at' | 'first_name' | 'last_name' | 'id'>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeRow | null>(null);
+  const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeTableRow | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const fetchPage = async (p = page, isRefresh = false) => {
@@ -122,7 +111,7 @@ export default function EmployeeList({
     if (totalPages && nextPage > totalPages) return;
     fetchPage(nextPage);
   };
-  const statusBadgeClass = (status: EmployeeRow['status']) =>
+  const statusBadgeClass = (status: EmployeeTableRow['status']) =>
     status === 'active'
       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
       : status === 'inactive'

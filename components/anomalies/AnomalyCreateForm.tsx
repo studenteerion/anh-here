@@ -3,12 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
-
-type Employee = {
-  id: number;
-  first_name: string;
-  last_name: string;
-};
+import type { EmployeeTableRow } from '@/types';
 
 interface AnomalyCreateFormProps {
   onCreated?: () => void;
@@ -17,7 +12,7 @@ interface AnomalyCreateFormProps {
 
 export function AnomalyCreateForm({ onCreated, embedded }: AnomalyCreateFormProps) {
   const authFetch = useAuthFetch();
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employees, setEmployees] = useState<Pick<EmployeeTableRow, 'id' | 'first_name' | 'last_name'>[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | ''>('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);

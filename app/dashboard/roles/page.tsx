@@ -8,6 +8,7 @@ import { PaginationSection } from '@/components/ui/pagination-section';
 import { useRouter } from 'next/navigation';
 import { RoleCreateForm } from '@/components/roles/RoleCreateForm';
 import { RolesFilter } from '@/components/roles/RolesFilter';
+import type { RoleOption } from '@/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,16 +16,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-type Role = {
-  id: number;
-  role_name: string;
-};
-
 export default function RolesPage() {
   const router = useRouter();
   const authFetch = useAuthFetch();
-  const [allItems, setAllItems] = useState<Role[]>([]);
-  const [items, setItems] = useState<Role[]>([]);
+  const [allItems, setAllItems] = useState<RoleOption[]>([]);
+  const [items, setItems] = useState<RoleOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
@@ -36,7 +32,7 @@ export default function RolesPage() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const [deleting, setDeleting] = useState<Role | null>(null);
+  const [deleting, setDeleting] = useState<RoleOption | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
 
   // Filtra e ordina elementi client-side

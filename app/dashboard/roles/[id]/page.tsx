@@ -4,49 +4,24 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  RefreshCw,
   Save,
   Shield,
-  Users,
 } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RolePermissionsSection } from '@/components/roles/RolePermissionsSection';
 import { RoleEmployeesSection } from '@/components/roles/RoleEmployeesSection';
+import type {
+  DepartmentOption,
+  RoleEmployeeItem,
+  RoleOption,
+  RolePermissionView,
+} from '@/types';
+import type { Permission } from '@/types/permissions';
 
-type Role = {
-  id: number;
-  role_name: string;
-};
-
-type RoleEmployee = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  departmentId: number;
-  status: 'active' | 'inactive';
-  createdAt: string;
-};
-
-type Department = {
-  id: number;
-  department_name: string;
-};
-
-type Permission = {
-  id: number;
-  permission_code: string;
-  description: string;
-};
-
-type RolePermission = Permission & {
-  assigned: boolean;
-};
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 export default function RoleDetailPage() {
   const params = useParams<{ id: string }>();
@@ -56,26 +31,23 @@ export default function RoleDetailPage() {
   const roleId = useMemo(() => Number(params?.id), [params?.id]);
 
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const [role, setRole] = useState<Role | null>(null);
+  const [role, setRole] = useState<RoleOption | null>(null);
   const [roleName, setRoleName] = useState('');
 
-  const [employees, setEmployees] = useState<RoleEmployee[]>([]);
+  const [employees, setEmployees] = useState<RoleEmployeeItem[]>([]);
   const [employeeTotal, setEmployeeTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
 
-  const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
-  const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
-  const [loadingPermissions, setLoadingPermissions] = useState(false);
+  const [rolePermissions, setRolePermissions] = useState<RolePermissionView[]>([]);
 
   const [expandedSection, setExpandedSection] = useState<'employees' | 'permissions' | null>('employees');
 
@@ -90,15 +62,14 @@ export default function RoleDetailPage() {
     }, {});
   }, [departments]);
 
-  const fetchData = async (targetPage = page, isRefresh = false) => {
+  const fetchData = async (targetPage = page) => {
     if (!roleId || Number.isNaN(roleId)) {
       setError('ID ruolo non valido');
       setLoading(false);
       return;
     }
 
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+    setLoading(true);
     setError(null);
 
     try {
@@ -126,7 +97,7 @@ export default function RoleDetailPage() {
         throw new Error(roleJson.message || 'Errore caricamento ruolo');
       }
 
-      const loadedRole = roleJson.data as Role;
+      const loadedRole = roleJson.data as RoleOption;
       setRole(loadedRole);
       setRoleName(loadedRole.role_name);
 
@@ -142,7 +113,6 @@ export default function RoleDetailPage() {
 
       if (allPermsJson.status === 'success') {
         const allPerms = allPermsJson.data.permissions || [];
-        setAllPermissions(allPerms);
 
         if (rolePermsJson.status === 'success') {
           const rolePerms = rolePermsJson.data.permissions || [];
@@ -154,11 +124,10 @@ export default function RoleDetailPage() {
           setRolePermissions(combined);
         }
       }
-    } catch (err: any) {
-      setError(err?.message || 'Errore durante il caricamento dei dati');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Errore durante il caricamento dei dati'));
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
@@ -195,9 +164,9 @@ export default function RoleDetailPage() {
       }
 
       setSuccess('Ruolo aggiornato con successo');
-      await fetchData(page, true);
-    } catch (err: any) {
-      setError(err?.message || 'Errore durante il salvataggio');
+      await fetchData(page);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Errore durante il salvataggio'));
     } finally {
       setSaving(false);
     }
@@ -228,22 +197,10 @@ export default function RoleDetailPage() {
       setSuccess('Permesso modificato con successo');
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err: any) {
-      setError(err?.message || 'Errore durante la modifica del permesso');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Errore durante la modifica del permesso'));
     }
   };
-
-  const goToPage = (nextPage: number) => {
-    if (nextPage < 1 || nextPage > totalPages) return;
-    setPage(nextPage);
-  };
-
-  const statusBadgeClass = (status: RoleEmployee['status']) =>
-    status === 'active'
-      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-      : status === 'inactive'
-      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
 
   if (loading) {
     return (
@@ -270,7 +227,7 @@ export default function RoleDetailPage() {
       <div className="flex items-center justify-between gap-3">
         <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/roles')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Torna all'elenco
+          Torna all&apos;elenco
         </Button>
       </div>
 

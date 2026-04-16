@@ -7,31 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Clock, Save, AlertCircle } from 'lucide-react';
 import EmployeeList from '@/components/employees/EmployeeList';
-
-type Shift = {
-  id: number;
-  name: string | null;
-  start_time: string;
-  end_time: string;
-  department_id: number;
-};
-
-type EmployeeRow = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  role_id: number;
-  role_name?: string | null;
-  department_id: number;
-  department_name?: string | null;
-  status: 'active' | 'inactive';
-  created_at: string;
-};
-
-type Department = {
-  id: number;
-  department_name: string;
-};
+import type { DepartmentOption, EmployeeTableRow, Shift, ShiftEmployeeSummary } from '@/types';
 
 export default function ShiftDetailPage() {
   const router = useRouter();
@@ -50,8 +26,8 @@ export default function ShiftDetailPage() {
   const [shiftEndTime, setShiftEndTime] = useState('');
   const [shiftDepartmentId, setShiftDepartmentId] = useState('');
 
-  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [employees, setEmployees] = useState<EmployeeTableRow[]>([]);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
 
   const departmentNameById = useMemo(() => {
     return departments.reduce<Record<number, string>>((acc, dept) => {
@@ -99,12 +75,12 @@ export default function ShiftDetailPage() {
       }
 
       if (empJson.status === 'success') {
-        const emps = empJson.data.employees || [];
-        // Convert employees to EmployeeRow format
-        const convertedEmps: EmployeeRow[] = emps.map((emp: any) => ({
-          id: emp.id,
-          first_name: emp.first_name,
-          last_name: emp.last_name,
+         const emps = (empJson.data.employees || []) as ShiftEmployeeSummary[];
+         // Convert employees to EmployeeRow format
+         const convertedEmps: EmployeeTableRow[] = emps.map((emp) => ({
+           id: emp.id,
+           first_name: emp.first_name,
+           last_name: emp.last_name,
           role_id: 0,
           department_id: 0,
           status: emp.status || 'active',

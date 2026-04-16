@@ -5,16 +5,7 @@ import { useAuthFetch } from '@/lib/api/authFetch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
-
-type Role = {
-  id: number;
-  role_name: string;
-};
-
-type Department = {
-  id: number;
-  department_name: string;
-};
+import type { DepartmentOption, RoleOption } from '@/types';
 
 export default function EmployeeCreateForm({ onCreated, embedded = false }: { onCreated?: () => void; embedded?: boolean }) {
   const authFetch = useAuthFetch();
@@ -28,8 +19,8 @@ export default function EmployeeCreateForm({ onCreated, embedded = false }: { on
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
 
   useEffect(() => {

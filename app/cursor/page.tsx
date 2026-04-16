@@ -25,12 +25,13 @@ const randomAlphaNum = (length = 6) => {
 export default function Home() {
     const clientRef = useRef<MqttClient | null>(null);
     const [cursors, setCursors] = useState<Record<string, Cursor>>({});
+    const [identity] = useState<{ id: string; color: string; name: string }>(() => ({
+        id: Math.random().toString(16).slice(2),
+        color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+        name: randomAlphaNum(),
+    }));
 
-    // ID utente e nickname casuali
-    const userId = useRef<string>(Math.random().toString(16).slice(2));
-    const color = useRef<string>(`hsl(${Math.random() * 360}, 70%, 50%)`);
-    const name = useRef<string>(randomAlphaNum());
-
+    // ID utente e nickname casuali (inizializzati dopo il mount per evitare impurità in render)
     const topic = "cursor/mqtt-demo-classe";
 
     // Connetti MQTT
@@ -73,12 +74,12 @@ export default function Home() {
             if (!clientRef.current) return;
 
             const payload: Cursor = {
-                id: userId.current,
+                id: identity.id,
                 x: e.clientX,
                 y: e.clientY,
-                color: color.current,
+                color: identity.color,
                 ts: Date.now(),
-                name: name.current,
+                name: identity.name,
             };
 
             clientRef.current.publish(topic, JSON.stringify(payload));
@@ -86,7 +87,7 @@ export default function Home() {
 
         window.addEventListener("mousemove", handleMove);
         return () => window.removeEventListener("mousemove", handleMove);
-    }, []);
+    }, [identity]);
 
     // Pulizia cursori inattivi
     useEffect(() => {
@@ -113,7 +114,7 @@ export default function Home() {
             </h2>
 
             {Object.values(cursors).map((c) =>
-                c.id !== userId.current ? (
+                c.id !== identity.id ? (
                     <div
                         key={c.id}
                         style={{
