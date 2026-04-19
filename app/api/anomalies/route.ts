@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getAnomalyById } from "@/lib/db/anomalies";
+import { getEmployeeAnomalies, getEmployeeAnomaliesCount, getAnomalyById } from "@/lib/db/anomalies";
 import pool from "@/lib/db";
 
 export async function GET(req: NextRequest) {
@@ -14,46 +14,28 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const pageParam = searchParams.get("page");
     const limitParam = searchParams.get("limit");
-    const requestedEmployeeId = searchParams.get("employeeId");
+    const employeeIdParam = searchParams.get("employeeId");
     const statusFilter = searchParams.get("status");
-    const viewMode = searchParams.get("viewMode") as 'admin' | null;
     
     const hasPagination = pageParam || limitParam;
     const page = pageParam ? parseInt(pageParam) : 1;
     const limit = limitParam ? parseInt(limitParam) : 50;
     const offset = (page - 1) * limit;
 
-    // Verifica permesso di vista storico base
+    // Verifica permesso di vista storico
     const hasPerm = await checkUserPermission(tenantId, employeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
-    // Determina di quale utente ottenere le anomalie
-    let targetEmployeeId: number | null = employeeId;
-
-    // Se modalità admin
-    if (viewMode === 'admin') {
+    // Se employeeId=all, ottieni tutte le anomalie
+    let isViewingAll = employeeIdParam === 'all';
+    
+    if (isViewingAll) {
       // Verifica permesso anomalies_view_all
       const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "anomalies_view_all");
       if (!hasAdminPerm) {
-        return errorResponse("Permission denied: you don't have access to admin view", 403);
-      }
-      // In modalità admin, targetEmployeeId = null significa "tutte"
-      targetEmployeeId = null;
-    } else {
-      // Se viene richiesto un employeeId diverso in modalità personale, verifica i permessi
-      if (requestedEmployeeId) {
-        const requestedId = parseInt(requestedEmployeeId);
-        
-        // Solo gli admin con permesso possono vedere le anomalie di altri utenti
-        if (requestedId !== employeeId) {
-          const hasPermission = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
-          if (!hasPermission) {
-            return errorResponse("Permission denied: you can only view your own anomalies", 403);
-          }
-        }
-        targetEmployeeId = requestedId;
+        return errorResponse("Permission denied: you can't view all anomalies", 403);
       }
     }
 
@@ -67,7 +49,7 @@ export async function GET(req: NextRequest) {
         return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
       }
 
-      // Costruisci query dinamicamente in base a targetEmployeeId
+      // Costruisci query dinamicamente
       let query = `SELECT a.id, a.description, a.created_at, a.reporter_id, a.employee_Id as employee_id, a.resolver_id, a.status, a.resolution_notes, a.resolved_at,
         CONCAT(r.first_name, ' ', r.last_name) as reporter_name,
         CONCAT(res.first_name, ' ', res.last_name) as resolver_name
@@ -78,9 +60,10 @@ export async function GET(req: NextRequest) {
 
       const params: any[] = [tenantId];
 
-      if (targetEmployeeId !== null) {
+      // Se NON stai visualizzando tutte, filtra per il dipendente
+      if (!isViewingAll) {
         query += ` AND a.employee_Id = ?`;
-        params.push(targetEmployeeId);
+        params.push(employeeId);
       }
 
       if (statusFilter) {
@@ -98,9 +81,9 @@ export async function GET(req: NextRequest) {
       let countQuery = `SELECT COUNT(*) as total FROM anomalies WHERE tenant_id = ?`;
       const countParams: any[] = [tenantId];
 
-      if (targetEmployeeId !== null) {
+      if (!isViewingAll) {
         countQuery += ` AND employee_Id = ?`;
-        countParams.push(targetEmployeeId);
+        countParams.push(employeeId);
       }
 
       if (statusFilter) {
@@ -144,7 +127,6 @@ export async function GET(req: NextRequest) {
           hasNextPage: page < totalPages,
           hasPrevPage: page > 1,
         },
-        employeeId: targetEmployeeId,
       };
     } else {
       const validStatuses = ["open", "in_progress", "closed"];
@@ -163,9 +145,9 @@ export async function GET(req: NextRequest) {
 
       const params: any[] = [tenantId];
 
-      if (targetEmployeeId !== null) {
+      if (!isViewingAll) {
         query += ` AND a.employee_Id = ?`;
-        params.push(targetEmployeeId);
+        params.push(employeeId);
       }
 
       if (statusFilter) {
@@ -197,7 +179,6 @@ export async function GET(req: NextRequest) {
           }
           return anomaly;
         }),
-        employeeId: targetEmployeeId,
       };
     }
 

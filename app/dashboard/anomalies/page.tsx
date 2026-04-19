@@ -69,7 +69,7 @@ export default function AnomaliesPage() {
       params.append('page', targetPage.toString());
       params.append('limit', limit.toString());
       if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (viewMode === 'admin') params.append('viewMode', 'admin');
+      if (viewMode === 'admin') params.append('employeeId', 'all');
 
       const listRes = await authFetch(`/api/anomalies?${params.toString()}`);
       const listJson = await listRes.json();
