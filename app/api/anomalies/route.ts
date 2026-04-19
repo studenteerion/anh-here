@@ -117,6 +117,7 @@ export async function GET(req: NextRequest) {
     const limitParam = searchParams.get("limit");
     const requestedEmployeeId = searchParams.get("employeeId");
     const statusFilter = searchParams.get("status");
+    const viewMode = searchParams.get("viewMode") as 'admin' | null;
     
     const hasPagination = pageParam || limitParam;
     const page = pageParam ? parseInt(pageParam) : 1;
@@ -126,15 +127,26 @@ export async function GET(req: NextRequest) {
     // Determina di quale utente ottenere le anomalie
     let targetEmployeeId = employeeId;
 
-    // Se viene richiesto un employeeId diverso, verifica i permessi
-    if (requestedEmployeeId) {
-      targetEmployeeId = parseInt(requestedEmployeeId);
-      
-      // Solo gli admin con permesso possono vedere le anomalie di altri utenti
-      if (targetEmployeeId !== employeeId) {
-        const hasPermission = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
-        if (!hasPermission) {
-          return errorResponse("Permission denied: you can only view your own anomalies", 403);
+    // Se modalità admin
+    if (viewMode === 'admin') {
+      // Verifica permesso anomalies_view_all
+      const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "anomalies_view_all");
+      if (!hasAdminPerm) {
+        return errorResponse("Permission denied: you don't have access to admin view", 403);
+      }
+      // In modalità admin, otteniamo tutte le anomalie (targetEmployeeId = undefined)
+      targetEmployeeId = undefined as any;
+    } else {
+      // Se viene richiesto un employeeId diverso in modalità personale, verifica i permessi
+      if (requestedEmployeeId) {
+        targetEmployeeId = parseInt(requestedEmployeeId);
+        
+        // Solo gli admin con permesso possono vedere le anomalie di altri utenti
+        if (targetEmployeeId !== employeeId) {
+          const hasPermission = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
+          if (!hasPermission) {
+            return errorResponse("Permission denied: you can only view your own anomalies", 403);
+          }
         }
       }
     }
@@ -245,8 +257,8 @@ export async function POST(req: NextRequest) {
   const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    // Permission check: report_anomalies
-    const hasPerm = await checkUserPermission(tenantId, employeeId, "report_anomalies");
+    // Permission check: report_anomaly
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "report_anomaly");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to report anomalies", 403);
     }

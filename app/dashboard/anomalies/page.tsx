@@ -26,6 +26,8 @@ export default function AnomaliesPage() {
   const [sortBy, setSortBy] = useState<'id' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'personal' | 'admin'>('personal');
+  const [hasAdminPermission, setHasAdminPermission] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -67,6 +69,7 @@ export default function AnomaliesPage() {
       params.append('page', targetPage.toString());
       params.append('limit', limit.toString());
       if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (viewMode === 'admin') params.append('viewMode', 'admin');
 
       const listRes = await authFetch(`/api/anomalies?${params.toString()}`);
       const listJson = await listRes.json();
@@ -88,9 +91,24 @@ export default function AnomaliesPage() {
   };
 
   useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await authFetch('/api/me');
+        const json = await res.json();
+        if (json.status === 'success') {
+          setHasAdminPermission(json.data.permissions?.includes('anomalies_view_all') ?? false);
+        }
+      } catch (err) {
+        console.error('Failed to check admin permission', err);
+      }
+    };
+    load();
+  }, [authFetch]);
+
+  useEffect(() => {
     fetchAnomalies(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, limit]);
+  }, [statusFilter, limit, viewMode]);
 
   const statusBadgeClass = (status: AnomalyListItem['status']) =>
     status === 'closed'
@@ -111,8 +129,33 @@ export default function AnomaliesPage() {
             <h1 className="text-lg sm:text-xl font-semibold">Anomalie</h1>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => setShowCreateModal(true)}>
+          <div className="flex items-center gap-2 flex-wrap">
+            {hasAdminPermission && (
+              <div className="flex gap-1 bg-muted rounded-lg p-1">
+                <button
+                  onClick={() => { setViewMode('personal'); setPage(1); }}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                    viewMode === 'personal'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  📊 Personale
+                </button>
+                <button
+                  onClick={() => { setViewMode('admin'); setPage(1); }}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                    viewMode === 'admin'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  ⚙️ Admin
+                </button>
+              </div>
+            )}
+
+            <Button size="sm" onClick={() => setShowCreateModal(true)} disabled={viewMode === 'personal'}>
               <Plus className="h-4 w-4 mr-2" />
               Nuova anomalia
             </Button>
@@ -144,31 +187,33 @@ export default function AnomaliesPage() {
             <thead>
               <tr className="text-left text-muted-foreground border-b bg-muted/40">
                 <th className="py-3 px-3 font-semibold">ID</th>
+                {viewMode === 'admin' && <th className="py-3 px-3 font-semibold">Dipendente</th>}
                 <th className="py-3 px-3 font-semibold">Descrizione</th>
                 <th className="py-3 px-3 font-semibold">Segnalata da</th>
                 <th className="py-3 px-3 font-semibold">Stato</th>
                 <th className="py-3 px-3 font-semibold">Segnalata</th>
-                <th className="py-3 px-3 font-semibold">Risolta da</th>
-                <th className="py-3 px-3 font-semibold">Risolta il</th>
+                {viewMode === 'admin' && <th className="py-3 px-3 font-semibold">Risolta da</th>}
+                {viewMode === 'admin' && <th className="py-3 px-3 font-semibold">Risolta il</th>}
                 <th className="py-3 px-3 font-semibold">Note</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
+                <tr><td colSpan={viewMode === 'admin' ? 10 : 8} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
               ) : filteredItems.length === 0 ? (
-                <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
+                <tr><td colSpan={viewMode === 'admin' ? 10 : 8} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
               ) : filteredItems.map((item) => (
                 <tr key={item.id} className="border-t hover:bg-muted/40 transition-colors">
                   <td className="py-3 px-3 font-mono text-xs text-muted-foreground">#{item.id}</td>
+                  {viewMode === 'admin' && <td className="py-3 px-3 text-sm font-medium">-</td>}
                   <td className="py-3 px-3 max-w-xs truncate">{item.description}</td>
                   <td className="py-3 px-3 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
                   <td className="py-3 px-3">
                     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
                   </td>
                   <td className="py-3 px-3 text-xs text-muted-foreground">{new Date(item.reportedAt).toLocaleDateString()}</td>
-                  <td className="py-3 px-3 text-sm">{item.resolverName ? `${item.resolverName}` : (item.resolverId ? `#${item.resolverId}` : '-')}</td>
-                  <td className="py-3 px-3 text-xs text-muted-foreground">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
+                  {viewMode === 'admin' && <td className="py-3 px-3 text-sm">{item.resolverName ? `${item.resolverName}` : (item.resolverId ? `#${item.resolverId}` : '-')}</td>}
+                  {viewMode === 'admin' && <td className="py-3 px-3 text-xs text-muted-foreground">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>}
                   <td className="py-3 px-3 max-w-xs truncate text-xs">{item.resolutionNotes || '-'}</td>
                 </tr>
               ))}
