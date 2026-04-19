@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { AlertTriangle, RefreshCw, X, Plus, User, Settings } from 'lucide-react';
+import { AlertTriangle, RefreshCw, X, Plus, User, Settings, History } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { PaginationSection } from '@/components/ui/pagination-section';
@@ -130,35 +131,7 @@ export default function AnomaliesPage() {
             <h1 className="text-lg sm:text-xl font-semibold">Anomalie</h1>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {hasAdminPermission && (
-              <div className="flex gap-0 bg-muted rounded-lg p-0 border border-border">
-                <button
-                  onClick={() => { setViewMode('personal'); setPage(1); }}
-                  className={`px-4 py-2 flex items-center gap-2 text-sm font-medium rounded-l transition-colors ${
-                    viewMode === 'personal'
-                      ? 'bg-background text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <User className="h-4 w-4" />
-                  Personale
-                </button>
-                <div className="w-px bg-border" />
-                <button
-                  onClick={() => { setViewMode('admin'); setPage(1); }}
-                  className={`px-4 py-2 flex items-center gap-2 text-sm font-medium rounded-r transition-colors ${
-                    viewMode === 'admin'
-                      ? 'bg-background text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Settings className="h-4 w-4" />
-                  Admin
-                </button>
-              </div>
-            )}
-
+          <div className="flex items-center gap-2">
             {viewMode === 'admin' && (
               <Button size="sm" onClick={() => setShowCreateModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -172,71 +145,217 @@ export default function AnomaliesPage() {
           </div>
         </div>
 
-        <div className="p-4 sm:p-6 border-b">
-          <AnomaliesFilter
-            onFilterChange={(search) => setSearchTerm(search)}
-            statusFilter={statusFilter}
-            onStatusChange={setStatusFilter}
-            limit={limit}
-            onLimitChange={(newLimit) => setLimit(newLimit)}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            sortOrder={sortOrder}
-            onSortOrderChange={setSortOrder}
-          />
-        </div>
+        {hasAdminPermission ? (
+          <>
+            <Tabs
+              defaultValue={viewMode}
+              onValueChange={(value) => {
+                setViewMode(value as 'personal' | 'admin');
+                setPage(1);
+              }}
+              className="w-full"
+            >
+              <TabsList className="w-full justify-start rounded-none border-b bg-card">
+                <TabsTrigger value="personal" icon={<User className="h-4 w-4" />}>
+                  Personale
+                </TabsTrigger>
+                <TabsTrigger value="admin" icon={<Settings className="h-4 w-4" />}>
+                  Admin
+                </TabsTrigger>
+              </TabsList>
 
-        {error && <div className="px-4 sm:px-6 pt-4 text-sm text-red-600">{error}</div>}
+              <TabsContent value="personal" className="border-0 p-0">
+                <div className="p-4 sm:p-6 border-b">
+                  <AnomaliesFilter
+                    onFilterChange={(search) => setSearchTerm(search)}
+                    statusFilter={statusFilter}
+                    onStatusChange={setStatusFilter}
+                    limit={limit}
+                    onLimitChange={(newLimit) => setLimit(newLimit)}
+                    sortBy={sortBy}
+                    onSortChange={setSortBy}
+                    sortOrder={sortOrder}
+                    onSortOrderChange={setSortOrder}
+                  />
+                </div>
 
-        <div className="overflow-x-auto p-4 sm:p-6 pt-4">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-muted-foreground border-b bg-muted/40">
-                <th className="py-3 px-3 font-semibold">ID</th>
-                {viewMode === 'admin' && <th className="py-3 px-3 font-semibold">Dipendente</th>}
-                <th className="py-3 px-3 font-semibold">Descrizione</th>
-                <th className="py-3 px-3 font-semibold">Segnalata da</th>
-                <th className="py-3 px-3 font-semibold">Stato</th>
-                <th className="py-3 px-3 font-semibold">Segnalata</th>
-                {viewMode === 'admin' && <th className="py-3 px-3 font-semibold">Risolta da</th>}
-                {viewMode === 'admin' && <th className="py-3 px-3 font-semibold">Risolta il</th>}
-                <th className="py-3 px-3 font-semibold">Note</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={viewMode === 'admin' ? 10 : 8} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
-              ) : filteredItems.length === 0 ? (
-                <tr><td colSpan={viewMode === 'admin' ? 10 : 8} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
-              ) : filteredItems.map((item) => (
-                <tr key={item.id} className="border-t hover:bg-muted/40 transition-colors">
-                  <td className="py-3 px-3 font-mono text-xs text-muted-foreground">#{item.id}</td>
-                  {viewMode === 'admin' && <td className="py-3 px-3 text-sm font-medium">-</td>}
-                  <td className="py-3 px-3 max-w-xs truncate">{item.description}</td>
-                  <td className="py-3 px-3 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
-                  <td className="py-3 px-3">
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
-                  </td>
-                  <td className="py-3 px-3 text-xs text-muted-foreground">{new Date(item.reportedAt).toLocaleDateString()}</td>
-                  {viewMode === 'admin' && <td className="py-3 px-3 text-sm">{item.resolverName ? `${item.resolverName}` : (item.resolverId ? `#${item.resolverId}` : '-')}</td>}
-                  {viewMode === 'admin' && <td className="py-3 px-3 text-xs text-muted-foreground">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>}
-                  <td className="py-3 px-3 max-w-xs truncate text-xs">{item.resolutionNotes || '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                {error && <div className="px-4 sm:px-6 pt-4 text-sm text-red-600">{error}</div>}
 
-        <PaginationSection
-          currentPage={page}
-          totalPages={totalPages}
-          total={total}
-          hasPrevPage={page > 1}
-          hasNextPage={page < totalPages}
-          onPageChange={(newPage) => fetchAnomalies(newPage)}
-          position="bottom"
-          label="anomalie"
-        />
+                <div className="overflow-x-auto p-4 sm:p-6 pt-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-muted-foreground border-b bg-muted/40">
+                        <th className="py-3 px-3 font-semibold">ID</th>
+                        <th className="py-3 px-3 font-semibold">Descrizione</th>
+                        <th className="py-3 px-3 font-semibold">Segnalata da</th>
+                        <th className="py-3 px-3 font-semibold">Stato</th>
+                        <th className="py-3 px-3 font-semibold">Segnalata</th>
+                        <th className="py-3 px-3 font-semibold">Note</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading ? (
+                        <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
+                      ) : filteredItems.length === 0 ? (
+                        <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
+                      ) : filteredItems.map((item) => (
+                        <tr key={item.id} className="border-t hover:bg-muted/40 transition-colors">
+                          <td className="py-3 px-3 font-mono text-xs text-muted-foreground">#{item.id}</td>
+                          <td className="py-3 px-3 max-w-xs truncate">{item.description}</td>
+                          <td className="py-3 px-3 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
+                          <td className="py-3 px-3">
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
+                          </td>
+                          <td className="py-3 px-3 text-xs text-muted-foreground">{new Date(item.reportedAt).toLocaleDateString()}</td>
+                          <td className="py-3 px-3 max-w-xs truncate text-xs">{item.resolutionNotes || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <PaginationSection
+                  currentPage={page}
+                  totalPages={totalPages}
+                  total={total}
+                  hasPrevPage={page > 1}
+                  hasNextPage={page < totalPages}
+                  onPageChange={(newPage) => fetchAnomalies(newPage)}
+                  position="bottom"
+                  label="anomalie"
+                />
+              </TabsContent>
+
+              <TabsContent value="admin" className="border-0 p-0">
+                <div className="p-4 sm:p-6 border-b">
+                  <AnomaliesFilter
+                    onFilterChange={(search) => setSearchTerm(search)}
+                    statusFilter={statusFilter}
+                    onStatusChange={setStatusFilter}
+                    limit={limit}
+                    onLimitChange={(newLimit) => setLimit(newLimit)}
+                    sortBy={sortBy}
+                    onSortChange={setSortBy}
+                    sortOrder={sortOrder}
+                    onSortOrderChange={setSortOrder}
+                  />
+                </div>
+
+                {error && <div className="px-4 sm:px-6 pt-4 text-sm text-red-600">{error}</div>}
+
+                <div className="overflow-x-auto p-4 sm:p-6 pt-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-muted-foreground border-b bg-muted/40">
+                        <th className="py-3 px-3 font-semibold">ID</th>
+                        <th className="py-3 px-3 font-semibold">Descrizione</th>
+                        <th className="py-3 px-3 font-semibold">Segnalata da</th>
+                        <th className="py-3 px-3 font-semibold">Stato</th>
+                        <th className="py-3 px-3 font-semibold">Segnalata</th>
+                        <th className="py-3 px-3 font-semibold">Risolta da</th>
+                        <th className="py-3 px-3 font-semibold">Risolta il</th>
+                        <th className="py-3 px-3 font-semibold">Note</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading ? (
+                        <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
+                      ) : filteredItems.length === 0 ? (
+                        <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
+                      ) : filteredItems.map((item) => (
+                        <tr key={item.id} className="border-t hover:bg-muted/40 transition-colors">
+                          <td className="py-3 px-3 font-mono text-xs text-muted-foreground">#{item.id}</td>
+                          <td className="py-3 px-3 max-w-xs truncate">{item.description}</td>
+                          <td className="py-3 px-3 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
+                          <td className="py-3 px-3">
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
+                          </td>
+                          <td className="py-3 px-3 text-xs text-muted-foreground">{new Date(item.reportedAt).toLocaleDateString()}</td>
+                          <td className="py-3 px-3 text-sm">{item.resolverName ? `${item.resolverName}` : (item.resolverId ? `#${item.resolverId}` : '-')}</td>
+                          <td className="py-3 px-3 text-xs text-muted-foreground">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
+                          <td className="py-3 px-3 max-w-xs truncate text-xs">{item.resolutionNotes || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <PaginationSection
+                  currentPage={page}
+                  totalPages={totalPages}
+                  total={total}
+                  hasPrevPage={page > 1}
+                  hasNextPage={page < totalPages}
+                  onPageChange={(newPage) => fetchAnomalies(newPage)}
+                  position="bottom"
+                  label="anomalie"
+                />
+              </TabsContent>
+            </Tabs>
+          </>
+        ) : (
+          <>
+            <div className="p-4 sm:p-6 border-b">
+              <AnomaliesFilter
+                onFilterChange={(search) => setSearchTerm(search)}
+                statusFilter={statusFilter}
+                onStatusChange={setStatusFilter}
+                limit={limit}
+                onLimitChange={(newLimit) => setLimit(newLimit)}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+                sortOrder={sortOrder}
+                onSortOrderChange={setSortOrder}
+              />
+            </div>
+
+            {error && <div className="px-4 sm:px-6 pt-4 text-sm text-red-600">{error}</div>}
+
+            <div className="overflow-x-auto p-4 sm:p-6 pt-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b bg-muted/40">
+                    <th className="py-3 px-3 font-semibold">ID</th>
+                    <th className="py-3 px-3 font-semibold">Descrizione</th>
+                    <th className="py-3 px-3 font-semibold">Segnalata da</th>
+                    <th className="py-3 px-3 font-semibold">Stato</th>
+                    <th className="py-3 px-3 font-semibold">Segnalata</th>
+                    <th className="py-3 px-3 font-semibold">Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
+                  ) : filteredItems.length === 0 ? (
+                    <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
+                  ) : filteredItems.map((item) => (
+                    <tr key={item.id} className="border-t hover:bg-muted/40 transition-colors">
+                      <td className="py-3 px-3 font-mono text-xs text-muted-foreground">#{item.id}</td>
+                      <td className="py-3 px-3 max-w-xs truncate">{item.description}</td>
+                      <td className="py-3 px-3 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
+                      <td className="py-3 px-3">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
+                      </td>
+                      <td className="py-3 px-3 text-xs text-muted-foreground">{new Date(item.reportedAt).toLocaleDateString()}</td>
+                      <td className="py-3 px-3 max-w-xs truncate text-xs">{item.resolutionNotes || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <PaginationSection
+              currentPage={page}
+              totalPages={totalPages}
+              total={total}
+              hasPrevPage={page > 1}
+              hasNextPage={page < totalPages}
+              onPageChange={(newPage) => fetchAnomalies(newPage)}
+              position="bottom"
+              label="anomalie"
+            />
+          </>
+        )}
       </div>
 
       {showCreateModal && (
