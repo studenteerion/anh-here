@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { AlertTriangle, RefreshCw, X, Plus } from 'lucide-react';
+import { AlertTriangle, RefreshCw, X, Plus, User, Settings } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { PaginationSection } from '@/components/ui/pagination-section';
@@ -132,34 +132,39 @@ export default function AnomaliesPage() {
 
           <div className="flex items-center gap-2 flex-wrap">
             {hasAdminPermission && (
-              <div className="flex gap-1 bg-muted rounded-lg p-1">
+              <div className="flex gap-0 bg-muted rounded-lg p-0 border border-border">
                 <button
                   onClick={() => { setViewMode('personal'); setPage(1); }}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 flex items-center gap-2 text-sm font-medium rounded-l transition-colors ${
                     viewMode === 'personal'
-                      ? 'bg-background text-foreground shadow-sm'
+                      ? 'bg-background text-foreground'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  📊 Personale
+                  <User className="h-4 w-4" />
+                  Personale
                 </button>
+                <div className="w-px bg-border" />
                 <button
                   onClick={() => { setViewMode('admin'); setPage(1); }}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 flex items-center gap-2 text-sm font-medium rounded-r transition-colors ${
                     viewMode === 'admin'
-                      ? 'bg-background text-foreground shadow-sm'
+                      ? 'bg-background text-foreground'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  ⚙️ Admin
+                  <Settings className="h-4 w-4" />
+                  Admin
                 </button>
               </div>
             )}
 
-            <Button size="sm" onClick={() => setShowCreateModal(true)} disabled={viewMode === 'personal'}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuova anomalia
-            </Button>
+            {viewMode === 'admin' && (
+              <Button size="sm" onClick={() => setShowCreateModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuova anomalia
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => fetchAnomalies(page, true)} disabled={refreshing}>
               <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               Aggiorna
