@@ -150,6 +150,23 @@ export default function AnomaliesPage() {
     }
   };
 
+  const handleReopenAnomaly = async (anomalyId: number) => {
+    try {
+      const res = await authFetch(`/api/anomalies/${anomalyId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'open' }),
+      });
+      const json = await res.json();
+      if (json.status === 'success') {
+        await fetchAnomalies(page);
+      } else {
+        setError(json.message || 'Failed to reopen anomaly');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error reopening anomaly');
+    }
+  };
+
   const handleDeleteAnomaly = async (anomalyId: number) => {
     try {
       const res = await authFetch(`/api/anomalies/${anomalyId}`, {
@@ -335,13 +352,24 @@ export default function AnomaliesPage() {
                               </button>
                               {openMenuId === item.id && (
                                 <div className="absolute right-0 mt-1 w-44 bg-popover border rounded-lg shadow-lg z-10">
-                                  {item.status !== 'closed' && (
+                                  {item.status !== 'closed' ? (
                                     <button
                                       onClick={() => setShowCloseConfirm(item.id)}
                                       className="w-full px-3 py-2 text-left hover:bg-muted flex items-center gap-2 text-sm border-b"
                                     >
                                       <CheckCircle className="h-4 w-4" />
                                       Chiudi
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        handleReopenAnomaly(item.id);
+                                        setOpenMenuId(null);
+                                      }}
+                                      className="w-full px-3 py-2 text-left hover:bg-muted flex items-center gap-2 text-sm border-b"
+                                    >
+                                      <CheckCircle className="h-4 w-4" />
+                                      Riapri
                                     </button>
                                   )}
                                   {hasAdminPermission && (
