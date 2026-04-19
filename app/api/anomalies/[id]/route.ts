@@ -37,14 +37,15 @@ import { isValidAnomalyStatus, ANOMALY_STATUSES } from "@/lib/validation/enums";
  *       - Anomalies
  *     summary: Update anomaly
  *     description: |
- *       Update anomaly status and/or description.
- *       Status can be: open, in_progress, closed
- *       Description is optional and maintained if not provided.
+ *       Update anomaly status, description, and/or resolution notes.
+ *       Status can be: open, in_progress, closed.
+ *       When closing an anomaly, resolver_id and resolved_at are automatically set.
  *       
  *       Examples:
- *       - Close anomaly: {"status": "closed"}
+ *       - Close anomaly with notes: {"status": "closed", "resolutionNotes": "Issue resolved"}
+ *       - Update resolution notes: {"resolutionNotes": "Additional notes"}
  *       - Reopen anomaly: {"status": "open"}
- *       - Update description: {"description": "New notes"}
+ *       - Update description: {"description": "New description"}
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -64,10 +65,13 @@ import { isValidAnomalyStatus, ANOMALY_STATUSES } from "@/lib/validation/enums";
  *               status:
  *                 type: string
  *                 enum: [open, in_progress, closed]
- *                 description: New status for the anomaly
+ *                 description: New status for the anomaly (optional)
  *               description:
  *                 type: string
- *                 description: Optional updated description
+ *                 description: Updated description (optional)
+ *               resolutionNotes:
+ *                 type: string
+ *                 description: Resolution notes/comments (optional)
  *     responses:
  *       200:
  *         description: Anomaly updated successfully
@@ -169,10 +173,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const body = await req.json();
-    const { description, status } = body;
+    const { description, status, resolutionNotes } = body;
 
-    if (!description && !status) {
-      return errorResponse("At least one field to update required: description or status", 422);
+    if (!description && !status && resolutionNotes === undefined) {
+      return errorResponse("At least one field to update required: description, status, or resolutionNotes", 422);
     }
 
     if (status && !isValidAnomalyStatus(status)) {
@@ -189,10 +193,25 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       }
     }
 
-    const updated = await updateAnomaly(tenantId, anomalyId, { 
-      description: description !== undefined ? description : anomaly.description, 
-      status 
-    });
+    // Build update object
+    const updateData: any = {};
+    if (description !== undefined) {
+      updateData.description = description;
+    }
+    if (status !== undefined) {
+      updateData.status = status;
+    }
+    if (resolutionNotes !== undefined) {
+      updateData.resolutionNotes = resolutionNotes;
+    }
+
+    // If closing, set resolver and resolved_at
+    if (status === "closed") {
+      updateData.resolvedAt = new Date();
+      updateData.resolverId = employeeId;
+    }
+
+    const updated = await updateAnomaly(tenantId, anomalyId, updateData);
 
     if (!updated) {
       return errorResponse("Failed to update anomaly", 422);
