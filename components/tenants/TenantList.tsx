@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   RefreshCw,
   Building2,
+  Plus,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -329,7 +330,7 @@ export default function TenantList({
           <div className="flex items-center gap-2">
             {onAddTenant && (
               <Button size="sm" onClick={onAddTenant}>
-                <Building2 className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-2" />
                 Nuovo tenant
               </Button>
             )}
