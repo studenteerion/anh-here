@@ -236,13 +236,14 @@ export default function AnomaliesPage() {
                         <th className="py-3 px-3 font-semibold">Stato</th>
                         <th className="py-3 px-3 font-semibold">Segnalata</th>
                         <th className="py-3 px-3 font-semibold">Note</th>
+                        <th className="py-3 px-3 font-semibold text-center">Azioni</th>
                       </tr>
                     </thead>
                     <tbody>
                       {loading ? (
-                        <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
+                        <tr><td colSpan={7} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
                       ) : filteredItems.length === 0 ? (
-                        <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
+                        <tr><td colSpan={7} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
                       ) : filteredItems.map((item) => (
                         <tr key={item.id} className="border-t hover:bg-muted/40 transition-colors">
                           <td className="py-3 px-3 font-mono text-xs text-muted-foreground">#{item.id}</td>
@@ -253,6 +254,29 @@ export default function AnomaliesPage() {
                           </td>
                           <td className="py-3 px-3 text-xs text-muted-foreground">{new Date(item.reportedAt).toLocaleDateString()}</td>
                           <td className="py-3 px-3 max-w-xs truncate text-xs">{item.resolutionNotes || '-'}</td>
+                          <td className="py-3 px-3">
+                            <div className="relative" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                                className="p-1 hover:bg-muted rounded transition-colors mx-auto block"
+                              >
+                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                              </button>
+                              {openMenuId === item.id && (
+                                <div className="absolute right-0 mt-1 w-44 bg-popover border rounded-lg shadow-lg z-10">
+                                  {item.status !== 'closed' && (
+                                    <button
+                                      onClick={() => setShowCloseConfirm(item.id)}
+                                      className="w-full px-3 py-2 text-left hover:bg-muted flex items-center gap-2 text-sm"
+                                    >
+                                      <CheckCircle className="h-4 w-4" />
+                                      Chiudi
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
