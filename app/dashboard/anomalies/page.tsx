@@ -301,13 +301,14 @@ export default function AnomaliesPage() {
                         <th className="py-3 px-3 font-semibold">Risolta da</th>
                         <th className="py-3 px-3 font-semibold">Risolta il</th>
                         <th className="py-3 px-3 font-semibold">Note</th>
+                        <th className="py-3 px-3 font-semibold text-center">Azioni</th>
                       </tr>
                     </thead>
                     <tbody>
                       {loading ? (
-                        <tr><td colSpan={9} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
+                        <tr><td colSpan={10} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
                       ) : filteredItems.length === 0 ? (
-                        <tr><td colSpan={9} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
+                        <tr><td colSpan={10} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
                       ) : filteredItems.map((item) => (
                         <tr
                           key={item.id}
@@ -323,11 +324,12 @@ export default function AnomaliesPage() {
                           <td className="py-3 px-3 text-xs text-muted-foreground">{new Date(item.reportedAt).toLocaleDateString()}</td>
                           <td className="py-3 px-3 text-sm">{item.resolverName ? `${item.resolverName}` : (item.resolverId ? `#${item.resolverId}` : '-')}</td>
                           <td className="py-3 px-3 text-xs text-muted-foreground">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
+                          <td className="py-3 px-3 max-w-xs truncate text-xs">{item.resolutionNotes || '-'}</td>
                           <td className="py-3 px-3">
                             <div className="relative" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
-                                className="p-1 hover:bg-muted rounded transition-colors"
+                                className="p-1 hover:bg-muted rounded transition-colors mx-auto block"
                               >
                                 <MoreVertical className="h-4 w-4 text-muted-foreground" />
                               </button>
