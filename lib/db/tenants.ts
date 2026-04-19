@@ -167,3 +167,74 @@ export async function createTenantWithInitialAdmin(input: CreateTenantWithInitia
     connection.release();
   }
 }
+
+type GetTenantsOptions = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: 'all' | 'active' | 'inactive';
+  sortBy?: 'name' | 'created_at' | 'id';
+  sortOrder?: 'asc' | 'desc';
+};
+
+export async function getTenants(options: GetTenantsOptions = {}) {
+  const page = Math.max(1, options.page || 1);
+  const limit = Math.min(100, Math.max(1, options.limit || 15));
+  const offset = (page - 1) * limit;
+  const search = options.search?.trim() || '';
+  const status = options.status || 'all';
+  const sortBy = options.sortBy || 'created_at';
+  const sortOrder = (options.sortOrder || 'desc').toUpperCase();
+
+  let whereClause = '1=1';
+  const params: (string | number)[] = [];
+
+  if (search) {
+    whereClause += ' AND (t.name LIKE ? OR t.id LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  if (status !== 'all') {
+    whereClause += ' AND t.status = ?';
+    params.push(status);
+  }
+
+  const sortColumn = sortBy === 'id' ? 't.id' : sortBy === 'name' ? 't.name' : 't.created_at';
+
+  // Get total count
+  const countQuery = `SELECT COUNT(*) as total FROM tenants t WHERE ${whereClause}`;
+  const [countRows] = await pool.query<Array<RowDataPacket & { total: number }>>(countQuery, params);
+  const total = countRows[0]?.total || 0;
+
+  // Get paginated results
+  const query = `
+    SELECT id, name, status, created_at, updated_at
+    FROM tenants t
+    WHERE ${whereClause}
+    ORDER BY ${sortColumn} ${sortOrder}
+    LIMIT ? OFFSET ?
+  `;
+
+  const [rows] = await pool.query<Array<RowDataPacket & { id: number; name: string; status: "active" | "inactive"; created_at: Date; updated_at: Date }>>(
+    query,
+    [...params, limit, offset]
+  );
+
+  return {
+    tenants: rows,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
+  };
+}
+
+export async function deleteTenant(tenantId: number): Promise<boolean> {
+  const [result] = await pool.query<ResultSetHeader>(
+    `DELETE FROM tenants WHERE id = ?`,
+    [tenantId]
+  );
+  return result.affectedRows > 0;
+}

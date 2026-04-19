@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { authErrorResponse, errorResponse, successResponse, verifyPlatformAuth } from "@/lib/middleware";
-import { createTenantWithInitialAdmin, getAllTenants } from "@/lib/db/tenants";
+import { createTenantWithInitialAdmin, getTenants } from "@/lib/db/tenants";
 
 /**
  * @swagger
@@ -131,16 +131,33 @@ export async function GET(req: NextRequest) {
   if (authResult.error) return authErrorResponse(authResult);
 
   try {
-    const tenants = await getAllTenants();
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '15', 10);
+    const search = searchParams.get('search') || '';
+    const status = (searchParams.get('status') || 'all') as 'all' | 'active' | 'inactive';
+    const sortBy = (searchParams.get('sortBy') || 'created_at') as 'name' | 'created_at' | 'id';
+    const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc';
+
+    const result = await getTenants({
+      page,
+      limit,
+      search,
+      status,
+      sortBy,
+      sortOrder,
+    });
+
     return successResponse(
       {
-        tenants: tenants.map((t) => ({
+        tenants: result.tenants.map((t) => ({
           id: t.id,
           name: t.name,
           status: t.status,
-          createdAt: t.created_at,
-          updatedAt: t.updated_at,
+          created_at: t.created_at,
+          updated_at: t.updated_at,
         })),
+        pagination: result.pagination,
       },
       "Tenants retrieved",
       200

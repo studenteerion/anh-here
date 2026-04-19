@@ -6,6 +6,8 @@ import { SidebarHeader } from './SidebarHeader';
 import { SidebarNav, type NavItem } from './SidebarNav';
 import { SidebarUserMenu, type UserMenuAction } from './SidebarUserMenu';
 
+export type { NavItem, UserMenuAction };
+
 interface BaseSidebarProps {
   logo: string;
   title: string;
