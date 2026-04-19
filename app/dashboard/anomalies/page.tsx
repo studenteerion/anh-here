@@ -93,7 +93,7 @@ export default function AnomaliesPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await authFetch('/api/me');
+        const res = await authFetch('/api/employees/me');
         const json = await res.json();
         if (json.status === 'success') {
           setHasAdminPermission(json.data.permissions?.includes('anomalies_view_all') ?? false);
