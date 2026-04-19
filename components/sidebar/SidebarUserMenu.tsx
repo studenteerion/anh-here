@@ -6,6 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ArrowLeftRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -66,9 +67,7 @@ export function SidebarUserMenu({
           {canSwitch && onWorkspaceClick && (
             <>
               <DropdownMenuItem onClick={onWorkspaceClick} className="cursor-pointer">
-                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                </svg>
+                <ArrowLeftRight className="mr-2 h-4 w-4" />
                 <span>Cambia sessione</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
