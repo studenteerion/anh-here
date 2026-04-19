@@ -156,10 +156,12 @@ export async function GET(req: NextRequest) {
       // Costruisci query dinamicamente
       let query = `SELECT a.id, a.description, a.created_at, a.reporter_id, a.employee_Id as employee_id, a.resolver_id, a.status, a.resolution_notes, a.resolved_at,
         CONCAT(r.first_name, ' ', r.last_name) as reporter_name,
-        CONCAT(res.first_name, ' ', res.last_name) as resolver_name
+        CONCAT(res.first_name, ' ', res.last_name) as resolver_name,
+        CONCAT(e.first_name, ' ', e.last_name) as assigned_employee_name
         FROM anomalies a
         LEFT JOIN employees r ON a.reporter_id = r.id AND a.tenant_id = r.tenant_id
         LEFT JOIN employees res ON a.resolver_id = res.id AND a.tenant_id = res.tenant_id
+        LEFT JOIN employees e ON a.employee_Id = e.id AND a.tenant_id = e.tenant_id
         WHERE a.tenant_id = ?`;
 
       const params: any[] = [tenantId];
@@ -220,6 +222,8 @@ export async function GET(req: NextRequest) {
             anomaly.reporterName = a.reporter_name;
             anomaly.resolverId = a.resolver_id;
             anomaly.resolverName = a.resolver_name;
+            anomaly.assignedEmployeeId = a.employee_id;
+            anomaly.assignedEmployeeName = a.assigned_employee_name;
           }
           return anomaly;
         }),
@@ -241,10 +245,12 @@ export async function GET(req: NextRequest) {
       // Query senza paginazione
       let query = `SELECT a.id, a.description, a.created_at, a.reporter_id, a.employee_Id as employee_id, a.resolver_id, a.status, a.resolution_notes, a.resolved_at,
         CONCAT(r.first_name, ' ', r.last_name) as reporter_name,
-        CONCAT(res.first_name, ' ', res.last_name) as resolver_name
+        CONCAT(res.first_name, ' ', res.last_name) as resolver_name,
+        CONCAT(e.first_name, ' ', e.last_name) as assigned_employee_name
         FROM anomalies a
         LEFT JOIN employees r ON a.reporter_id = r.id AND a.tenant_id = r.tenant_id
         LEFT JOIN employees res ON a.resolver_id = res.id AND a.tenant_id = res.tenant_id
+        LEFT JOIN employees e ON a.employee_Id = e.id AND a.tenant_id = e.tenant_id
         WHERE a.tenant_id = ?`;
 
       const params: any[] = [tenantId];
@@ -280,6 +286,8 @@ export async function GET(req: NextRequest) {
             anomaly.reporterName = a.reporter_name;
             anomaly.resolverId = a.resolver_id;
             anomaly.resolverName = a.resolver_name;
+            anomaly.assignedEmployeeId = a.employee_id;
+            anomaly.assignedEmployeeName = a.assigned_employee_name;
           }
           return anomaly;
         }),

@@ -250,6 +250,7 @@ export default function AnomaliesPage() {
                         <th className="py-3 px-3 font-semibold">ID</th>
                         <th className="py-3 px-3 font-semibold">Descrizione</th>
                         <th className="py-3 px-3 font-semibold">Segnalata da</th>
+                        <th className="py-3 px-3 font-semibold">Rivolta a</th>
                         <th className="py-3 px-3 font-semibold">Stato</th>
                         <th className="py-3 px-3 font-semibold">Segnalata</th>
                         <th className="py-3 px-3 font-semibold">Risolta da</th>
@@ -259,14 +260,15 @@ export default function AnomaliesPage() {
                     </thead>
                     <tbody>
                       {loading ? (
-                        <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
+                        <tr><td colSpan={9} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
                       ) : filteredItems.length === 0 ? (
-                        <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
+                        <tr><td colSpan={9} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
                       ) : filteredItems.map((item) => (
                         <tr key={item.id} className="border-t hover:bg-muted/40 transition-colors">
                           <td className="py-3 px-3 font-mono text-xs text-muted-foreground">#{item.id}</td>
                           <td className="py-3 px-3 max-w-xs truncate">{item.description}</td>
                           <td className="py-3 px-3 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
+                          <td className="py-3 px-3 text-sm">{item.assignedEmployeeName ? `${item.assignedEmployeeName}` : (item.assignedEmployeeId ? `#${item.assignedEmployeeId}` : '-')}</td>
                           <td className="py-3 px-3">
                             <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
                           </td>

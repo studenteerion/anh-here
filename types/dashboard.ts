@@ -78,6 +78,8 @@ export interface AnomalyListItem {
   resolverId?: number;
   reporterName?: string;
   resolverName?: string;
+  assignedEmployeeId?: number;
+  assignedEmployeeName?: string;
 }
 
 export interface CompanyReportListItem {
