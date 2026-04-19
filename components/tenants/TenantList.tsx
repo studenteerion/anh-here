@@ -18,25 +18,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-interface TenantTableRow {
-  id: number;
-  name: string;
-  status: 'active' | 'inactive';
-  created_at: string;
-}
+import type { TenantTableRow, TenantListProps } from '@/types/tenants';
 
 export default function TenantList({
   onAddTenant,
   onRefreshed,
   onTenantDeleted,
   staticData,
-}: {
-  onAddTenant?: () => void;
-  onRefreshed?: () => void;
-  onTenantDeleted?: () => void;
-  staticData?: TenantTableRow[];
-}) {
+}: TenantListProps) {
   const isStatic = staticData !== undefined;
   const [tenants, setTenants] = useState<TenantTableRow[]>(staticData || []);
   const [page, setPage] = useState(1);
@@ -330,6 +319,7 @@ export default function TenantList({
           <div className="flex items-center gap-2">
             {onAddTenant && (
               <Button size="sm" onClick={onAddTenant}>
+                <Building2 className="h-4 w-4 mr-2" />
                 Nuovo tenant
               </Button>
             )}

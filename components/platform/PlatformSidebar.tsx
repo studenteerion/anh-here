@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Building2, LogOut, Settings } from 'lucide-react';
-import { BaseSidebar, type NavItem } from '@/components/sidebar/BaseSidebar';
-import type { UserMenuAction } from '@/components/sidebar/SidebarUserMenu';
+import { BaseSidebar } from '@/components/sidebar/BaseSidebar';
+import type { NavItem, UserMenuAction } from '@/types/sidebar';
 
 const navItems: NavItem[] = [
   {

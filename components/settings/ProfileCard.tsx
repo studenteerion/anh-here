@@ -1,21 +1,5 @@
 import { UserCircle2 } from 'lucide-react';
-
-export interface ProfileData {
-  id: number | string;
-  name: string;
-  email: string;
-  status: 'active' | 'inactive';
-  lastLogin: string | null;
-  additionalFields?: Array<{
-    label: string;
-    value: React.ReactNode;
-  }>;
-}
-
-interface ProfileCardProps {
-  user: ProfileData | null;
-  isLoading: boolean;
-}
+import type { ProfileCardProps } from '@/types/settings';
 
 export function ProfileCard({ user, isLoading }: ProfileCardProps) {
   if (isLoading) {

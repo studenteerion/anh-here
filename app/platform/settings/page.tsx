@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { SettingsLayout } from '@/components/settings/SettingsLayout';
-import type { ProfileData } from '@/components/settings/ProfileCard';
+import type { ProfileData } from '@/types/settings';
 
 export default function PlatformSettingsPage() {
   const [loading, setLoading] = useState(true);

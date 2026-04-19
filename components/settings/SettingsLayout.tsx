@@ -1,20 +1,6 @@
-import { ProfileCard, type ProfileData } from './ProfileCard';
+import { ProfileCard } from './ProfileCard';
 import { PasswordCard } from './PasswordCard';
-
-interface SettingsLayoutProps {
-  user: ProfileData | null;
-  isLoading: boolean;
-  error: string | null;
-  success: string | null;
-  currentPassword: string;
-  onCurrentPasswordChange: (value: string) => void;
-  newPassword: string;
-  onNewPasswordChange: (value: string) => void;
-  confirmPassword: string;
-  onConfirmPasswordChange: (value: string) => void;
-  onChangePassword: () => void;
-  isChangingPassword: boolean;
-}
+import type { SettingsLayoutProps } from '@/types/settings';
 
 export function SettingsLayout({
   user,

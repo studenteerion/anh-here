@@ -9,24 +9,7 @@ import {
 import { ArrowLeftRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-
-export interface UserMenuAction {
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href?: string;
-  onClick?: () => void;
-  isDangerous?: boolean;
-}
-
-interface SidebarUserMenuProps {
-  initials: string;
-  fullName: string;
-  email: string;
-  isCollapsed: boolean;
-  workspaces?: Array<{ type: 'tenant' | 'platform'; tenantId?: number; companyName: string; isCurrent: boolean }>;
-  onWorkspaceClick?: () => void;
-  actions: UserMenuAction[];
-}
+import type { UserMenuAction, SidebarUserMenuProps } from '@/types/sidebar';
 
 export function SidebarUserMenu({
   initials,

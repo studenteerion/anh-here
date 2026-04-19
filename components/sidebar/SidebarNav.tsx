@@ -1,19 +1,6 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-
-export interface NavItem {
-  title: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-interface SidebarNavProps {
-  items: NavItem[];
-  pathname: string;
-  isCollapsed: boolean;
-  isMobileOpen: boolean;
-  onNavigate?: () => void;
-}
+import type { NavItem, SidebarNavProps } from '@/types/sidebar';
 
 export function SidebarNav({ items, pathname, isCollapsed, isMobileOpen, onNavigate }: SidebarNavProps) {
   return (

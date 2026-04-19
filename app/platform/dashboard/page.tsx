@@ -5,20 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import TenantList from '@/components/tenants/TenantList';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-
-type PlatformMe = {
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  email: string;
-};
-
-interface TenantTableRow {
-  id: number;
-  name: string;
-  status: 'active' | 'inactive';
-  created_at: string;
-}
+import type { PlatformMe, TenantTableRow } from '@/types/tenants';
 
 export default function PlatformDashboardPage() {
   const { isLoading } = useAuth();

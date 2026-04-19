@@ -3,29 +3,11 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { SidebarHeader } from './SidebarHeader';
-import { SidebarNav, type NavItem } from './SidebarNav';
-import { SidebarUserMenu, type UserMenuAction } from './SidebarUserMenu';
+import { SidebarNav } from './SidebarNav';
+import { SidebarUserMenu } from './SidebarUserMenu';
+import type { BaseSidebarProps, NavItem, UserMenuAction } from '@/types/sidebar';
 
-export type { NavItem, UserMenuAction };
-
-interface BaseSidebarProps {
-  logo: string;
-  title: string;
-  headerHref: string;
-  navItems: NavItem[];
-  pathname: string;
-  isCollapsed: boolean;
-  onCollapseChange: (collapsed: boolean) => void;
-  isMobileOpen: boolean;
-  onMobileOpenChange: (open: boolean) => void;
-  userInitials: string;
-  userFullName: string;
-  userEmail: string;
-  workspaces?: Array<{ type: 'tenant' | 'platform'; tenantId?: number; companyName: string; isCurrent: boolean }>;
-  onWorkspaceSwitchClick?: () => void;
-  userMenuActions: UserMenuAction[];
-  isLoading?: boolean;
-}
+export type { NavItem, UserMenuAction, BaseSidebarProps };
 
 export function BaseSidebar({
   logo,

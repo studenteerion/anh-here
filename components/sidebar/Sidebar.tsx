@@ -14,8 +14,8 @@ import {
   Settings,
   LogOut,
 } from 'lucide-react';
-import { BaseSidebar, type NavItem } from './BaseSidebar';
-import type { UserMenuAction } from './SidebarUserMenu';
+import { BaseSidebar } from './BaseSidebar';
+import type { NavItem, UserMenuAction } from '@/types/sidebar';
 
 const navItems: NavItem[] = [
   {

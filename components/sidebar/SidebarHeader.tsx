@@ -1,15 +1,6 @@
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-
-interface SidebarHeaderProps {
-  href: string;
-  isCollapsed: boolean;
-  isMobileOpen: boolean;
-  logo: string;
-  title: string;
-  onCollapse: () => void;
-  onCloseMobile: () => void;
-}
+import type { SidebarHeaderProps } from '@/types/sidebar';
 
 export function SidebarHeader({
   href,

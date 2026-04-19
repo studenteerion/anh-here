@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { SettingsLayout } from '@/components/settings/SettingsLayout';
-import type { ProfileData } from '@/components/settings/ProfileCard';
+import type { ProfileData } from '@/types/settings';
 import type { CurrentUserProfile } from '@/types';
 
 export default function SettingsPage() {

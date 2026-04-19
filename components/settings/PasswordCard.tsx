@@ -1,18 +1,7 @@
 import { KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-interface PasswordCardProps {
-  currentPassword: string;
-  onCurrentPasswordChange: (value: string) => void;
-  newPassword: string;
-  onNewPasswordChange: (value: string) => void;
-  confirmPassword: string;
-  onConfirmPasswordChange: (value: string) => void;
-  onSubmit: () => void;
-  isLoading: boolean;
-  disabled?: boolean;
-}
+import type { PasswordCardProps } from '@/types/settings';
 
 export function PasswordCard({
   currentPassword,
