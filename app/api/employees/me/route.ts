@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { getEmployeeById } from "@/lib/db/employees";
-import { getUserPermissionsById } from "@/lib/db/permissions";
 
 /**
  * @swagger
@@ -10,7 +9,7 @@ import { getUserPermissionsById } from "@/lib/db/permissions";
  *     tags:
  *       - Employees
  *     summary: Get own profile
- *     description: Returns the profile of the currently authenticated user with their permissions
+ *     description: Returns the profile of the currently authenticated user
  *     security:
  *       - BearerAuth: []
  *     responses:
@@ -34,14 +33,7 @@ export async function GET(req: NextRequest) {
       return errorResponse("Employee profile not found", 404);
     }
 
-    // Fetch permissions for this employee
-    const permissions = await getUserPermissionsById(tenantId, employeeId);
-    const permissionCodes = permissions.map(p => p.permission_code);
-
-    return successResponse({
-      ...employee,
-      permissions: permissionCodes
-    }, "Your profile retrieved", 200);
+    return successResponse(employee, "Your profile retrieved", 200);
   } catch (error: any) {
     return errorResponse(error.message || "Failed to retrieve your profile", 500);
   }

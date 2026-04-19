@@ -93,10 +93,11 @@ export default function AnomaliesPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await authFetch('/api/employees/me');
+        const res = await authFetch('/api/permissions');
         const json = await res.json();
         if (json.status === 'success') {
-          setHasAdminPermission(json.data.permissions?.includes('anomalies_view_all') ?? false);
+          const permissionCodes = json.data.permissions?.map((p: any) => p.permission_code) ?? [];
+          setHasAdminPermission(permissionCodes.includes('anomalies_view_all'));
         }
       } catch (err) {
         console.error('Failed to check admin permission', err);
