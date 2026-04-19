@@ -326,25 +326,18 @@ export default function AnomaliesPage() {
                           <td className="py-3 px-3 text-xs text-muted-foreground">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
                           <td className="py-3 px-3 max-w-xs truncate text-xs">{item.resolutionNotes || '-'}</td>
                           <td className="py-3 px-3">
-                            <div className="relative flex justify-center">
+                            <div className="relative" onClick={(e) => e.stopPropagation()}>
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenMenuId(openMenuId === item.id ? null : item.id);
-                                }}
-                                className="p-1 hover:bg-muted rounded transition-colors"
+                                onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                                className="p-1 hover:bg-muted rounded transition-colors mx-auto block"
                               >
                                 <MoreVertical className="h-4 w-4 text-muted-foreground" />
                               </button>
                               {openMenuId === item.id && (
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-card border rounded-lg shadow-xl z-50">
+                                <div className="absolute right-0 mt-1 w-44 bg-popover border rounded-lg shadow-lg z-10">
                                   {item.status !== 'closed' && (
                                     <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setShowCloseConfirm(item.id);
-                                        setOpenMenuId(null);
-                                      }}
+                                      onClick={() => setShowCloseConfirm(item.id)}
                                       className="w-full px-3 py-2 text-left hover:bg-muted flex items-center gap-2 text-sm border-b"
                                     >
                                       <CheckCircle className="h-4 w-4" />
@@ -353,11 +346,7 @@ export default function AnomaliesPage() {
                                   )}
                                   {hasAdminPermission && (
                                     <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setShowDeleteConfirm(item.id);
-                                        setOpenMenuId(null);
-                                      }}
+                                      onClick={() => setShowDeleteConfirm(item.id)}
                                       className="w-full px-3 py-2 text-left hover:bg-muted flex items-center gap-2 text-sm text-red-600"
                                     >
                                       <Trash2 className="h-4 w-4" />
