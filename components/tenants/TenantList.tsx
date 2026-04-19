@@ -41,6 +41,12 @@ export default function TenantList({
   const [tenantToDelete, setTenantToDelete] = useState<TenantTableRow | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const getDefaultSortOrder = (field: 'created_at' | 'name' | 'id'): 'asc' | 'desc' => {
+    if (field === 'id') return 'asc';
+    if (field === 'name') return 'asc';
+    return 'desc'; // created_at
+  };
+
   const fetchPage = async (p = page, isRefresh = false) => {
     if (isStatic) {
       setLoading(false);
@@ -111,6 +117,10 @@ export default function TenantList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [limit, statusFilter, searchTerm, sortBy, sortOrder]);
 
+  useEffect(() => {
+    setSortOrder(getDefaultSortOrder(sortBy));
+  }, [sortBy]);
+
   const goToPage = (nextPage: number) => {
     if (nextPage < 1) return;
     if (totalPages && nextPage > totalPages) return;
@@ -154,7 +164,7 @@ export default function TenantList({
 
   const renderFiltersSection = (position: 'top' | 'bottom') => (
     <div className={`${position === 'top' ? 'border-b p-4 sm:p-6 space-y-4' : 'border-t p-4 sm:p-6 space-y-4'}`}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
         <Input
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}

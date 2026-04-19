@@ -40,6 +40,12 @@ export default function EmployeeList({
   const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeTableRow | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const getDefaultSortOrder = (field: 'created_at' | 'first_name' | 'last_name' | 'id'): 'asc' | 'desc' => {
+    if (field === 'id') return 'asc';
+    if (field === 'first_name' || field === 'last_name') return 'asc';
+    return 'desc'; // created_at
+  };
+
   const fetchPage = async (p = page, isRefresh = false) => {
     // If using static data, don't fetch
     if (isStatic) {
@@ -105,6 +111,10 @@ export default function EmployeeList({
     fetchPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [limit, statusFilter, searchTerm, sortBy, sortOrder]);
+
+  useEffect(() => {
+    setSortOrder(getDefaultSortOrder(sortBy));
+  }, [sortBy]);
 
   const goToPage = (nextPage: number) => {
     if (nextPage < 1) return;
