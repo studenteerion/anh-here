@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
     if (platformUser && platformUser.status === "active") {
       workspaces.push({
         type: "platform",
-        companyName: "Gestione tenant",
+        companyName: "Tenant manager",
         isCurrent: false,
         isDefault: false,
       });
@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
 
     workspaces.push({
       type: "platform",
-      companyName: "Gestione tenant",
+      companyName: "Tenant manager",
       isCurrent: true,
       isDefault: false,
     });
