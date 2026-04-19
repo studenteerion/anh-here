@@ -4,6 +4,110 @@ import { checkUserPermission } from "@/lib/db/permissions";
 import { getEmployeeAnomalies, getEmployeeAnomaliesCount, getAnomalyById } from "@/lib/db/anomalies";
 import pool from "@/lib/db";
 
+/**
+ * @swagger
+ * /api/anomalies:
+ *   get:
+ *     tags:
+ *       - Anomalies
+ *     summary: Get anomalies
+ *     description: |
+ *       Retrieve attendance anomalies.
+ *       By default returns anomalies for the authenticated user.
+ *       Pass employeeId=all to view all anomalies (requires anomalies_view_all permission).
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: employeeId
+ *         in: query
+ *         schema:
+ *           type: string
+ *         description: Pass "all" to view all anomalies (admin only). Defaults to current user.
+ *       - name: status
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [open, in_progress, closed]
+ *         description: Filter by anomaly status
+ *       - name: page
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (starts at 1). Omit for all results without pagination.
+ *       - name: limit
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Number of items per page. Omit for all results without pagination.
+ *     responses:
+ *       200:
+ *         description: Anomalies retrieved successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               status: success
+ *               data:
+ *                 anomalies:
+ *                   - id: 1
+ *                     description: Missing clock-out
+ *                     status: open
+ *                     reportedAt: 2024-01-14T15:30:00Z
+ *                     reporterId: 5
+ *                     reporterName: John Doe
+ *                     resolvedAt: null
+ *                     resolverId: null
+ *                     resolverName: null
+ *                     resolutionNotes: null
+ *                 pagination:
+ *                   page: 1
+ *                   limit: 50
+ *                   total: 3
+ *                   totalPages: 1
+ *                   hasNextPage: false
+ *                   hasPrevPage: false
+ *       401:
+ *         description: Invalid or missing token
+ *       403:
+ *         description: Permission denied
+ *       500:
+ *         description: Server error
+ *   post:
+ *     tags:
+ *       - Anomalies
+ *     summary: Create anomaly
+ *     description: Create a new attendance anomaly. Requires report_anomaly permission.
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - employeeId
+ *               - description
+ *             properties:
+ *               employeeId:
+ *                 type: integer
+ *                 description: ID of the employee with the anomaly
+ *               description:
+ *                 type: string
+ *                 description: Description of the anomaly
+ *     responses:
+ *       201:
+ *         description: Anomaly created successfully
+ *       400:
+ *         description: Bad request
+ *       422:
+ *         description: Validation failed (invalid employeeId, invalid description)
+ *       403:
+ *         description: Permission denied
+ *       500:
+ *         description: Server error
+ */
 export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
