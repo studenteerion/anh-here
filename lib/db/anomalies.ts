@@ -79,6 +79,9 @@ export async function updateAnomaly(
   updates: {
     description?: string;
     status?: "open" | "in_progress" | "closed";
+    resolutionNotes?: string;
+    resolverId?: number;
+    resolvedAt?: Date;
   }
 ) {
   const setClauses = [];
@@ -91,6 +94,18 @@ export async function updateAnomaly(
   if (updates.status) {
     setClauses.push("status = ?");
     values.push(updates.status);
+  }
+  if (updates.resolutionNotes !== undefined) {
+    setClauses.push("resolution_notes = ?");
+    values.push(updates.resolutionNotes);
+  }
+  if (updates.resolverId !== undefined) {
+    setClauses.push("resolver_id = ?");
+    values.push(updates.resolverId);
+  }
+  if (updates.resolvedAt) {
+    setClauses.push("resolved_at = ?");
+    values.push(updates.resolvedAt);
   }
 
   if (setClauses.length === 0) {
