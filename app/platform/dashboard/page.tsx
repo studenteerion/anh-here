@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import TenantStats from '@/components/tenants/TenantStats';
 import TenantList from '@/components/tenants/TenantList';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import type { PlatformMe, TenantTableRow } from '@/types/tenants';
+import type { PlatformMe } from '@/types/tenants';
 
 export default function PlatformDashboardPage() {
   const { isLoading } = useAuth();
   const [me, setMe] = useState<PlatformMe | null>(null);
-  const [tenants, setTenants] = useState<TenantTableRow[]>([]);
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -86,14 +86,8 @@ export default function PlatformDashboardPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="mb-2">
-          <h1 className="text-3xl font-bold">Dashboard tenant manager</h1>
-          <p className="text-muted-foreground mt-2">
-            {me ? `Benvenuto ${me.firstName} ${me.lastName}` : 'Gestione tenant e onboarding aziende'}
-          </p>
-        </div>
 
-        <TenantStatsSection key={statsRefreshKey} />
+        <TenantStats refreshKey={statsRefreshKey} />
 
         <TenantList
           onAddTenant={() => {
@@ -202,59 +196,3 @@ export default function PlatformDashboardPage() {
   );
 }
 
-function TenantStatsSection() {
-  const [tenants, setTenants] = useState<TenantTableRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch('/api/platform/tenants?limit=1000', {
-          credentials: 'include',
-        });
-        const json = await res.json();
-        if (res.ok && json.data) {
-          setTenants(json.data.tenants || []);
-        }
-      } catch (err) {
-        console.error('Failed to fetch tenants for stats', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-lg border bg-card p-5 animate-pulse">
-            <div className="h-4 bg-muted rounded w-20 mb-2" />
-            <div className="h-8 bg-muted rounded w-12" />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  const activeCount = tenants.filter((t) => t.status === 'active').length;
-  const inactiveCount = tenants.filter((t) => t.status === 'inactive').length;
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="rounded-lg border bg-card p-5">
-        <p className="text-sm text-muted-foreground">Tenant totali</p>
-        <p className="text-3xl font-bold mt-1">{tenants.length}</p>
-      </div>
-      <div className="rounded-lg border bg-card p-5">
-        <p className="text-sm text-muted-foreground">Tenant attivi</p>
-        <p className="text-3xl font-bold mt-1">{activeCount}</p>
-      </div>
-      <div className="rounded-lg border bg-card p-5">
-        <p className="text-sm text-muted-foreground">Tenant non attivi</p>
-        <p className="text-3xl font-bold mt-1">{inactiveCount}</p>
-      </div>
-    </div>
-  );
-}
