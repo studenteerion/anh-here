@@ -243,41 +243,40 @@ export default function AnomaliesPage() {
 
                 {error && <div className="px-4 sm:px-6 pt-4 text-sm text-red-600">{error}</div>}
 
-                <div className="overflow-x-auto p-4 sm:p-6 pt-4">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-muted-foreground border-b bg-muted/40">
-                        <th className="py-3 px-3 font-semibold">ID</th>
-                        <th className="py-3 px-3 font-semibold">Descrizione</th>
-                        <th className="py-3 px-3 font-semibold">Segnalata da</th>
-                        <th className="py-3 px-3 font-semibold">Stato</th>
-                        <th className="py-3 px-3 font-semibold">Segnalata</th>
-                        <th className="py-3 px-3 font-semibold">Risolta da</th>
-                        <th className="py-3 px-3 font-semibold">Risolta il</th>
-                        <th className="py-3 px-3 font-semibold">Note</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loading ? (
-                        <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Caricamento...</td></tr>
-                      ) : filteredItems.length === 0 ? (
-                        <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
-                      ) : filteredItems.map((item) => (
-                        <tr key={item.id} className="border-t hover:bg-muted/40 transition-colors">
-                          <td className="py-3 px-3 font-mono text-xs text-muted-foreground">#{item.id}</td>
-                          <td className="py-3 px-3 max-w-xs truncate">{item.description}</td>
-                          <td className="py-3 px-3 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
-                          <td className="py-3 px-3">
-                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
-                          </td>
-                          <td className="py-3 px-3 text-xs text-muted-foreground">{new Date(item.reportedAt).toLocaleDateString()}</td>
-                          <td className="py-3 px-3 text-sm">{item.resolverName ? `${item.resolverName}` : (item.resolverId ? `#${item.resolverId}` : '-')}</td>
-                          <td className="py-3 px-3 text-xs text-muted-foreground">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
-                          <td className="py-3 px-3 max-w-xs truncate text-xs">{item.resolutionNotes || '-'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                                <div className="space-y-3 p-4 sm:p-6 pt-4">
+                  {loading ? (
+                    <div className="py-8 text-center text-muted-foreground">Caricamento...</div>
+                  ) : filteredItems.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</div>
+                  ) : filteredItems.map((item) => (
+                    <div key={item.id} className="border rounded-lg p-4 hover:bg-muted/40 transition-colors">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <div className="flex items-start justify-between gap-3 mb-3">
+                            <div>
+                              <div className="font-mono text-xs text-muted-foreground mb-1">#{item.id}</div>
+                              <div className="font-semibold text-sm">{item.description}</div>
+                            </div>
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold flex-shrink-0 ${statusBadgeClass(item.status)}`}>
+                              {statusLabel(item.status)}
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground space-y-1">
+                            <div><strong>Segnalata da:</strong> {item.reporterName ? `${item.reporterName} (#${item.reporterId})` : (item.reporterId ? `#${item.reporterId}` : '-')}</div>
+                            <div><strong>Data segnalazione:</strong> {new Date(item.reportedAt).toLocaleString()}</div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <div><strong>Risolta da:</strong> {item.resolverName ? `${item.resolverName} (#${item.resolverId})` : (item.resolverId ? `#${item.resolverId}` : '-')}</div>
+                          <div><strong>Data risoluzione:</strong> {item.resolvedAt ? new Date(item.resolvedAt).toLocaleString() : '-'}</div>
+                          <div className="mt-2">
+                            <strong>Note:</strong>
+                            <div className="mt-1 p-2 bg-muted/50 rounded text-xs whitespace-pre-wrap break-words">{item.resolutionNotes || '-'}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <PaginationSection
