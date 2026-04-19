@@ -56,6 +56,8 @@ import pool from "@/lib/db";
  *                     reportedAt: 2024-01-14T15:30:00Z
  *                     reporterId: 5
  *                     reporterName: John Doe
+ *                     assignedEmployeeId: 3
+ *                     assignedEmployeeName: Jane Smith
  *                     resolvedAt: null
  *                     resolverId: null
  *                     resolverName: null

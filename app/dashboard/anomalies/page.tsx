@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { AlertTriangle, RefreshCw, X, Plus, User, Settings, History } from 'lucide-react';
+import { AlertTriangle, RefreshCw, X, Plus, User, Settings, History, MoreVertical, Trash2, CheckCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
 export default function AnomaliesPage() {
+  const router = useRouter();
   const authFetch = useAuthFetch();
   const [items, setItems] = useState<AnomalyListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,9 @@ export default function AnomaliesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [viewMode, setViewMode] = useState<'personal' | 'admin'>('personal');
   const [hasAdminPermission, setHasAdminPermission] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+  const [showCloseConfirm, setShowCloseConfirm] = useState<number | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -121,6 +126,41 @@ export default function AnomaliesPage() {
 
   const statusLabel = (status: AnomalyListItem['status']) =>
     status === 'closed' ? 'Chiusa' : status === 'in_progress' ? 'In lavorazione' : 'Aperta';
+
+  const handleCloseAnomaly = async (anomalyId: number) => {
+    try {
+      const res = await authFetch(`/api/anomalies/${anomalyId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'closed' }),
+      });
+      const json = await res.json();
+      if (json.status === 'success') {
+        setShowCloseConfirm(null);
+        await fetchAnomalies(page);
+      } else {
+        setError(json.message || 'Failed to close anomaly');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error closing anomaly');
+    }
+  };
+
+  const handleDeleteAnomaly = async (anomalyId: number) => {
+    try {
+      const res = await authFetch(`/api/anomalies/${anomalyId}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (json.status === 'success') {
+        setShowDeleteConfirm(null);
+        await fetchAnomalies(page);
+      } else {
+        setError(json.message || 'Failed to delete anomaly');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error deleting anomaly');
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
@@ -264,7 +304,11 @@ export default function AnomaliesPage() {
                       ) : filteredItems.length === 0 ? (
                         <tr><td colSpan={9} className="py-8 text-center text-muted-foreground">Nessuna anomalia trovata</td></tr>
                       ) : filteredItems.map((item) => (
-                        <tr key={item.id} className="border-t hover:bg-muted/40 transition-colors">
+                        <tr
+                          key={item.id}
+                          className="border-t hover:bg-muted/40 transition-colors cursor-pointer"
+                          onClick={() => router.push(`/dashboard/anomalies/${item.id}`)}
+                        >
                           <td className="py-3 px-3 font-mono text-xs text-muted-foreground">#{item.id}</td>
                           <td className="py-3 px-3 max-w-xs truncate">{item.description}</td>
                           <td className="py-3 px-3 text-sm">{item.reporterName ? `${item.reporterName}` : (item.reporterId ? `#${item.reporterId}` : '-')}</td>
@@ -275,7 +319,38 @@ export default function AnomaliesPage() {
                           <td className="py-3 px-3 text-xs text-muted-foreground">{new Date(item.reportedAt).toLocaleDateString()}</td>
                           <td className="py-3 px-3 text-sm">{item.resolverName ? `${item.resolverName}` : (item.resolverId ? `#${item.resolverId}` : '-')}</td>
                           <td className="py-3 px-3 text-xs text-muted-foreground">{item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '-'}</td>
-                          <td className="py-3 px-3 max-w-xs truncate text-xs">{item.resolutionNotes || '-'}</td>
+                          <td className="py-3 px-3">
+                            <div className="relative" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                                className="p-1 hover:bg-muted rounded transition-colors"
+                              >
+                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                              </button>
+                              {openMenuId === item.id && (
+                                <div className="absolute right-0 mt-1 w-44 bg-popover border rounded-lg shadow-lg z-10">
+                                  {item.status !== 'closed' && (
+                                    <button
+                                      onClick={() => setShowCloseConfirm(item.id)}
+                                      className="w-full px-3 py-2 text-left hover:bg-muted flex items-center gap-2 text-sm border-b"
+                                    >
+                                      <CheckCircle className="h-4 w-4" />
+                                      Chiudi
+                                    </button>
+                                  )}
+                                  {hasAdminPermission && (
+                                    <button
+                                      onClick={() => setShowDeleteConfirm(item.id)}
+                                      className="w-full px-3 py-2 text-left hover:bg-muted flex items-center gap-2 text-sm text-red-600"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      Elimina
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -393,6 +468,42 @@ export default function AnomaliesPage() {
                 }}
                 embedded
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg p-6 max-w-sm w-full space-y-4 border">
+            <h3 className="text-lg font-semibold">Elimina anomalia?</h3>
+            <p className="text-sm text-muted-foreground">Questa azione non può essere annullata. L'anomalia verrà eliminata permanentemente.</p>
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(null)}>
+                Annulla
+              </Button>
+              <Button variant="destructive" onClick={() => handleDeleteAnomaly(showDeleteConfirm)}>
+                Elimina
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Close Confirmation Modal */}
+      {showCloseConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg p-6 max-w-sm w-full space-y-4 border">
+            <h3 className="text-lg font-semibold">Chiudi anomalia?</h3>
+            <p className="text-sm text-muted-foreground">L'anomalia verrà contrassegnata come chiusa.</p>
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setShowCloseConfirm(null)}>
+                Annulla
+              </Button>
+              <Button onClick={() => handleCloseAnomaly(showCloseConfirm)}>
+                Chiudi
+              </Button>
             </div>
           </div>
         </div>
