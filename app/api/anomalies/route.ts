@@ -1,110 +1,9 @@
 import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getEmployeeAnomalies, getEmployeeAnomaliesCount, createAnomaly, getAnomalyById, updateAnomaly, deleteAnomaly } from "@/lib/db/anomalies";
-import { Anomaly } from "@/types/anomalies";
+import { getAnomalyById } from "@/lib/db/anomalies";
+import pool from "@/lib/db";
 
-/**
- * @swagger
- * /api/anomalies:
- *   get:
- *     tags:
- *       - Anomalies
- *     summary: Get anomalies
- *     description: |
- *       Retrieve attendance anomalies.
- *       By default returns anomalies for the authenticated user.
- *       Admins can specify employeeId query parameter to view other users' anomalies.
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - name: employeeId
- *         in: query
- *         schema:
- *           type: integer
- *         description: Employee ID to get anomalies for (admin only, defaults to current user)
- *       - name: status
- *         in: query
- *         schema:
- *           type: string
- *           enum: [open, resolved]
- *         description: Filter by anomaly status
- *       - name: page
- *         in: query
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number (starts at 1). Omit for all results without pagination.
- *       - name: limit
- *         in: query
- *         schema:
- *           type: integer
- *           default: 50
- *         description: Number of items per page. Omit for all results without pagination.
- *     responses:
- *       401:
-*         description: Invalid or missing token
-*       200:
- *         description: Anomalies retrieved successfully
- *         content:
- *           application/json:
- *             example:
- *               anomalies:
- *                 - id: 1
-  *                   employee_id: 5
- *                   reporterId: 5
- *                   description: Missing clock-out
- *                   status: open
- *                   reportedAt: 2024-01-14T15:30:00Z
- *                   resolvedAt: null
- *                   resolutionNotes: null
- *               pagination:
- *                 page: 1
- *                 limit: 50
- *                 total: 3
- *                 totalPages: 1
- *                 hasNextPage: false
- *                 hasPrevPage: false
- *               employeeId: 5
- *       403:
- *         description: Permission denied
- *       500:
- *         description: Server error
- *   post:
- *     tags:
- *       - Anomalies
- *     summary: Create anomaly
- *     description: Create a new attendance anomaly
- *     security:
- *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - employeeId
- *               - description
- *             properties:
- *               employeeId:
- *                 type: integer
- *                 description: ID of the employee with the anomaly
- *               description:
- *                 type: string
- *                 description: Description of the anomaly
- *     responses:
- *       201:
- *         description: Anomaly created successfully
- *       400:
- *         description: Bad request
- *       422:
- *         description: Validation failed (invalid employeeId, invalid description)
- *       403:
- *         description: Permission denied
- *       500:
- *         description: Server error
- */
 export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
@@ -124,8 +23,14 @@ export async function GET(req: NextRequest) {
     const limit = limitParam ? parseInt(limitParam) : 50;
     const offset = (page - 1) * limit;
 
+    // Verifica permesso di vista storico base
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_history");
+    if (!hasPerm) {
+      return errorResponse("Permission denied: you don't have access to this feature", 403);
+    }
+
     // Determina di quale utente ottenere le anomalie
-    let targetEmployeeId = employeeId;
+    let targetEmployeeId: number | null = employeeId;
 
     // Se modalità admin
     if (viewMode === 'admin') {
@@ -134,31 +39,27 @@ export async function GET(req: NextRequest) {
       if (!hasAdminPerm) {
         return errorResponse("Permission denied: you don't have access to admin view", 403);
       }
-      // In modalità admin, otteniamo tutte le anomalie (targetEmployeeId = undefined)
-      targetEmployeeId = undefined as any;
+      // In modalità admin, targetEmployeeId = null significa "tutte"
+      targetEmployeeId = null;
     } else {
       // Se viene richiesto un employeeId diverso in modalità personale, verifica i permessi
       if (requestedEmployeeId) {
-        targetEmployeeId = parseInt(requestedEmployeeId);
+        const requestedId = parseInt(requestedEmployeeId);
         
         // Solo gli admin con permesso possono vedere le anomalie di altri utenti
-        if (targetEmployeeId !== employeeId) {
+        if (requestedId !== employeeId) {
           const hasPermission = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
           if (!hasPermission) {
             return errorResponse("Permission denied: you can only view your own anomalies", 403);
           }
         }
+        targetEmployeeId = requestedId;
       }
-    }
-
-    // Verifica permesso di vista storico
-    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_history");
-    if (!hasPerm) {
-      return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     let anomalies;
     let response: any;
+    let total = 0;
 
     if (hasPagination) {
       const validStatuses = ["open", "in_progress", "closed"];
@@ -166,14 +67,49 @@ export async function GET(req: NextRequest) {
         return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
       }
 
-      anomalies = await getEmployeeAnomalies(tenantId, targetEmployeeId, {
-        status: statusFilter as any,
-        limit,
-        offset,
-      });
-      let total = await getEmployeeAnomaliesCount(tenantId, targetEmployeeId, {
-        status: statusFilter as any,
-      });
+      // Costruisci query dinamicamente in base a targetEmployeeId
+      let query = `SELECT a.id, a.description, a.created_at, a.reporter_id, a.employee_Id as employee_id, a.resolver_id, a.status, a.resolution_notes, a.resolved_at,
+        CONCAT(r.first_name, ' ', r.last_name) as reporter_name,
+        CONCAT(res.first_name, ' ', res.last_name) as resolver_name
+        FROM anomalies a
+        LEFT JOIN employees r ON a.reporter_id = r.id AND a.tenant_id = r.tenant_id
+        LEFT JOIN employees res ON a.resolver_id = res.id AND a.tenant_id = res.tenant_id
+        WHERE a.tenant_id = ?`;
+
+      const params: any[] = [tenantId];
+
+      if (targetEmployeeId !== null) {
+        query += ` AND a.employee_Id = ?`;
+        params.push(targetEmployeeId);
+      }
+
+      if (statusFilter) {
+        query += ` AND a.status = ?`;
+        params.push(statusFilter);
+      }
+
+      query += ` ORDER BY a.created_at DESC LIMIT ? OFFSET ?`;
+      params.push(limit, offset);
+
+      const [rows]: any = await pool.query(query, params);
+      anomalies = rows;
+
+      // Query per il totale
+      let countQuery = `SELECT COUNT(*) as total FROM anomalies WHERE tenant_id = ?`;
+      const countParams: any[] = [tenantId];
+
+      if (targetEmployeeId !== null) {
+        countQuery += ` AND employee_Id = ?`;
+        countParams.push(targetEmployeeId);
+      }
+
+      if (statusFilter) {
+        countQuery += ` AND status = ?`;
+        countParams.push(statusFilter);
+      }
+
+      const [countResult]: any = await pool.query(countQuery, countParams);
+      total = countResult[0]?.total || 0;
 
       const totalPages = Math.ceil(total / limit) || 1;
 
@@ -216,9 +152,31 @@ export async function GET(req: NextRequest) {
         return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
       }
 
-      anomalies = await getEmployeeAnomalies(tenantId, targetEmployeeId, {
-        status: statusFilter as any,
-      });
+      // Query senza paginazione
+      let query = `SELECT a.id, a.description, a.created_at, a.reporter_id, a.employee_Id as employee_id, a.resolver_id, a.status, a.resolution_notes, a.resolved_at,
+        CONCAT(r.first_name, ' ', r.last_name) as reporter_name,
+        CONCAT(res.first_name, ' ', res.last_name) as resolver_name
+        FROM anomalies a
+        LEFT JOIN employees r ON a.reporter_id = r.id AND a.tenant_id = r.tenant_id
+        LEFT JOIN employees res ON a.resolver_id = res.id AND a.tenant_id = res.tenant_id
+        WHERE a.tenant_id = ?`;
+
+      const params: any[] = [tenantId];
+
+      if (targetEmployeeId !== null) {
+        query += ` AND a.employee_Id = ?`;
+        params.push(targetEmployeeId);
+      }
+
+      if (statusFilter) {
+        query += ` AND a.status = ?`;
+        params.push(statusFilter);
+      }
+
+      query += ` ORDER BY a.created_at DESC`;
+
+      const [rows]: any = await pool.query(query, params);
+      anomalies = rows;
 
       const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       response = {
@@ -276,13 +234,17 @@ export async function POST(req: NextRequest) {
     }
 
     // Create the anomaly
-    const result = await createAnomaly(tenantId, employeeId, targetEmployeeId, description.trim());
+    const [result]: any = await pool.query(
+      `INSERT INTO anomalies (tenant_id, reporter_id, employee_Id, description, status, created_at)
+       VALUES (?, ?, ?, ?, 'open', NOW())`,
+      [tenantId, employeeId, targetEmployeeId, description.trim()]
+    );
     
-    if (!result) {
+    if (!result.insertId) {
       return errorResponse("Failed to create anomaly", 500);
     }
 
-    const newAnomaly = await getAnomalyById(tenantId, result);
+    const newAnomaly = await getAnomalyById(tenantId, result.insertId);
     return successResponse(newAnomaly, "Anomaly created successfully", 201);
   } catch (error: any) {
     console.error("POST error:", error);
