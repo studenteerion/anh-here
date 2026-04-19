@@ -34,6 +34,7 @@ export default function AnomaliesPage() {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState<number | null>(null);
+  const [closeNotes, setCloseNotes] = useState('');
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -131,11 +132,15 @@ export default function AnomaliesPage() {
     try {
       const res = await authFetch(`/api/anomalies/${anomalyId}`, {
         method: 'PUT',
-        body: JSON.stringify({ status: 'closed' }),
+        body: JSON.stringify({ 
+          status: 'closed',
+          resolutionNotes: closeNotes || undefined,
+        }),
       });
       const json = await res.json();
       if (json.status === 'success') {
         setShowCloseConfirm(null);
+        setCloseNotes('');
         await fetchAnomalies(page);
       } else {
         setError(json.message || 'Failed to close anomaly');
@@ -306,8 +311,7 @@ export default function AnomaliesPage() {
                       ) : filteredItems.map((item) => (
                         <tr
                           key={item.id}
-                          className="border-t hover:bg-muted/40 transition-colors cursor-pointer"
-                          onClick={() => router.push(`/dashboard/anomalies/${item.id}`)}
+                          className="border-t hover:bg-muted/40 transition-colors"
                         >
                           <td className="py-3 px-3 font-mono text-xs text-muted-foreground">#{item.id}</td>
                           <td className="py-3 px-3 max-w-xs truncate">{item.description}</td>
@@ -494,11 +498,27 @@ export default function AnomaliesPage() {
       {/* Close Confirmation Modal */}
       {showCloseConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg p-6 max-w-sm w-full space-y-4 border">
+          <div className="bg-card rounded-lg p-6 max-w-md w-full space-y-4 border">
             <h3 className="text-lg font-semibold">Chiudi anomalia?</h3>
             <p className="text-sm text-muted-foreground">L'anomalia verrà contrassegnata come chiusa.</p>
+            <div>
+              <label htmlFor="close-notes" className="text-xs font-semibold text-muted-foreground uppercase">
+                Note di risoluzione (opzionale)
+              </label>
+              <textarea
+                id="close-notes"
+                value={closeNotes}
+                onChange={(e) => setCloseNotes(e.target.value)}
+                placeholder="Aggiungi note sulla risoluzione..."
+                className="w-full mt-2 p-2 border rounded-lg text-sm bg-muted/30 focus:outline-none focus:ring-2 focus:ring-primary"
+                rows={3}
+              />
+            </div>
             <div className="flex gap-3 justify-end">
-              <Button variant="outline" onClick={() => setShowCloseConfirm(null)}>
+              <Button variant="outline" onClick={() => {
+                setShowCloseConfirm(null);
+                setCloseNotes('');
+              }}>
                 Annulla
               </Button>
               <Button onClick={() => handleCloseAnomaly(showCloseConfirm)}>
