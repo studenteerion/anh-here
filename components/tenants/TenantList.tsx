@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Building2,
   Plus,
+  Trash2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -390,6 +391,7 @@ export default function TenantList({
                         variant="destructive"
                         onClick={() => setTenantToDelete(t)}
                       >
+                        <Trash2 className="h-4 w-4 mr-2" />
                         Elimina
                       </DropdownMenuItem>
                     </DropdownMenuContent>
