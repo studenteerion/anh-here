@@ -136,10 +136,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     const requestId = parseInt(id);
-    const request = await getLeaveRequestById(requestId);
+    const request = await getLeaveRequestById(tenantId, requestId);
 
     if (!request) {
       return errorResponse("Leave request not found", 404);
@@ -150,7 +151,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return errorResponse("You can only cancel your own leave requests", 403);
     }
 
-    const deleted = await deleteLeaveRequest(requestId);
+    const deleted = await deleteLeaveRequest(tenantId, requestId);
 
     if (!deleted) {
       return errorResponse("Can only delete pending leave requests", 400);
@@ -167,15 +168,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "view_history");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const requestId = parseInt(id);
-    const request = await getLeaveRequestById(requestId);
+    const request = await getLeaveRequestById(tenantId, requestId);
 
     if (!request) {
       return errorResponse("Leave request not found", 404);
@@ -183,7 +185,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Users can see their own requests or if they have permission to see all
     if (request.employee_id !== employeeId) {
-      const canSeeAll = await checkUserPermission(employeeId, "user_permissions_read");
+      const canSeeAll = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       if (!canSeeAll) {
         return errorResponse("You can only view your own leave requests", 403);
       }
@@ -200,10 +202,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     // Check permission to approve/reject requests
-    const hasPerm = await checkUserPermission(employeeId, "approve_requests");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "approve_requests");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to approve requests", 403);
     }
@@ -220,13 +223,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const requestId = parseInt(id);
-    const request = await getLeaveRequestById(requestId);
+    const request = await getLeaveRequestById(tenantId, requestId);
     if (!request) {
       return errorResponse("Leave request not found", 404);
     }
 
     // Use the new auto-assignment function
-    const result = await assignAndUpdateApproval(requestId, employeeId, status as "approved" | "rejected");
+    const result = await assignAndUpdateApproval(tenantId, requestId, employeeId, status as "approved" | "rejected");
 
     if (!result.success) {
       // Determine appropriate HTTP status based on error type

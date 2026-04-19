@@ -12,17 +12,18 @@ export async function GET(
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     const { id } = await context.params;
     const roleId = parseInt(id);
 
-    const role = await getRoleById(roleId);
+    const role = await getRoleById(tenantId, roleId);
     if (!role) {
       return errorResponse('Role not found', 404);
     }
 
-    const hasPerm = await checkUserPermission(employeeId, 'permissions_read_all');
+    const hasPerm = await checkUserPermission(tenantId, employeeId, 'permissions_read_all');
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -42,7 +43,7 @@ export async function GET(
       return errorResponse(`Status deve essere uno di: ${EMPLOYEE_STATUSES.join(', ')}`, 400);
     }
 
-    const employees = await getEmployeesByRole(roleId, {
+    const employees = await getEmployeesByRole(tenantId, roleId, {
       status: statusFilter as 'active' | 'inactive' | undefined,
       search: searchFilter || undefined,
       ...(hasPagination ? { limit, offset } : {}),
@@ -68,7 +69,7 @@ export async function GET(
         params.push(term, term, term, term);
       }
 
-      const total = await countRows('employees', whereClause, params);
+      const total = await countRows('employees', tenantId, whereClause, params);
       const totalPages = Math.ceil(total / limit) || 1;
 
       if (page > totalPages && total > 0) {

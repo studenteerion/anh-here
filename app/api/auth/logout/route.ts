@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
+import { verifyAuth, authErrorResponse, errorResponse, getAuthContext } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import { deleteTokensByUser } from "@/lib/db/refreshTokens";
+import { deletePlatformTokensByUser } from "@/lib/db/platformRefreshTokens";
 
 /**
  * @swagger
@@ -53,17 +54,22 @@ import { deleteTokensByUser } from "@/lib/db/refreshTokens";
 export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
-  const employeeId = authResult.payload!.sub;
+  const authContext = getAuthContext(authResult.payload!);
 
   try {
-    // Check logout permission
-    const hasPerm = await checkUserPermission(employeeId, "logout");
-    if (!hasPerm) {
-      return errorResponse("Permission denied: you don't have access to logout", 403);
-    }
+    if (authContext === "platform") {
+      await deletePlatformTokensByUser(authResult.payload!.sub);
+    } else {
+      const employeeId = authResult.payload!.sub;
+      const tenantId = "tenant_id" in authResult.payload!.data ? authResult.payload!.data.tenant_id : 0;
 
-    // Invalidate all refresh tokens for this user
-    await deleteTokensByUser(employeeId);
+      const hasPerm = await checkUserPermission(tenantId, employeeId, "logout");
+      if (!hasPerm) {
+        return errorResponse("Permission denied: you don't have access to logout", 403);
+      }
+
+      await deleteTokensByUser(tenantId, employeeId);
+    }
 
     const response = NextResponse.json({
       status: "success",
@@ -86,6 +92,13 @@ export async function POST(req: NextRequest) {
       sameSite: 'strict',
       path: '/',
       maxAge: 0, // Expire immediately
+    });
+    response.cookies.set("tenant_selection_token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 0,
     });
 
     return response;

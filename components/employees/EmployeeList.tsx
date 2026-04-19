@@ -330,16 +330,16 @@ export default function EmployeeList({
   {renderPaginationSection('top')}
 
       <div className="overflow-x-auto p-4 sm:p-6 pt-4">
-        <table className="w-full table-fixed text-sm">
+        <table className="w-full min-w-[780px] table-fixed text-sm">
           <thead>
             <tr className="text-left text-muted-foreground border-b">
               <th className="w-1/12">ID</th>
               <th className="w-2/12">Nome</th>
               <th className="w-2/12">Cognome</th>
-              <th className="w-2/12">Ruolo</th>
-              <th className="w-2/12">Dipartimento</th>
+              <th className="w-2/12 hidden md:table-cell">Ruolo</th>
+              <th className="w-2/12 hidden md:table-cell">Dipartimento</th>
               <th className="w-2/12">Status</th>
-              <th className="w-2/12">Creato</th>
+              <th className="w-2/12 hidden sm:table-cell">Creato</th>
               <th className="w-1/12 text-right">Azioni</th>
             </tr>
           </thead>
@@ -366,14 +366,14 @@ export default function EmployeeList({
                 <td className="py-2.5 pr-2 font-mono text-xs text-muted-foreground">#{e.id}</td>
                 <td className="py-2.5 pr-2 font-medium truncate">{e.first_name}</td>
                 <td className="py-2.5 pr-2 truncate">{e.last_name}</td>
-                <td>{e.role_name || '-'}</td>
-                <td>{e.department_name || '-'}</td>
+                <td className="hidden md:table-cell">{e.role_name || '-'}</td>
+                <td className="hidden md:table-cell">{e.department_name || '-'}</td>
                 <td>
                   <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(e.status)}`}>
                     {e.status === 'active' ? 'Attivo' : 'Inattivo'}
                   </span>
                 </td>
-                <td>{new Date(e.created_at).toLocaleDateString()}</td>
+                <td className="hidden sm:table-cell">{new Date(e.created_at).toLocaleDateString()}</td>
                 <td className="text-right" onClick={(event) => event.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

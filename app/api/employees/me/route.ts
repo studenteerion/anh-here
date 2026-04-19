@@ -24,9 +24,10 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const employee = await getEmployeeById(employeeId);
+    const employee = await getEmployeeById(tenantId, employeeId);
 
     if (!employee) {
       return errorResponse("Employee profile not found", 404);

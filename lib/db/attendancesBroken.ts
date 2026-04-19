@@ -8,18 +8,19 @@ import { PoolConnection } from 'mysql2/promise';
  * and create duplicate attendances
  */
 
-export async function getOpenAttendanceBroken(employeeId: number): Promise<any | null> {
+export async function getOpenAttendanceBroken(tenantId: number, employeeId: number): Promise<any | null> {
   const [rows]: any = await pool.query(
     `SELECT id, employee_id, shift_id, start_datetime 
      FROM attendances 
-     WHERE employee_id = ? AND end_datetime IS NULL 
+     WHERE tenant_id = ? AND employee_id = ? AND end_datetime IS NULL 
      ORDER BY start_datetime DESC LIMIT 1`,
-    [employeeId]
+    [tenantId, employeeId]
   );
   return rows[0] || null;
 }
 
 export async function createAttendanceBroken(
+  tenantId: number,
   employeeId: number,
   shiftId: number,
   startDatetime: Date
@@ -27,19 +28,20 @@ export async function createAttendanceBroken(
   // RACE CONDITION HERE: No atomic check
   // If called twice simultaneously, both can succeed
   const [result]: any = await pool.query(
-    `INSERT INTO attendances (employee_id, shift_id, start_datetime) 
-     VALUES (?, ?, ?)`,
-    [employeeId, shiftId, startDatetime]
+    `INSERT INTO attendances (tenant_id, employee_id, shift_id, start_datetime) 
+     VALUES (?, ?, ?, ?)`,
+    [tenantId, employeeId, shiftId, startDatetime]
   );
   return result.insertId;
 }
 
 export async function closeAttendanceBroken(
+  tenantId: number,
   attendanceId: number,
   endDatetime: Date
 ): Promise<void> {
   await pool.query(
-    `UPDATE attendances SET end_datetime = ? WHERE id = ?`,
-    [endDatetime, attendanceId]
+    `UPDATE attendances SET end_datetime = ? WHERE tenant_id = ? AND id = ?`,
+    [endDatetime, tenantId, attendanceId]
   );
 }

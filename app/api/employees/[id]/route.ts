@@ -91,19 +91,20 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     const targetId = parseInt(id);
     
     // Se l'utente chiede le informazioni di un altro dipendente, verifica i permessi
     if (targetId !== employeeId) {
-      const hasPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       if (!hasPerm) {
         return errorResponse("Permission denied: you can only view your own profile", 403);
       }
     }
 
-    const employee = await getEmployeeById(targetId);
+    const employee = await getEmployeeById(tenantId, targetId);
 
     if (!employee) {
       return errorResponse("Employee not found", 404);
@@ -120,15 +121,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_update");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_update");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const targetId = parseInt(id);
-    const employee = await getEmployeeById(targetId);
+    const employee = await getEmployeeById(tenantId, targetId);
 
     if (!employee) {
       return errorResponse("Employee not found", 404);
@@ -137,7 +139,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const body = await req.json();
     const { firstName, lastName, roleId, departmentId, status } = body;
 
-    const updated = await updateEmployee(targetId, {
+    const updated = await updateEmployee(tenantId, targetId, {
       firstName,
       lastName,
       roleId,
@@ -149,7 +151,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return errorResponse("No fields to update", 400);
     }
 
-    const updatedEmployee = await getEmployeeById(targetId);
+    const updatedEmployee = await getEmployeeById(tenantId, targetId);
     return successResponse(updatedEmployee, "Employee updated successfully", 200);
   } catch (error: any) {
     return errorResponse(error.message || "Failed to update employee", 500);
@@ -161,9 +163,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "delete_employees");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "delete_employees");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -174,12 +177,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return errorResponse("Cannot delete your own account", 400);
     }
 
-    const employee = await getEmployeeById(targetId);
+    const employee = await getEmployeeById(tenantId, targetId);
     if (!employee) {
       return errorResponse("Employee not found", 404);
     }
 
-    await deleteEmployee(targetId);
+    await deleteEmployee(tenantId, targetId);
 
     return successResponse({ id: targetId }, "Employee deleted successfully", 200);
   } catch (error: any) {

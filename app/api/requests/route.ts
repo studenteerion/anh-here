@@ -141,6 +141,7 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     const searchParams = req.nextUrl.searchParams;
@@ -163,14 +164,14 @@ export async function GET(req: NextRequest) {
       
       // Solo gli admin con permesso possono vedere le requests di altri utenti
       if (targetEmployeeId !== employeeId) {
-        const hasPermission = await checkUserPermission(employeeId, "user_permissions_read");
+        const hasPermission = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
         if (!hasPermission) {
           return errorResponse("Permission denied: you can only view your own requests", 403);
         }
       }
     }
 
-    const hasPerm = await checkUserPermission(employeeId, "view_history");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -183,12 +184,12 @@ export async function GET(req: NextRequest) {
         return errorResponse(`Status deve essere uno di: ${LEAVE_REQUEST_STATUSES.join(", ")}`, 400);
       }
 
-      requests = await getUserLeaveRequests(targetEmployeeId, {
+      requests = await getUserLeaveRequests(tenantId, targetEmployeeId, {
         status: statusFilter as any,
         limit,
         offset,
       });
-      let total = await getUserLeaveRequestsCount(targetEmployeeId, {
+      let total = await getUserLeaveRequestsCount(tenantId, targetEmployeeId, {
         status: statusFilter as any,
       });
 
@@ -226,7 +227,7 @@ export async function GET(req: NextRequest) {
         return errorResponse(`Status deve essere uno di: ${LEAVE_REQUEST_STATUSES.join(", ")}`, 400);
       }
 
-      requests = await getUserLeaveRequests(targetEmployeeId, {
+      requests = await getUserLeaveRequests(tenantId, targetEmployeeId, {
         status: statusFilter as any,
       });
 
@@ -258,9 +259,10 @@ export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "request_leave");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "request_leave");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -289,6 +291,7 @@ export async function POST(req: NextRequest) {
     }
 
     const requestId = await createLeaveRequest(
+      tenantId,
       employeeId,
       start,
       end,

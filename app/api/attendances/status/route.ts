@@ -48,19 +48,20 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     // Verifica permesso
-    const hasPerm = await checkUserPermission(employeeId, "view_history");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     // Ottieni timbro aperto (DB fornisce hours_open)
-    const openAttendance = await getOpenAttendance(employeeId);
+    const openAttendance = await getOpenAttendance(tenantId, employeeId);
 
     // Ottieni tutti i timbri di oggi (DB fornisce "hours" per ciascuna riga)
-    const todayAttendances = await getTodayAttendance(employeeId);
+    const todayAttendances = await getTodayAttendance(tenantId, employeeId);
 
     // Somma ore calcolate dal DB
     let totalHoursToday = 0;

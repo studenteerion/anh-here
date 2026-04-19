@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     const body = await req.json();
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verifica la password corrente
-    const currentHash = await getUserPasswordHash(employeeId);
+    const currentHash = await getUserPasswordHash(tenantId, employeeId);
     if (!currentHash) {
       return errorResponse("User account not found", 404);
     }
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest) {
 
     // Aggiorna la password
     const newHash = hashPassword(newPassword);
-    const updated = await updateUserPassword(employeeId, newHash);
+    const updated = await updateUserPassword(tenantId, employeeId, newHash);
 
     if (!updated) {
       return errorResponse("Failed to update password", 500);

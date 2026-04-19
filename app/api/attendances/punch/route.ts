@@ -55,13 +55,14 @@ export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   // Get a connection from the pool for transaction
   const connection = await pool.getConnection();
 
   try {
     // Verifica permesso
-    const hasPerm = await checkUserPermission(employeeId, "clock_in_out");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "clock_in_out");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
     const now = new Date();
 
     // Get employee shift first (before transaction)
-    const shift = await getEmployeeShift(employeeId);
+    const shift = await getEmployeeShift(tenantId, employeeId);
     if (!shift) {
       return errorResponse("No shift configured for this employee", 400);
     }
@@ -81,6 +82,7 @@ export async function POST(req: NextRequest) {
       // ATOMIC OPERATION: Try to insert new attendance
       // This will fail (return null) if an open attendance already exists
       const attendanceId = await createAttendanceWithConnection(
+        tenantId,
         employeeId, 
         shift.id, 
         now, 
@@ -102,7 +104,7 @@ export async function POST(req: NextRequest) {
       // INSERT failed because open attendance exists - do CHECK-OUT
       // Retrieve the existing open attendance with FOR UPDATE lock
       // This prevents concurrent requests from closing the same attendance
-      const openAttendance = await getOpenAttendanceInTransaction(employeeId, connection);
+      const openAttendance = await getOpenAttendanceInTransaction(tenantId, employeeId, connection);
 
       if (!openAttendance) {
         // This can happen if another concurrent request just closed the attendance
@@ -112,6 +114,7 @@ export async function POST(req: NextRequest) {
         // Start new transaction for check-in
         await connection.beginTransaction();
         const newAttendanceId = await createAttendanceWithConnection(
+          tenantId,
           employeeId, 
           shift.id, 
           now, 
@@ -134,7 +137,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Close the attendance
-      await closeAttendanceWithConnection(openAttendance.id, now, connection);
+      await closeAttendanceWithConnection(tenantId, openAttendance.id, now, connection);
       await connection.commit();
 
       const workedHours = (

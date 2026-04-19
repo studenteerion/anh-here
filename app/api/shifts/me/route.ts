@@ -66,16 +66,17 @@ export async function GET(req: NextRequest) {
   if (authResult.error) return authErrorResponse(authResult);
 
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     // Verify employee exists (ensure user data is still in system)
-    const employee = await getEmployeeById(employeeId);
+    const employee = await getEmployeeById(tenantId, employeeId);
     if (!employee) {
       return errorResponse("Employee data not found", 404);
     }
 
     // Get shifts for the authenticated employee
-    const shifts = await getShiftsByEmployee(employeeId);
+    const shifts = await getShiftsByEmployee(tenantId, employeeId);
 
     return successResponse(
       {

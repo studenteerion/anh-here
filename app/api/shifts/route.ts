@@ -96,9 +96,10 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_read");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -117,11 +118,11 @@ export async function GET(req: NextRequest) {
     let response: any;
     
     if (departmentId) {
-      shifts = await getShiftsByDepartment(parseInt(departmentId));
+      shifts = await getShiftsByDepartment(tenantId, parseInt(departmentId));
       response = { shifts };
     } else if (hasPagination) {
-      shifts = await getAllShifts({ limit, offset });
-      const total = await getShiftsCount();
+      shifts = await getAllShifts(tenantId, { limit, offset });
+      const total = await getShiftsCount(tenantId);
       const totalPages = Math.ceil(total / limit) || 1;
 
       // Valida pagina fuori range
@@ -141,7 +142,7 @@ export async function GET(req: NextRequest) {
         },
       };
     } else {
-      shifts = await getAllShifts();
+      shifts = await getAllShifts(tenantId);
       response = { shifts };
     }
 
@@ -155,9 +156,10 @@ export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_create");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_create");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -189,7 +191,7 @@ export async function POST(req: NextRequest) {
     const startTimeStr = startTime.replace('Z', '').replace('T', ' ').slice(0, 19);
     const endTimeStr = endTime.replace('Z', '').replace('T', ' ').slice(0, 19);
 
-    const shiftId = await createShift(departmentId, name || null, startTimeStr as any, endTimeStr as any);
+    const shiftId = await createShift(tenantId, departmentId, name || null, startTimeStr as any, endTimeStr as any);
 
     return successResponse({
       id: shiftId,

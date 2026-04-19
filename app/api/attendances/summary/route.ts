@@ -76,10 +76,11 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     // Verifica permesso
-    const hasPerm = await checkUserPermission(employeeId, "view_history");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -124,6 +125,7 @@ export async function GET(req: NextRequest) {
 
     // Ottieni presenze nel periodo
     const attendances = await getAttendanceHistory(
+      tenantId,
       employeeId,
       startDate,
       endDate
@@ -131,6 +133,7 @@ export async function GET(req: NextRequest) {
 
     // Ottieni permessi approvati nel periodo
     const leaveRequests = await getLeaveRequestsByDateRange(
+      tenantId,
       employeeId,
       startDate,
       endDate

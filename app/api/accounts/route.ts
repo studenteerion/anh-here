@@ -66,9 +66,10 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "manage_accounts");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "manage_accounts");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",
@@ -97,12 +98,12 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      accounts = await getAllUserAccounts({
+      accounts = await getAllUserAccounts(tenantId, {
         status: statusFilter as any,
         limit,
         offset,
       });
-      const total = await getUserAccountsCount({
+      const total = await getUserAccountsCount(tenantId, {
         status: statusFilter as any,
       });
       const totalPages = Math.ceil(total / limit) || 1;
@@ -147,7 +148,7 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      accounts = await getAllUserAccounts({
+      accounts = await getAllUserAccounts(tenantId, {
         status: statusFilter as any,
       });
 

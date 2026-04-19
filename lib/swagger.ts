@@ -8,7 +8,7 @@ export const getApiDocs = async () => {
       info: {
         title: 'ANH-here - Sistema di Gestione Presenze',
         version: '1.0.0',
-        description: 'Documentazione ufficiale delle API ANH-here.',
+        description: 'Documentazione ufficiale delle API ANH-here. Login unico per utenti tenant e platform manager; per utenti multitenant può essere richiesta la selezione tenant tramite /api/auth/select-tenant prima dell’emissione JWT.',
         contact: {
           name: 'ANH-here API Support',
           email: 'support@anhere.local',

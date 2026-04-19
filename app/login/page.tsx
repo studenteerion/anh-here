@@ -3,6 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+type TenantChoice = {
+  tenantId: number;
+  tenantName: string;
+  isDefault: boolean;
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -11,6 +17,9 @@ export default function LoginPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isSelectingTenant, setIsSelectingTenant] = useState(false);
+  const [tenantChoices, setTenantChoices] = useState<TenantChoice[]>([]);
+  const [canAccessPlatform, setCanAccessPlatform] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
@@ -29,8 +38,9 @@ export default function LoginPage() {
         });
 
         if (validateResponse.ok) {
-          // Token valido, vai alla dashboard
-          router.push('/dashboard');
+          const validateData = await validateResponse.json();
+          const context = validateData?.data?.data?.context;
+          router.push(context === 'platform' ? '/platform/dashboard' : '/dashboard');
           return;
         }
 
@@ -41,11 +51,26 @@ export default function LoginPage() {
         });
 
         if (refreshResponse.ok) {
-          // Refresh riuscito, vai alla dashboard
-          router.push('/dashboard');
+          const refreshData = await refreshResponse.json();
+          router.push(refreshData?.redirectTo || '/dashboard');
           return;
         }
-      } catch (error) {
+
+        const tenantSelectionResponse = await fetch('/api/auth/select-tenant', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (tenantSelectionResponse.ok) {
+          const selectionData = await tenantSelectionResponse.json();
+          const choices = selectionData?.data?.tenants || [];
+          const hasPlatform = Boolean(selectionData?.data?.canAccessPlatform);
+          if (choices.length > 0 || hasPlatform) {
+            setTenantChoices(choices);
+            setCanAccessPlatform(hasPlatform);
+            return;
+          }
+        }
+      } catch {
         console.log('Nessun token valido, mostra login');
       } finally {
         setIsCheckingAuth(false);
@@ -85,6 +110,8 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setCanAccessPlatform(false);
+    setTenantChoices([]);
     setFieldErrors({ email: '', password: '' });
 
     if (!validateForm()) {
@@ -106,15 +133,65 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // I token sono già salvati nei cookie HttpOnly dal server!
-        router.push('/dashboard');
+        if (data.requiresTenantSelection && Array.isArray(data.tenants)) {
+          setTenantChoices(data.tenants);
+          setCanAccessPlatform(Boolean(data.canAccessPlatform));
+        } else {
+          router.push(data.redirectTo || (data.context === 'platform' ? '/platform/dashboard' : '/dashboard'));
+        }
       } else {
         setError(data.message || 'Login failed');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleTenantSelection = async (tenantId: number) => {
+    setIsSelectingTenant(true);
+    setError('');
+    try {
+      const response = await fetch('/api/auth/select-tenant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ tenantId }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.message || 'Selezione tenant fallita');
+        return;
+      }
+      router.push(data.redirectTo || '/dashboard');
+    } catch {
+      setError('Errore durante la selezione tenant');
+    } finally {
+      setIsSelectingTenant(false);
+    }
+  };
+
+  const handlePlatformSelection = async () => {
+    setIsSelectingTenant(true);
+    setError('');
+    try {
+      const response = await fetch('/api/auth/select-tenant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ context: 'platform' }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.message || 'Selezione workspace fallita');
+        return;
+      }
+      router.push(data.redirectTo || '/platform/dashboard');
+    } catch {
+      setError('Errore durante la selezione workspace');
+    } finally {
+      setIsSelectingTenant(false);
     }
   };
 
@@ -147,9 +224,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+      <div className="min-h-svh flex flex-col lg:flex-row">
       {/* Branding - Responsive: top on mobile, right side on desktop */}
-      <div className="flex justify-center items-center py-12 lg:py-0 lg:flex-1 bg-white dark:bg-zinc-950 lg:bg-zinc-50 lg:dark:bg-zinc-900 lg:relative lg:overflow-hidden order-first lg:order-last">
+        <div className="flex justify-center items-center py-10 lg:py-0 lg:flex-1 bg-white dark:bg-zinc-950 lg:bg-zinc-50 lg:dark:bg-zinc-900 lg:relative lg:overflow-hidden order-first lg:order-last">
         {/* Subtle Grid Pattern - Desktop only */}
         <div className="hidden lg:block absolute inset-0" style={{
           backgroundImage: `
@@ -160,9 +237,9 @@ export default function LoginPage() {
         }}></div>
         
         {/* Content */}
-        <div className="relative z-10 text-center space-y-2 lg:space-y-3">
-          <h1 className="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-white">
-            ANH-here
+          <div className="relative z-10 text-center space-y-2 lg:space-y-3 px-4">
+            <h1 className="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-white">
+              ANH-here
           </h1>
           <p className="text-base lg:text-lg text-zinc-600 dark:text-zinc-400">
             Presence Management System
@@ -171,8 +248,8 @@ export default function LoginPage() {
       </div>
 
       {/* Form Section */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 lg:py-0 bg-white dark:bg-zinc-950">
-        <div className="w-full max-w-md space-y-8">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-0 bg-white dark:bg-zinc-950">
+        <div className="w-full max-w-md space-y-6 sm:space-y-8">
           {/* Header */}
           <div>
             <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white">
@@ -183,17 +260,59 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Form */}
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
-            {error && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 px-4 py-3">
-                <p className="text-sm text-red-800 dark:text-red-200">
-                  {error}
-                </p>
-              </div>
-            )}
+          {error && (
+            <div className="rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 px-4 py-3">
+              <p className="text-sm text-red-800 dark:text-red-200">
+                {error}
+              </p>
+            </div>
+          )}
 
-            <div className="space-y-5">
+          {/* Form */}
+          {(tenantChoices.length > 0 || canAccessPlatform) ? (
+            <div className="mt-6 sm:mt-8 space-y-4">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                Seleziona dove vuoi accedere per questa sessione.
+              </p>
+              <div className="space-y-2">
+                {tenantChoices.map((tenant) => (
+                  <button
+                    key={tenant.tenantId}
+                    type="button"
+                    onClick={() => handleTenantSelection(tenant.tenantId)}
+                    disabled={isSelectingTenant}
+                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors disabled:opacity-60"
+                  >
+                    <div className="font-medium text-zinc-900 dark:text-white">
+                      {tenant.tenantName}
+                    </div>
+                    {tenant.isDefault && (
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Tenant predefinito
+                      </div>
+                    )}
+                  </button>
+                ))}
+                {canAccessPlatform && (
+                  <button
+                    type="button"
+                    onClick={handlePlatformSelection}
+                    disabled={isSelectingTenant}
+                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors disabled:opacity-60"
+                  >
+                    <div className="font-medium text-zinc-900 dark:text-white">
+                      Pannello gestione tenant
+                    </div>
+                    <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Accesso come superuser platform
+                    </div>
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+          <form className="mt-6 sm:mt-8 space-y-5 sm:space-y-6" onSubmit={handleSubmit} noValidate>
+            <div className="space-y-4 sm:space-y-5">
               {/* Email Field */}
               <div>
                 <label
@@ -347,6 +466,7 @@ export default function LoginPage() {
               </a>
             </div>
           </form>
+          )}
         </div>
       </div>
 

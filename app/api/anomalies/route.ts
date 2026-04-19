@@ -109,6 +109,7 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     const searchParams = req.nextUrl.searchParams;
@@ -131,7 +132,7 @@ export async function GET(req: NextRequest) {
       
       // Solo gli admin con permesso possono vedere le anomalie di altri utenti
       if (targetEmployeeId !== employeeId) {
-        const hasPermission = await checkUserPermission(employeeId, "user_permissions_read");
+        const hasPermission = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
         if (!hasPermission) {
           return errorResponse("Permission denied: you can only view your own anomalies", 403);
         }
@@ -139,7 +140,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Verifica permesso di vista storico
-    const hasPerm = await checkUserPermission(employeeId, "view_history");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -153,12 +154,12 @@ export async function GET(req: NextRequest) {
         return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
       }
 
-      anomalies = await getEmployeeAnomalies(targetEmployeeId, {
+      anomalies = await getEmployeeAnomalies(tenantId, targetEmployeeId, {
         status: statusFilter as any,
         limit,
         offset,
       });
-      let total = await getEmployeeAnomaliesCount(targetEmployeeId, {
+      let total = await getEmployeeAnomaliesCount(tenantId, targetEmployeeId, {
         status: statusFilter as any,
       });
 
@@ -168,7 +169,7 @@ export async function GET(req: NextRequest) {
         return errorResponse(`Page ${page} does not exist. Total pages: ${totalPages}`, 400);
       }
 
-      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       response = {
         anomalies: anomalies.map((a: any) => {
           const anomaly: any = {
@@ -203,11 +204,11 @@ export async function GET(req: NextRequest) {
         return errorResponse(`Status deve essere uno di: ${validStatuses.join(", ")}`, 400);
       }
 
-      anomalies = await getEmployeeAnomalies(targetEmployeeId, {
+      anomalies = await getEmployeeAnomalies(tenantId, targetEmployeeId, {
         status: statusFilter as any,
       });
 
-      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       response = {
         anomalies: anomalies.map((a: any) => {
           const anomaly: any = {
@@ -241,10 +242,11 @@ export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     // Permission check: report_anomalies
-    const hasPerm = await checkUserPermission(employeeId, "report_anomalies");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "report_anomalies");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to report anomalies", 403);
     }
@@ -262,13 +264,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Create the anomaly
-    const result = await createAnomaly(employeeId, targetEmployeeId, description.trim());
+    const result = await createAnomaly(tenantId, employeeId, targetEmployeeId, description.trim());
     
     if (!result) {
       return errorResponse("Failed to create anomaly", 500);
     }
 
-    const newAnomaly = await getAnomalyById(result);
+    const newAnomaly = await getAnomalyById(tenantId, result);
     return successResponse(newAnomaly, "Anomaly created successfully", 201);
   } catch (error: any) {
     console.error("POST error:", error);

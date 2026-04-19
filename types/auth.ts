@@ -4,6 +4,17 @@
 
 export interface JWTPayload {
   sub: number;
+  data:
+    | {
+        context?: "tenant";
+        role_id: number;
+        tenant_id: number;
+      }
+    | {
+        context: "platform";
+        role_id: number;
+        tenant_id: number;
+      };
   iat: number;
   exp: number;
 }

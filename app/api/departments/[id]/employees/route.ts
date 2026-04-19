@@ -104,19 +104,20 @@ export async function GET(
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     const { id } = await context.params;
     const departmentId = parseInt(id);
 
     // Verifica che il dipartimento esista
-    const department = await getDepartmentById(departmentId);
+    const department = await getDepartmentById(tenantId, departmentId);
     if (!department) {
       return errorResponse("Department not found", 404);
     }
 
     // Verifica permessi
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_read");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -140,14 +141,14 @@ export async function GET(
         return errorResponse(`Status deve essere uno di: ${EMPLOYEE_STATUSES.join(", ")}`, 400);
       }
 
-      employees = await getEmployeesByDepartment(departmentId, {
+      employees = await getEmployeesByDepartment(tenantId, departmentId, {
         status: statusFilter as any,
         search: searchFilter || undefined,
         limit,
         offset,
       });
-      let whereClause = 'department_id = ?';
-      const params: any[] = [departmentId];
+       let whereClause = 'department_id = ?';
+       const params: any[] = [departmentId];
       if (statusFilter) {
         whereClause += ' AND status = ?';
         params.push(statusFilter);
@@ -162,7 +163,7 @@ export async function GET(
         const term = `%${searchFilter}%`;
         params.push(term, term, term, term);
       }
-      let total = await countRows('employees', whereClause, params);
+       let total = await countRows('employees', tenantId, whereClause, params);
 
       const totalPages = Math.ceil(total / limit) || 1;
 
@@ -196,7 +197,7 @@ export async function GET(
         return errorResponse(`Status deve essere uno di: ${EMPLOYEE_STATUSES.join(", ")}`, 400);
       }
 
-      employees = await getEmployeesByDepartment(departmentId, {
+      employees = await getEmployeesByDepartment(tenantId, departmentId, {
         status: statusFilter as any,
         search: searchFilter || undefined,
       });

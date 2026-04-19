@@ -111,15 +111,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "view_history");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const anomalyId = parseInt(id);
-    const anomaly = await getAnomalyById(anomalyId);
+    const anomaly = await getAnomalyById(tenantId, anomalyId);
 
     if (!anomaly) {
       return errorResponse("Anomaly not found", 404);
@@ -127,7 +128,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Check ownership: only allow viewing if anomaly belongs to user OR user is admin with permission
     if (anomaly.employee_id !== employeeId) {
-      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       if (!hasAdminPerm) {
         return errorResponse("Permission denied: you can only view your own anomalies", 403);
       }
@@ -144,15 +145,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "resolve_anomalies");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "resolve_anomalies");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const anomalyId = parseInt(id);
-    const anomaly = await getAnomalyById(anomalyId);
+    const anomaly = await getAnomalyById(tenantId, anomalyId);
 
     if (!anomaly) {
       return errorResponse("Anomaly not found", 404);
@@ -160,7 +162,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Only allow modification if anomaly belongs to user OR user is admin
     if (anomaly.employee_id !== employeeId) {
-      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       if (!hasAdminPerm) {
         return errorResponse("Permission denied: you can only modify your own anomalies", 403);
       }
@@ -187,7 +189,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       }
     }
 
-    const updated = await updateAnomaly(anomalyId, { 
+    const updated = await updateAnomaly(tenantId, anomalyId, { 
       description: description !== undefined ? description : anomaly.description, 
       status 
     });
@@ -196,7 +198,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return errorResponse("Failed to update anomaly", 422);
     }
 
-    const updatedAnomaly = await getAnomalyById(anomalyId);
+    const updatedAnomaly = await getAnomalyById(tenantId, anomalyId);
     return successResponse(updatedAnomaly, "Anomaly updated successfully", 200);
   } catch (error: any) {
     return errorResponse(error.message || "Failed to update anomaly", 500);
@@ -208,15 +210,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "resolve_anomalies");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "resolve_anomalies");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const anomalyId = parseInt(id);
-    const anomaly = await getAnomalyById(anomalyId);
+    const anomaly = await getAnomalyById(tenantId, anomalyId);
 
     if (!anomaly) {
       return errorResponse("Anomaly not found", 404);
@@ -224,13 +227,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     // Only allow deletion if anomaly belongs to user OR user is admin
     if (anomaly.employee_id !== employeeId) {
-      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       if (!hasAdminPerm) {
         return errorResponse("Permission denied: you can only delete your own anomalies", 403);
       }
     }
 
-    await deleteAnomaly(anomalyId);
+    await deleteAnomaly(tenantId, anomalyId);
 
     return successResponse({ id: anomalyId }, "Anomaly deleted successfully", 200);
   } catch (error: any) {

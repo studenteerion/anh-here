@@ -97,9 +97,10 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "permissions_read_all");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "permissions_read_all");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -117,8 +118,8 @@ export async function GET(req: NextRequest) {
     let response: any;
 
     if (hasPagination) {
-      roles = await getAllRoles({ limit, offset });
-      const total = await countRows('roles');
+      roles = await getAllRoles(tenantId, { limit, offset });
+      const total = await countRows('roles', tenantId);
       const totalPages = Math.ceil(total / limit) || 1;
 
       // Valida pagina fuori range
@@ -138,7 +139,7 @@ export async function GET(req: NextRequest) {
         },
       };
     } else {
-      roles = await getAllRoles();
+      roles = await getAllRoles(tenantId);
       response = { roles };
     }
 
@@ -152,9 +153,10 @@ export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_create");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_create");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -166,7 +168,7 @@ export async function POST(req: NextRequest) {
       return errorResponse("Missing required field: roleName", 422);
     }
 
-    const roleId = await createRole(roleName);
+    const roleId = await createRole(tenantId, roleName);
 
     return successResponse({
       id: roleId,

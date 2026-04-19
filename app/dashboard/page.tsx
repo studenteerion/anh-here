@@ -7,7 +7,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zinc-900 dark:border-white mx-auto mb-4"></div>
           <p className="text-zinc-600 dark:text-zinc-400">Caricamento...</p>
@@ -17,7 +17,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground mt-2">

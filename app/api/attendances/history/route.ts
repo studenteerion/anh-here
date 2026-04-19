@@ -97,10 +97,11 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const authenticatedEmployeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     // Check base permission
-    const hasPerm = await checkUserPermission(authenticatedEmployeeId, "view_history");
+    const hasPerm = await checkUserPermission(tenantId, authenticatedEmployeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -113,7 +114,7 @@ export async function GET(req: NextRequest) {
 
     // Check access control: if requesting another employee's data, need special permission
     if (requestedEmployeeId !== authenticatedEmployeeId) {
-      const hasViewAllPerm = await checkUserPermission(authenticatedEmployeeId, "view_all_attendances");
+      const hasViewAllPerm = await checkUserPermission(tenantId, authenticatedEmployeeId, "view_all_attendances");
       if (!hasViewAllPerm) {
         return errorResponse("Permission denied: you don't have access to view other employees' attendance history", 403);
       }
@@ -164,6 +165,7 @@ export async function GET(req: NextRequest) {
 
     // Ottieni permessi approvati nel periodo (una sola volta)
     const leaveRequests = await getLeaveRequestsByDateRange(
+      tenantId,
       requestedEmployeeId,
       startDate,
       endDate
@@ -189,6 +191,7 @@ export async function GET(req: NextRequest) {
 
       // Ottieni count totale delle attendances
       const totalAttendances = await getAttendanceHistoryCount(
+        tenantId,
         requestedEmployeeId,
         startDate,
         endDate
@@ -202,6 +205,7 @@ export async function GET(req: NextRequest) {
 
       // Ottieni attendances PAGINATE dal database
       attendances = await getAttendanceHistory(
+        tenantId,
         requestedEmployeeId,
         startDate,
         endDate,
@@ -290,6 +294,7 @@ export async function GET(req: NextRequest) {
     } else {
       // Nessuna paginazione - ottieni tutto (pass no filters)
       attendances = await getAttendanceHistory(
+        tenantId,
         requestedEmployeeId,
         startDate,
         endDate

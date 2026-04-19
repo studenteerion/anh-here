@@ -188,15 +188,6 @@ export default function PlatformDashboardPage() {
               </tbody>
             </table>
           </div>
-          <div className="pt-4">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-md border px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              Logout
-            </button>
-          </div>
         </div>
       </div>
 

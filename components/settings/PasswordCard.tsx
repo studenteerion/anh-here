@@ -2,7 +2,7 @@ import { KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-interface SecurityCardProps {
+interface PasswordCardProps {
   currentPassword: string;
   onCurrentPasswordChange: (value: string) => void;
   newPassword: string;
@@ -14,7 +14,7 @@ interface SecurityCardProps {
   disabled?: boolean;
 }
 
-export function SecurityCard({
+export function PasswordCard({
   currentPassword,
   onCurrentPasswordChange,
   newPassword,
@@ -24,14 +24,14 @@ export function SecurityCard({
   onSubmit,
   isLoading,
   disabled = false,
-}: SecurityCardProps) {
+}: PasswordCardProps) {
   const isFormValid = currentPassword && newPassword && confirmPassword;
 
   return (
     <div className="border rounded-lg bg-card">
       <div className="p-4 sm:p-6 border-b flex items-center gap-2">
         <KeyRound className="h-5 w-5 text-muted-foreground" />
-        <h2 className="text-lg font-semibold">Sicurezza</h2>
+        <h2 className="text-lg font-semibold">Password</h2>
       </div>
       <div className="p-4 sm:p-6 space-y-3">
         <Input

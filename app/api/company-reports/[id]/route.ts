@@ -120,9 +120,10 @@ export async function GET(
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "view_reports");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_reports");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",
@@ -133,7 +134,7 @@ export async function GET(
     const { id } = await params;
     const reportId = parseInt(id);
 
-    const report = await getCompanyReportById(reportId);
+    const report = await getCompanyReportById(tenantId, reportId);
     if (!report) {
       return errorResponse("Report not found", 404);
     }
@@ -141,6 +142,7 @@ export async function GET(
     // Verifica se l'utente è il proprietario o ha permesso admin
     if (report.employee_id !== employeeId) {
       const hasAdminPerm = await checkUserPermission(
+        tenantId,
         employeeId,
         "generate_reports"
       );
@@ -172,9 +174,10 @@ export async function PUT(
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "generate_reports");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "generate_reports");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",
@@ -185,7 +188,7 @@ export async function PUT(
     const { id } = await params;
     const reportId = parseInt(id);
 
-    const report = await getCompanyReportById(reportId);
+    const report = await getCompanyReportById(tenantId, reportId);
     if (!report) {
       return errorResponse("Report not found", 404);
     }
@@ -193,6 +196,7 @@ export async function PUT(
     // Verifica se l'utente è il proprietario
     if (report.employee_id !== employeeId) {
       const hasAdminPerm = await checkUserPermission(
+        tenantId,
         employeeId,
         "manage_accounts"
       );
@@ -215,7 +219,7 @@ export async function PUT(
       return errorResponse("Invalid URL format for link", 422);
     }
 
-    const success = await updateCompanyReport(reportId, link);
+    const success = await updateCompanyReport(tenantId, reportId, link);
 
     if (!success) {
       return errorResponse("Failed to update report", 500);
@@ -244,9 +248,10 @@ export async function DELETE(
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "delete_reports");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "delete_reports");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",
@@ -257,7 +262,7 @@ export async function DELETE(
     const { id } = await params;
     const reportId = parseInt(id);
 
-    const report = await getCompanyReportById(reportId);
+    const report = await getCompanyReportById(tenantId, reportId);
     if (!report) {
       return errorResponse("Report not found", 404);
     }
@@ -265,6 +270,7 @@ export async function DELETE(
     // Verifica se l'utente è il proprietario
     if (report.employee_id !== employeeId) {
       const hasAdminPerm = await checkUserPermission(
+        tenantId,
         employeeId,
         "manage_accounts"
       );
@@ -273,7 +279,7 @@ export async function DELETE(
       }
     }
 
-    const success = await deleteCompanyReport(reportId);
+    const success = await deleteCompanyReport(tenantId, reportId);
 
     if (!success) {
       return errorResponse("Failed to delete report", 500);

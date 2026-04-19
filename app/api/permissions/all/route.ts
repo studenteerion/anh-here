@@ -57,9 +57,10 @@ export async function GET(req: NextRequest) {
   if (authResult.error) return authErrorResponse(authResult);
 
   const userId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(userId, "permissions_read_all");
+    const hasPerm = await checkUserPermission(tenantId, userId, "permissions_read_all");
     if (!hasPerm) {
       return errorResponse("Insufficient permissions to access all authorizations", 403);
     }

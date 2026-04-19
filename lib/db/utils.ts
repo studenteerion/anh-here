@@ -47,15 +47,24 @@ function validateTableName(table: string): asserts table is ValidTable {
  */
 export async function countRows(
   table: string,
+  tenantId?: number,
   whereClause?: string,
   params: any[] = []
 ): Promise<number> {
   validateTableName(table);
   let query = `SELECT COUNT(*) as total FROM ${table}`;
-  if (whereClause) {
-    query += ` WHERE ${whereClause}`;
+  const hasTenant = tenantId !== undefined;
+  if (hasTenant || whereClause) {
+    query += " WHERE ";
+    if (hasTenant) {
+      query += "tenant_id = ?";
+    }
+    if (whereClause) {
+      query += hasTenant ? ` AND ${whereClause}` : whereClause;
+    }
   }
-  const [result]: any = await pool.query(query, params);
+  const finalParams = hasTenant ? [tenantId, ...params] : params;
+  const [result]: any = await pool.query(query, finalParams);
   return result[0]?.total || 0;
 }
 
@@ -69,12 +78,13 @@ export async function countRows(
  */
 export async function getById<T = any>(
   table: string,
+  tenantId: number,
   id: number,
   selectFields: string = '*'
 ): Promise<T | null> {
   validateTableName(table);
-  const query = `SELECT ${selectFields} FROM ${table} WHERE id = ? LIMIT 1`;
-  const [rows]: any = await pool.query(query, [id]);
+  const query = `SELECT ${selectFields} FROM ${table} WHERE tenant_id = ? AND id = ? LIMIT 1`;
+  const [rows]: any = await pool.query(query, [tenantId, id]);
   return rows[0] || null;
 }
 
@@ -89,13 +99,14 @@ export async function getById<T = any>(
  */
 export async function getByField<T = any>(
   table: string,
+  tenantId: number,
   field: string,
   value: any,
   selectFields: string = '*'
 ): Promise<T | null> {
   validateTableName(table);
-  const query = `SELECT ${selectFields} FROM ${table} WHERE ${field} = ? LIMIT 1`;
-  const [rows]: any = await pool.query(query, [value]);
+  const query = `SELECT ${selectFields} FROM ${table} WHERE tenant_id = ? AND ${field} = ? LIMIT 1`;
+  const [rows]: any = await pool.query(query, [tenantId, value]);
   return rows[0] || null;
 }
 
@@ -105,11 +116,11 @@ export async function getByField<T = any>(
  * @param id - Primary key value
  * @returns true if entity exists, false otherwise
  */
-export async function exists(table: string, id: number): Promise<boolean> {
+export async function exists(table: string, tenantId: number, id: number): Promise<boolean> {
   validateTableName(table);
   const [rows]: any = await pool.query(
-    `SELECT id FROM ${table} WHERE id = ? LIMIT 1`,
-    [id]
+    `SELECT id FROM ${table} WHERE tenant_id = ? AND id = ? LIMIT 1`,
+    [tenantId, id]
   );
   return rows.length > 0;
 }
@@ -120,9 +131,10 @@ export async function exists(table: string, id: number): Promise<boolean> {
  * @param id - Primary key value
  * @returns true if row was deleted, false otherwise
  */
-export async function deleteById(table: string, id: number): Promise<boolean> {
+export async function deleteById(table: string, tenantId: number, id: number): Promise<boolean> {
   validateTableName(table);
-  const [result]: any = await pool.query(`DELETE FROM ${table} WHERE id = ?`, [
+  const [result]: any = await pool.query(`DELETE FROM ${table} WHERE tenant_id = ? AND id = ?`, [
+    tenantId,
     id,
   ]);
   return result.affectedRows > 0;
@@ -174,6 +186,7 @@ export async function insert(
  */
 export async function updateById(
   table: string,
+  tenantId: number,
   id: number,
   updates: Record<string, any>
 ): Promise<boolean> {
@@ -184,8 +197,8 @@ export async function updateById(
 
   const setClauses = Object.keys(updates).map((key) => `${key} = ?`);
   const values = Object.values(updates);
-  const query = `UPDATE ${table} SET ${setClauses.join(', ')} WHERE id = ?`;
-  values.push(id);
+  const query = `UPDATE ${table} SET ${setClauses.join(', ')} WHERE tenant_id = ? AND id = ?`;
+  values.push(tenantId, id);
 
   const [result]: any = await pool.query(query, values);
   return result.affectedRows > 0;

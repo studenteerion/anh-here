@@ -3,12 +3,14 @@ import { Department, DepartmentFilter } from "@/types/departments";
 import { countRows, getById, getByField, insert, updateById, deleteById, exists } from "./utils";
 
 export async function getAllDepartments(
+  tenantId: number,
   filters?: DepartmentFilter
 ): Promise<Department[]> {
   let query = `SELECT id, department_name
-    FROM departments`;
+    FROM departments
+    WHERE tenant_id = ?`;
   
-  const params: any[] = [];
+  const params: any[] = [tenantId];
 
   query += ` ORDER BY department_name ASC`;
 
@@ -21,31 +23,33 @@ export async function getAllDepartments(
   return rows as Department[];
 }
 
-export async function getDepartmentById(departmentId: number): Promise<Department | null> {
+export async function getDepartmentById(tenantId: number, departmentId: number): Promise<Department | null> {
   return await getById<Department>(
     'departments',
+    tenantId,
     departmentId,
     'id, department_name'
   );
 }
 
-export async function getDepartmentByName(departmentName: string): Promise<Department | null> {
+export async function getDepartmentByName(tenantId: number, departmentName: string): Promise<Department | null> {
   return await getByField<Department>(
     'departments',
+    tenantId,
     'department_name',
     departmentName,
     'id, department_name'
   );
 }
 
-export async function createDepartment(departmentName: string): Promise<number> {
-  return await insert('departments', { department_name: departmentName });
+export async function createDepartment(tenantId: number, departmentName: string): Promise<number> {
+  return await insert('departments', { tenant_id: tenantId, department_name: departmentName });
 }
 
-export async function updateDepartment(departmentId: number, departmentName: string): Promise<boolean> {
-  return await updateById('departments', departmentId, { department_name: departmentName });
+export async function updateDepartment(tenantId: number, departmentId: number, departmentName: string): Promise<boolean> {
+  return await updateById('departments', tenantId, departmentId, { department_name: departmentName });
 }
 
-export async function deleteDepartment(departmentId: number): Promise<boolean> {
-  return await deleteById('departments', departmentId);
+export async function deleteDepartment(tenantId: number, departmentId: number): Promise<boolean> {
+  return await deleteById('departments', tenantId, departmentId);
 }
