@@ -220,6 +220,23 @@ INSERT INTO `global_users` (`id`, `email`, `password_hash`, `status`, `created_a
 (2, 'lavelli.tommaso.studente@itispaleocapa.it', '3LKyFyCeqeODOlBALgD/Dg==1a4bf58a50f7aba81808ef2b91a71b7b62f0a1726d2ce636ea6e20630a88b099', 'active', '2026-01-23 09:27:26', '2026-04-16 16:49:05', '2026-04-10 06:33:56'),
 (3, 'villa.davideousmane.studente@itispaleocapa.it', 'ZuQx7D7DRhldBvGm6YAAWw==d8c9eeb7bea5caed0a352ff3a43631423045d3db9fa593789ca8cb3824cdc188', 'active', '2026-01-23 09:27:58', '2026-04-16 16:49:05', '2026-01-28 17:32:14');
 
+INSERT INTO `global_users` (`email`, `password_hash`, `status`, `created_at`, `updated_at`, `last_login`)
+SELECT 'admin@admin.com',
+       '48f7ba2f96d3dd61eb51816e8ec2d77c192a0c4ce86a16b2f2b7cb05eb9de6b2e7930c2b5b6c7c4ee7fa9bff',
+       'active',
+       NOW(),
+       NOW(),
+       NULL
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM `global_users`
+  WHERE `email` = 'admin@admin.com'
+)
+AND NOT EXISTS (
+  SELECT 1
+  FROM `global_users`
+);
+
 -- --------------------------------------------------------
 
 --
@@ -229,6 +246,20 @@ INSERT INTO `global_users` (`id`, `email`, `password_hash`, `status`, `created_a
 CREATE TABLE `global_users_platform` (
   `global_user_id` bigint NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `global_users_platform`
+--
+
+INSERT INTO `global_users_platform` (`global_user_id`)
+SELECT `id`
+FROM `global_users`
+WHERE `email` = 'admin@admin.com'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM `global_users_platform`
+    WHERE `global_user_id` = `global_users`.`id`
+  );
 
 -- --------------------------------------------------------
 

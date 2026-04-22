@@ -1,0 +1,55 @@
+services:
+  web:
+    container_name: anh-here-container
+    build: .
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 8000
+      API_URL: ${API_URL}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_KEY: ${JWT_KEY}
+      PEPPER: ${PEPPER}
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - caddy_net
+      - app_net
+
+  db:
+    container_name: anh-here-db
+    image: mysql:8.4
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./anh-here_prod.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - app_net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+networks:
+  caddy_net:
+    external: true
+  app_net:
+    driver: bridge
+
+volumes:
+  mysql_data:

@@ -62,3 +62,30 @@ Il servizio si rivolge principalmente alle figure professionali che operano all'
 
 🌐 [https://anh-connect-hub.lovable.app](https://anh-connect-hub.lovable.app)
 
+---
+
+## Docker & CI/CD
+
+Il progetto ora include:
+
+- `Dockerfile` multi-stage per esecuzione Next.js in produzione (porta interna `8000`)
+- `docker-compose.yml` con:
+  - servizio `web` (`anh-here-container`)
+  - servizio MySQL `db` (`anh-here-db`) in Docker
+  - rete esterna `caddy_net` (per reverse proxy) + rete interna `app_net`
+- workflow GitHub Actions in `.github/workflows/ci.yml` (`npm ci`, `npm run lint`, `npm run build`)
+
+### Avvio con Docker
+
+1. Crea la rete esterna una sola volta:
+   `docker network create caddy_net`
+2. Copia `.env.example` in `.env` e imposta i valori reali.
+3. Avvia:
+   `docker compose --env-file .env up --build -d`
+
+### File server-side pronti da copiare
+
+Sono stati creati in `server-deploy/` (cartella ignorata da Git) i template per:
+
+- Caddy (`Caddyfile` e `conf.d/*.conf`)
+- Webhook (`docker-compose.yml`, `hooks.json`, `.env.example`, script deploy)
