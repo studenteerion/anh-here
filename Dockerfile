@@ -9,6 +9,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 FROM base AS builder
+ENV SKIP_ENV_VALIDATION=true
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

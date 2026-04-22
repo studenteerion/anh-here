@@ -29,6 +29,10 @@ export const config = {
   isTest: process.env.NODE_ENV === 'test',
 };
 
+const skipStrictValidationAtBuild =
+  process.env.SKIP_ENV_VALIDATION === 'true' ||
+  process.env.NEXT_PHASE === 'phase-production-build';
+
 // Validate critical configuration on startup
 if (!process.env.JWT_KEY) {
   console.warn(
@@ -42,7 +46,7 @@ if (!process.env.PEPPER) {
   );
 }
 
-if (config.isProduction) {
+if (config.isProduction && !skipStrictValidationAtBuild) {
   if (!config.database.password) {
     throw new Error('DB_PASSWORD or MYSQL_PASSWORD must be set in production environment');
   }
