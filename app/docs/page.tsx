@@ -5,8 +5,8 @@ import { useEffect, useRef } from 'react';
 
 declare global {
   interface Window {
-    SwaggerUIBundle: any;
-    SwaggerUIStandalonePreset: any;
+    SwaggerUIBundle: unknown;
+    SwaggerUIStandalonePreset: unknown;
   }
 }
 

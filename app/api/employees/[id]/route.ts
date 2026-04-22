@@ -111,7 +111,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     return successResponse(employee, "Employee retrieved", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to retrieve employee", 500);
   }
 }
@@ -153,7 +153,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const updatedEmployee = await getEmployeeById(tenantId, targetId);
     return successResponse(updatedEmployee, "Employee updated successfully", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to update employee", 500);
   }
 }
@@ -185,7 +185,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await deleteEmployee(tenantId, targetId);
 
     return successResponse({ id: targetId }, "Employee deleted successfully", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to delete employee", 500);
   }
 }

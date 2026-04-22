@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
     const offset = (page - 1) * limit;
 
     let roles;
-    let response: any;
+    let response: unknown;
 
     if (hasPagination) {
       roles = await getAllRoles(tenantId, { limit, offset });
@@ -144,7 +144,7 @@ export async function GET(req: NextRequest) {
     }
 
     return successResponse(response, "Roles retrieved", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to retrieve roles", 500);
   }
 }
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
       id: roleId,
       roleName,
     }, "Role created successfully", 201);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error.code === "ER_DUP_ENTRY") {
       return errorResponse("Role with this name already exists", 409);
     }

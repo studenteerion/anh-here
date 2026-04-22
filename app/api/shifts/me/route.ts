@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
       "Your shifts retrieved successfully",
       200
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse(error.message || "Failed to retrieve shifts", 500);
   }

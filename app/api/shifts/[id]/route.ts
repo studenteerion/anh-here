@@ -118,7 +118,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     return successResponse(shift, "Shift retrieved", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to retrieve shift", 500);
   }
 }
@@ -164,8 +164,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const updated = await updateShift(tenantId, shiftId, {
       name,
-      startTime: startTimeStr as any,
-      endTime: endTimeStr as any,
+      startTime: startTimeStr as unknown,
+      endTime: endTimeStr as unknown,
       departmentId,
     });
 
@@ -175,7 +175,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const updatedShift = await getShiftById(tenantId, shiftId);
     return successResponse(updatedShift, "Shift updated successfully", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to update shift", 500);
   }
 }
@@ -203,7 +203,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await deleteShift(tenantId, shiftId);
 
     return successResponse({ id: shiftId }, "Shift deleted successfully", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to delete shift", 500);
   }
 }

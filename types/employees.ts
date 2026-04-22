@@ -19,15 +19,3 @@ export interface EmployeeFilter {
   limit?: number;
   offset?: number;
 }
-
-export interface EmployeeResponse {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  roleId: number;
-  departmentId: number;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-}

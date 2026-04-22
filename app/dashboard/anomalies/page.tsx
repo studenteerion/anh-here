@@ -103,7 +103,7 @@ export default function AnomaliesPage() {
         const res = await authFetch('/api/permissions');
         const json = await res.json();
         if (json.status === 'success') {
-          const permissionCodes = json.data.permissions?.map((p: any) => p.permission_code) ?? [];
+          const permissionCodes = json.data.permissions?.map((p: unknown) => p.permission_code) ?? [];
           setHasAdminPermission(permissionCodes.includes('anomalies_view_all'));
         }
       } catch (err) {
@@ -512,7 +512,7 @@ export default function AnomaliesPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg p-6 max-w-sm w-full space-y-4 border">
             <h3 className="text-lg font-semibold">Elimina anomalia?</h3>
-            <p className="text-sm text-muted-foreground">Questa azione non può essere annullata. L'anomalia verrà eliminata permanentemente.</p>
+            <p className="text-sm text-muted-foreground">Questa azione non può essere annullata. L&apos;anomalia verrà eliminata permanentemente.</p>
             <div className="flex gap-3 justify-end">
               <Button variant="outline" onClick={() => setShowDeleteConfirm(null)}>
                 Annulla
@@ -530,7 +530,7 @@ export default function AnomaliesPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg p-6 max-w-md w-full space-y-4 border">
             <h3 className="text-lg font-semibold">Chiudi anomalia?</h3>
-            <p className="text-sm text-muted-foreground">L'anomalia verrà contrassegnata come chiusa.</p>
+            <p className="text-sm text-muted-foreground">L&apos;anomalia verrà contrassegnata come chiusa.</p>
             <div>
               <label htmlFor="close-notes" className="text-xs font-semibold text-muted-foreground uppercase">
                 Note di risoluzione (opzionale)

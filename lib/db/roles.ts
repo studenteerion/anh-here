@@ -11,14 +11,14 @@ export async function getAllRoles(
     WHERE tenant_id = ?
     ORDER BY role_name ASC`;
 
-  const params: any[] = [tenantId];
+  const params: unknown[] = [tenantId];
 
   if (filters?.limit) {
     query += ` LIMIT ? OFFSET ?`;
     params.push(filters.limit, filters.offset || 0);
   }
 
-  const [rows]: any = await pool.query(query, params);
+  const [rows]: unknown = await pool.query(query, params);
   return rows as Role[];
 }
 
@@ -65,7 +65,7 @@ export async function getEmployeesByRole(
 ) {
   let query = `SELECT id, first_name, last_name, role_id, department_id, status, created_at, updated_at
     FROM employees WHERE tenant_id = ? AND role_id = ?`;
-  const params: any[] = [tenantId, roleId];
+  const params: unknown[] = [tenantId, roleId];
 
   if (filters?.status) {
     query += ` AND status = ?`;
@@ -90,6 +90,6 @@ export async function getEmployeesByRole(
     params.push(filters.limit, filters.offset || 0);
   }
 
-  const [rows]: any = await pool.query(query, params);
+  const [rows]: unknown = await pool.query(query, params);
   return rows;
 }

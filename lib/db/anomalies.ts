@@ -14,7 +14,7 @@ export async function getEmployeeAnomalies(
       LEFT JOIN employees res ON a.resolver_id = res.id AND a.tenant_id = res.tenant_id
       WHERE a.tenant_id = ? AND a.employee_Id = ?`;
 
-  const params: any[] = [tenantId, employeeId];
+  const params: unknown[] = [tenantId, employeeId];
 
   if (filters?.status) {
     query += ` AND a.status = ?`;
@@ -28,7 +28,7 @@ export async function getEmployeeAnomalies(
     params.push(filters.limit, filters.offset || 0);
   }
 
-  const [rows]: any = await pool.query(query, params);
+  const [rows]: unknown = await pool.query(query, params);
   return rows;
 }
 
@@ -38,14 +38,14 @@ export async function getEmployeeAnomaliesCount(
   filters?: { status?: Anomaly["status"] }
 ): Promise<number> {
   let query = `SELECT COUNT(*) as total FROM anomalies WHERE tenant_id = ? AND employee_Id = ?`;
-  const params: any[] = [tenantId, employeeId];
+  const params: unknown[] = [tenantId, employeeId];
 
   if (filters?.status) {
     query += ` AND status = ?`;
     params.push(filters.status);
   }
 
-  const [result]: any = await pool.query(query, params);
+  const [result]: unknown = await pool.query(query, params);
   return result[0]?.total || 0;
 }
 
@@ -55,7 +55,7 @@ export async function createAnomaly(
   employeeId: number,
   description: string
 ): Promise<number> {
-  const [result]: any = await pool.query(
+  const [result]: unknown = await pool.query(
     `INSERT INTO anomalies (tenant_id, reporter_id, employee_Id, description, status, created_at)
      VALUES (?, ?, ?, ?, 'open', NOW())`,
     [tenantId, reporterId, employeeId, description]
@@ -64,7 +64,7 @@ export async function createAnomaly(
 }
 
 export async function getAnomalyById(tenantId: number, anomalyId: number): Promise<Anomaly | null> {
-  const [rows]: any = await pool.query(
+  const [rows]: unknown = await pool.query(
     `SELECT id, description, created_at, reporter_id, employee_Id as employee_id, resolver_id, status, resolution_notes, resolved_at
      FROM anomalies 
      WHERE tenant_id = ? AND id = ?`,
@@ -114,7 +114,7 @@ export async function updateAnomaly(
 
   values.push(tenantId, anomalyId);
 
-  const [result]: any = await pool.query(
+  const [result]: unknown = await pool.query(
     `UPDATE anomalies SET ${setClauses.join(", ")} WHERE tenant_id = ? AND id = ?`,
     values
   );
@@ -123,7 +123,7 @@ export async function updateAnomaly(
 }
 
 export async function deleteAnomaly(tenantId: number, anomalyId: number) {
-  const [result]: any = await pool.query(
+  const [result]: unknown = await pool.query(
     `DELETE FROM anomalies WHERE tenant_id = ? AND id = ?`,
     [tenantId, anomalyId]
   );

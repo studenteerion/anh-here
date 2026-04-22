@@ -51,7 +51,7 @@ export async function GET(
 
     if (hasPagination) {
       let whereClause = 'role_id = ?';
-      const params: any[] = [roleId];
+      const params: unknown[] = [roleId];
 
       if (statusFilter) {
         whereClause += ' AND status = ?';
@@ -77,7 +77,7 @@ export async function GET(
       }
 
       return successResponse({
-        employees: employees.map((e: any) => ({
+        employees: employees.map((e: unknown) => ({
           id: e.id,
           firstName: e.first_name,
           lastName: e.last_name,
@@ -100,7 +100,7 @@ export async function GET(
     }
 
     return successResponse({
-      employees: employees.map((e: any) => ({
+      employees: employees.map((e: unknown) => ({
         id: e.id,
         firstName: e.first_name,
         lastName: e.last_name,
@@ -112,7 +112,7 @@ export async function GET(
       })),
       roleId,
     }, undefined, 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || 'Server error', 500);
   }
 }

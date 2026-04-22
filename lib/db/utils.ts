@@ -49,7 +49,7 @@ export async function countRows(
   table: string,
   tenantId?: number,
   whereClause?: string,
-  params: any[] = []
+  params: unknown[] = []
 ): Promise<number> {
   validateTableName(table);
   let query = `SELECT COUNT(*) as total FROM ${table}`;
@@ -64,7 +64,7 @@ export async function countRows(
     }
   }
   const finalParams = hasTenant ? [tenantId, ...params] : params;
-  const [result]: any = await pool.query(query, finalParams);
+  const [result]: unknown = await pool.query(query, finalParams);
   return result[0]?.total || 0;
 }
 
@@ -76,7 +76,7 @@ export async function countRows(
  * @param selectFields - Optional fields to select (default: *)
  * @returns Row object or null if not found
  */
-export async function getById<T = any>(
+export async function getById<T = unknown>(
   table: string,
   tenantId: number,
   id: number,
@@ -84,7 +84,7 @@ export async function getById<T = any>(
 ): Promise<T | null> {
   validateTableName(table);
   const query = `SELECT ${selectFields} FROM ${table} WHERE tenant_id = ? AND id = ? LIMIT 1`;
-  const [rows]: any = await pool.query(query, [tenantId, id]);
+  const [rows]: unknown = await pool.query(query, [tenantId, id]);
   return rows[0] || null;
 }
 
@@ -97,16 +97,16 @@ export async function getById<T = any>(
  * @param selectFields - Optional fields to select (default: *)
  * @returns Row object or null if not found
  */
-export async function getByField<T = any>(
+export async function getByField<T = unknown>(
   table: string,
   tenantId: number,
   field: string,
-  value: any,
+  value: unknown,
   selectFields: string = '*'
 ): Promise<T | null> {
   validateTableName(table);
   const query = `SELECT ${selectFields} FROM ${table} WHERE tenant_id = ? AND ${field} = ? LIMIT 1`;
-  const [rows]: any = await pool.query(query, [tenantId, value]);
+  const [rows]: unknown = await pool.query(query, [tenantId, value]);
   return rows[0] || null;
 }
 
@@ -118,7 +118,7 @@ export async function getByField<T = any>(
  */
 export async function exists(table: string, tenantId: number, id: number): Promise<boolean> {
   validateTableName(table);
-  const [rows]: any = await pool.query(
+  const [rows]: unknown = await pool.query(
     `SELECT id FROM ${table} WHERE tenant_id = ? AND id = ? LIMIT 1`,
     [tenantId, id]
   );
@@ -133,7 +133,7 @@ export async function exists(table: string, tenantId: number, id: number): Promi
  */
 export async function deleteById(table: string, tenantId: number, id: number): Promise<boolean> {
   validateTableName(table);
-  const [result]: any = await pool.query(`DELETE FROM ${table} WHERE tenant_id = ? AND id = ?`, [
+  const [result]: unknown = await pool.query(`DELETE FROM ${table} WHERE tenant_id = ? AND id = ?`, [
     tenantId,
     id,
   ]);
@@ -150,11 +150,11 @@ export async function deleteById(table: string, tenantId: number, id: number): P
 export async function deleteWhere(
   table: string,
   whereClause: string,
-  params: any[] = []
+  params: unknown[] = []
 ): Promise<number> {
   validateTableName(table);
   const query = `DELETE FROM ${table} WHERE ${whereClause}`;
-  const [result]: any = await pool.query(query, params);
+  const [result]: unknown = await pool.query(query, params);
   return result.affectedRows;
 }
 
@@ -166,14 +166,14 @@ export async function deleteWhere(
  */
 export async function insert(
   table: string,
-  fields: Record<string, any>
+  fields: Record<string, unknown>
 ): Promise<number> {
   validateTableName(table);
   const keys = Object.keys(fields);
   const placeholders = keys.map(() => '?').join(',');
   const values = Object.values(fields);
   const query = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
-  const [result]: any = await pool.query(query, values);
+  const [result]: unknown = await pool.query(query, values);
   return result.insertId;
 }
 
@@ -188,7 +188,7 @@ export async function updateById(
   table: string,
   tenantId: number,
   id: number,
-  updates: Record<string, any>
+  updates: Record<string, unknown>
 ): Promise<boolean> {
   validateTableName(table);
   if (Object.keys(updates).length === 0) {
@@ -200,7 +200,7 @@ export async function updateById(
   const query = `UPDATE ${table} SET ${setClauses.join(', ')} WHERE tenant_id = ? AND id = ?`;
   values.push(tenantId, id);
 
-  const [result]: any = await pool.query(query, values);
+  const [result]: unknown = await pool.query(query, values);
   return result.affectedRows > 0;
 }
 
@@ -215,8 +215,8 @@ export async function updateById(
 export async function updateWhere(
   table: string,
   whereClause: string,
-  updates: Record<string, any>,
-  whereParams: any[] = []
+  updates: Record<string, unknown>,
+  whereParams: unknown[] = []
 ): Promise<number> {
   validateTableName(table);
   if (Object.keys(updates).length === 0) {
@@ -227,6 +227,6 @@ export async function updateWhere(
   const values = [...Object.values(updates), ...whereParams];
   const query = `UPDATE ${table} SET ${setClauses.join(', ')} WHERE ${whereClause}`;
 
-  const [result]: any = await pool.query(query, values);
+  const [result]: unknown = await pool.query(query, values);
   return result.affectedRows;
 }

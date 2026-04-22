@@ -139,7 +139,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     return successResponse(anomaly, "Anomaly retrieved", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to retrieve anomaly", 500);
   }
 }
@@ -194,7 +194,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // Build update object
-    const updateData: any = {};
+    const updateData: unknown = {};
     if (description !== undefined) {
       updateData.description = description;
     }
@@ -219,7 +219,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const updatedAnomaly = await getAnomalyById(tenantId, anomalyId);
     return successResponse(updatedAnomaly, "Anomaly updated successfully", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to update anomaly", 500);
   }
 }
@@ -255,7 +255,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await deleteAnomaly(tenantId, anomalyId);
 
     return successResponse({ id: anomalyId }, "Anomaly deleted successfully", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to delete anomaly", 500);
   }
 }

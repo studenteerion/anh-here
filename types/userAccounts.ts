@@ -16,12 +16,3 @@ export interface UserAccountFilter {
   limit?: number;
   offset?: number;
 }
-
-export interface UserAccountResponse {
-  employeeId: number;
-  email: string;
-  createdAt: Date;
-  updatedAt: Date;
-  lastLogin?: Date | null;
-  status: "active" | "inactive";
-}

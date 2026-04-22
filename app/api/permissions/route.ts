@@ -110,8 +110,8 @@ export async function GET(req: NextRequest) {
       targetUserId = Number(idParam);
     }
 
-    let permissionsList = await getUserPermissionsById(tenantId, targetUserId);
-    let response: any;
+    const permissionsList = await getUserPermissionsById(tenantId, targetUserId);
+    let response: unknown;
 
     if (hasPagination) {
       const total = permissionsList.length;

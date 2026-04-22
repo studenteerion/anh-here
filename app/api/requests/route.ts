@@ -176,8 +176,8 @@ export async function GET(req: NextRequest) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
-    let requests: any[];
-    let response: any;
+    let requests: unknown[];
+    let response: unknown;
 
      if (hasPagination) {
       if (statusFilter && !isValidLeaveRequestStatus(statusFilter)) {
@@ -185,12 +185,12 @@ export async function GET(req: NextRequest) {
       }
 
       requests = await getUserLeaveRequests(tenantId, targetEmployeeId, {
-        status: statusFilter as any,
+        status: statusFilter as unknown,
         limit,
         offset,
       });
-      let total = await getUserLeaveRequestsCount(tenantId, targetEmployeeId, {
-        status: statusFilter as any,
+      const total = await getUserLeaveRequestsCount(tenantId, targetEmployeeId, {
+        status: statusFilter as unknown,
       });
 
       const totalPages = Math.ceil(total / limit) || 1;
@@ -201,7 +201,7 @@ export async function GET(req: NextRequest) {
 
       response = {
         count: requests.length,
-        requests: requests.map((r: any) => ({
+        requests: requests.map((r: unknown) => ({
           id: r.id,
           type: r.type,
           startDate: r.start_datetime,
@@ -228,12 +228,12 @@ export async function GET(req: NextRequest) {
       }
 
       requests = await getUserLeaveRequests(tenantId, targetEmployeeId, {
-        status: statusFilter as any,
+        status: statusFilter as unknown,
       });
 
       response = {
         count: requests.length,
-        requests: requests.map((r: any) => ({
+        requests: requests.map((r: unknown) => ({
           id: r.id,
           type: r.type,
           startDate: r.start_datetime,
@@ -249,7 +249,7 @@ export async function GET(req: NextRequest) {
     }
 
     return successResponse(response, undefined, 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse("Server error", 500);
   }
@@ -295,7 +295,7 @@ export async function POST(req: NextRequest) {
       employeeId,
       start,
       end,
-      type as any,
+      type as unknown,
       motivation
     );
 

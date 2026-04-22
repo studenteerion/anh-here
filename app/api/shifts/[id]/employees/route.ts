@@ -29,7 +29,7 @@ export async function GET(
         employees,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching employees for shift:', error);
     return NextResponse.json(
       { status: 'error', message: error?.message || 'Internal server error' },

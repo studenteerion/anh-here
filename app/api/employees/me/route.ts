@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     }
 
     return successResponse(employee, "Your profile retrieved", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to retrieve your profile", 500);
   }
 }

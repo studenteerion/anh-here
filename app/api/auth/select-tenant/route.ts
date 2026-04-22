@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { errorResponse, successResponse } from "@/lib/middleware";
+import { TenantSelectionPayload } from "@/types/auth";
 import { getTenantMembershipByGlobalUserAndTenant, getTenantMembershipsByGlobalUser } from "@/lib/db/tenants";
 import { deleteTokensByUser, storeRefreshToken } from "@/lib/db/refreshTokens";
 import { updateLastLogin, updateGlobalUserLastLogin } from "@/lib/db/userAccounts";
@@ -11,25 +12,15 @@ import { createPlatformRefreshToken } from "@/lib/platformRefreshToken";
 const JWT_KEY = process.env.JWT_KEY!;
 const TENANT_SELECTION_COOKIE = "tenant_selection_token";
 
-type SelectionPayload = {
-  iss: string;
-  sub: number;
-  data: {
-    purpose: string;
-    global_user_id?: number;
-    platform_user_id?: number;
-  };
-  iat: number;
-  exp: number;
-};
-
-function readSelectionPayload(req: NextRequest): SelectionPayload | null {
+function readSelectionPayload(req: NextRequest): TenantSelectionPayload | null {
   const selectionToken = req.cookies.get(TENANT_SELECTION_COOKIE)?.value;
   if (!selectionToken) return null;
   try {
-    const payload = jwt.verify(selectionToken, JWT_KEY) as SelectionPayload;
+    const payload = jwt.verify(selectionToken, JWT_KEY) as unknown as TenantSelectionPayload & {
+      data?: { purpose?: string; global_user_id?: number; platform_user_id?: number };
+    };
     if (payload.data?.purpose !== "tenant_selection" && payload.data?.purpose !== "workspace_selection") return null;
-    return payload;
+    return payload as TenantSelectionPayload;
   } catch {
     return null;
   }

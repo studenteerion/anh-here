@@ -34,3 +34,24 @@ export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
 }
+
+/**
+ * Tenant selection payload for JWT
+ */
+export interface TenantSelectionPayload {
+  sub: number;
+  tenant_id: number;
+  context: "tenant_selection";
+  iat: number;
+  exp: number;
+}
+
+/**
+ * Platform refresh token payload
+ */
+export interface PlatformRefreshPayload {
+  sub: number;
+  type: "platform_refresh";
+  iat: number;
+  exp: number;
+}

@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
       'Current user retrieved',
       200
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || 'Failed to retrieve current user', 500);
   }
 }

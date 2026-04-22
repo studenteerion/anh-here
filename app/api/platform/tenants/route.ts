@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
       "Tenant and initial admin created successfully",
       201
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error?.code === "ER_DUP_ENTRY") {
       return errorResponse("Tenant already exists or unique constraint violated", 409);
     }
@@ -162,7 +162,7 @@ export async function GET(req: NextRequest) {
       "Tenants retrieved",
       200
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error?.message || "Failed to retrieve tenants", 500);
   }
 }

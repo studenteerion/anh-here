@@ -91,7 +91,7 @@ export default function ReportsPage() {
       if (allJson.status === 'success') {
         setAllItems(allJson.data.reports || []);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err?.message || 'Errore durante il caricamento report');
     } finally {
       setLoading(false);

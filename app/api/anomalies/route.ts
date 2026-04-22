@@ -135,7 +135,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Se employeeId=all, ottieni tutte le anomalie
-    let isViewingAll = employeeIdParam === 'all';
+    const isViewingAll = employeeIdParam === 'all';
     
     if (isViewingAll) {
       // Verifica permesso anomalies_view_all
@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
     }
 
     let anomalies;
-    let response: any;
+    let response: unknown;
     let total = 0;
 
     if (hasPagination) {
@@ -166,7 +166,7 @@ export async function GET(req: NextRequest) {
         LEFT JOIN employees e ON a.employee_Id = e.id AND a.tenant_id = e.tenant_id
         WHERE a.tenant_id = ?`;
 
-      const params: any[] = [tenantId];
+      const params: unknown[] = [tenantId];
 
       // Se NON stai visualizzando tutte, filtra per il dipendente
       if (!isViewingAll) {
@@ -182,12 +182,12 @@ export async function GET(req: NextRequest) {
       query += ` ORDER BY a.created_at DESC LIMIT ? OFFSET ?`;
       params.push(limit, offset);
 
-      const [rows]: any = await pool.query(query, params);
+      const [rows]: unknown = await pool.query(query, params);
       anomalies = rows;
 
       // Query per il totale
       let countQuery = `SELECT COUNT(*) as total FROM anomalies WHERE tenant_id = ?`;
-      const countParams: any[] = [tenantId];
+      const countParams: unknown[] = [tenantId];
 
       if (!isViewingAll) {
         countQuery += ` AND employee_Id = ?`;
@@ -199,7 +199,7 @@ export async function GET(req: NextRequest) {
         countParams.push(statusFilter);
       }
 
-      const [countResult]: any = await pool.query(countQuery, countParams);
+      const [countResult]: unknown = await pool.query(countQuery, countParams);
       total = countResult[0]?.total || 0;
 
       const totalPages = Math.ceil(total / limit) || 1;
@@ -210,8 +210,8 @@ export async function GET(req: NextRequest) {
 
       const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       response = {
-        anomalies: anomalies.map((a: any) => {
-          const anomaly: any = {
+        anomalies: anomalies.map((a: unknown) => {
+          const anomaly: unknown = {
             id: a.id,
             description: a.description,
             status: a.status,
@@ -255,7 +255,7 @@ export async function GET(req: NextRequest) {
         LEFT JOIN employees e ON a.employee_Id = e.id AND a.tenant_id = e.tenant_id
         WHERE a.tenant_id = ?`;
 
-      const params: any[] = [tenantId];
+      const params: unknown[] = [tenantId];
 
       if (!isViewingAll) {
         query += ` AND a.employee_Id = ?`;
@@ -269,13 +269,13 @@ export async function GET(req: NextRequest) {
 
       query += ` ORDER BY a.created_at DESC`;
 
-      const [rows]: any = await pool.query(query, params);
+      const [rows]: unknown = await pool.query(query, params);
       anomalies = rows;
 
       const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       response = {
-        anomalies: anomalies.map((a: any) => {
-          const anomaly: any = {
+        anomalies: anomalies.map((a: unknown) => {
+          const anomaly: unknown = {
             id: a.id,
             description: a.description,
             status: a.status,
@@ -297,7 +297,7 @@ export async function GET(req: NextRequest) {
     }
 
     return successResponse(response, undefined, 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse("Server error", 500);
   }
@@ -329,7 +329,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create the anomaly
-    const [result]: any = await pool.query(
+    const [result]: unknown = await pool.query(
       `INSERT INTO anomalies (tenant_id, reporter_id, employee_Id, description, status, created_at)
        VALUES (?, ?, ?, ?, 'open', NOW())`,
       [tenantId, employeeId, targetEmployeeId, description.trim()]
@@ -341,7 +341,7 @@ export async function POST(req: NextRequest) {
 
     const newAnomaly = await getAnomalyById(tenantId, result.insertId);
     return successResponse(newAnomaly, "Anomaly created successfully", 201);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST error:", error);
     return errorResponse(error.message || "Failed to create anomaly", 500);
   }

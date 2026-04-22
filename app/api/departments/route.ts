@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
     const offset = (page - 1) * limit;
 
     let departments;
-    let response: any;
+    let response: unknown;
 
     if (hasPagination) {
       departments = await getAllDepartments(tenantId, { limit, offset });
@@ -144,7 +144,7 @@ export async function GET(req: NextRequest) {
     }
 
     return successResponse(response, "Departments retrieved", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to retrieve departments", 500);
   }
 }
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
       id: departmentId,
       departmentName,
     }, "Department created successfully", 201);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error.code === "ER_DUP_ENTRY") {
       return errorResponse("Department with this name already exists", 409);
     }

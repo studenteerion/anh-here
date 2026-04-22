@@ -157,7 +157,7 @@ export async function GET(req: NextRequest) {
     }
 
     let reports;
-    let response: any;
+    let response: unknown;
 
     if (hasPagination) {
       reports = await getAllCompanyReports(tenantId, {
@@ -209,7 +209,7 @@ export async function GET(req: NextRequest) {
     }
 
     return successResponse(response, "Company reports retrieved", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse(error.message || "Failed to retrieve reports", 500);
   }
@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
       "Company report created successfully",
       201
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse(error.message || "Failed to create report", 500);
   }

@@ -1,17 +1,7 @@
 import jwt from "jsonwebtoken";
+import { PlatformRefreshPayload } from "@/types/auth";
 
 const JWT_KEY = process.env.JWT_KEY!;
-
-type PlatformRefreshPayload = {
-  iss: string;
-  sub: number;
-  data: {
-    context: "platform";
-    purpose: "platform_refresh";
-  };
-  iat: number;
-  exp: number;
-};
 
 export function createPlatformRefreshToken(globalUserId: number): string {
   return jwt.sign(

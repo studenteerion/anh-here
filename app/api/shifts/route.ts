@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
     const offset = (page - 1) * limit;
 
     let shifts;
-    let response: any;
+    let response: unknown;
     
     if (departmentId) {
       shifts = await getShiftsByDepartment(tenantId, parseInt(departmentId));
@@ -147,7 +147,7 @@ export async function GET(req: NextRequest) {
     }
 
     return successResponse(response, "Shifts retrieved", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to retrieve shifts", 500);
   }
 }
@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
     const startTimeStr = startTime.replace('Z', '').replace('T', ' ').slice(0, 19);
     const endTimeStr = endTime.replace('Z', '').replace('T', ' ').slice(0, 19);
 
-    const shiftId = await createShift(tenantId, departmentId, name || null, startTimeStr as any, endTimeStr as any);
+    const shiftId = await createShift(tenantId, departmentId, name || null, startTimeStr as unknown, endTimeStr as unknown);
 
     return successResponse({
       id: shiftId,
@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
       startTime,
       endTime,
     }, "Shift created successfully", 201);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to create shift", 500);
   }
 }

@@ -74,8 +74,8 @@ export async function GET(req: NextRequest) {
     const limit = limitParam ? parseInt(limitParam) : 50;
     const offset = (page - 1) * limit;
 
-    let allPermissions = await getAllPermissions();
-    let response: any;
+    const allPermissions = await getAllPermissions();
+    let response: unknown;
 
     if (hasPagination) {
       const total = allPermissions.length;

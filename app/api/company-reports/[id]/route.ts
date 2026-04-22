@@ -161,7 +161,7 @@ export async function GET(
       "Report retrieved",
       200
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse(error.message || "Failed to retrieve report", 500);
   }
@@ -235,7 +235,7 @@ export async function PUT(
       "Report updated successfully",
       200
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse(error.message || "Failed to update report", 500);
   }
@@ -286,7 +286,7 @@ export async function DELETE(
     }
 
     return successResponse({}, "Report deleted successfully", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse(error.message || "Failed to delete report", 500);
   }

@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Cerca l'ultima uscita (primo record con end_datetime)
-    const lastClosedAttendance = todayAttendances.find((att: any) => att.end_datetime);
+    const lastClosedAttendance = todayAttendances.find((att: unknown) => att.end_datetime);
 
     return successResponse({
       clockedIn: !!openAttendance,

@@ -54,7 +54,7 @@ export async function DELETE(
       "Tenant deleted successfully",
       200
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error?.message || "Failed to delete tenant", 500);
   }
 }

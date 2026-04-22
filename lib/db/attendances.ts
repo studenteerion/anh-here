@@ -2,8 +2,8 @@ import pool from "@/lib/db";
 import { AttendanceFilter } from "@/types/attendances";
 import { PoolConnection } from "mysql2/promise";
 
-export async function getOpenAttendance(tenantId: number, employeeId: number): Promise<any | null> {
-  const [rows]: any = await pool.query(
+export async function getOpenAttendance(tenantId: number, employeeId: number): Promise<unknown | null> {
+  const [rows]: unknown = await pool.query(
     `SELECT id, employee_id, shift_id, start_datetime,
       ROUND(TIMESTAMPDIFF(SECOND, start_datetime, NOW())/3600, 2) AS hours_open
      FROM attendances
@@ -20,7 +20,7 @@ export async function createAttendance(
   shiftId: number,
   startDatetime: Date
 ): Promise<number> {
-  const [result]: any = await pool.query(
+  const [result]: unknown = await pool.query(
     `INSERT INTO attendances (tenant_id, employee_id, shift_id, start_datetime) 
      VALUES (?, ?, ?, ?)`,
     [tenantId, employeeId, shiftId, startDatetime]
@@ -35,7 +35,7 @@ export async function createAttendanceWithConnection(
   startDatetime: Date,
   connection: PoolConnection
 ): Promise<number | null> {
-  const [result]: any = await connection.query(
+  const [result]: unknown = await connection.query(
     `INSERT INTO attendances (tenant_id, employee_id, shift_id, start_datetime)
      SELECT ?, ?, ?, ?
      WHERE NOT EXISTS (
@@ -54,8 +54,8 @@ export async function getOpenAttendanceInTransaction(
   tenantId: number,
   employeeId: number,
   connection: PoolConnection
-): Promise<any | null> {
-  const [rows]: any = await connection.query(
+): Promise<unknown | null> {
+  const [rows]: unknown = await connection.query(
     `SELECT id, employee_id, shift_id, start_datetime,
       ROUND(TIMESTAMPDIFF(SECOND, start_datetime, NOW())/3600, 2) AS hours_open
      FROM attendances
@@ -96,7 +96,7 @@ export async function getAttendanceHistory(
   startDate: Date,
   endDate: Date,
   filters?: AttendanceFilter
-): Promise<any[]> {
+): Promise<unknown[]> {
   let query = `SELECT id, employee_id, shift_id, start_datetime, end_datetime,
       CASE WHEN end_datetime IS NOT NULL
         THEN ROUND(TIMESTAMPDIFF(SECOND, start_datetime, end_datetime)/3600, 2)
@@ -108,15 +108,15 @@ export async function getAttendanceHistory(
      AND DATE(start_datetime) <= DATE(?)
      ORDER BY start_datetime DESC`;
 
-  const params: any[] = [tenantId, employeeId, startDate, endDate];
+  const params: unknown[] = [tenantId, employeeId, startDate, endDate];
 
   if (filters?.limit && Number(filters.limit) > 0) {
     query += ` LIMIT ? OFFSET ?`;
     params.push(filters.limit, filters.offset || 0);
   }
 
-  const [rows]: any = await pool.query(query, params);
-  return rows as any[];
+  const [rows]: unknown = await pool.query(query, params);
+  return rows as unknown[];
 }
 
 export async function getAttendanceHistoryCount(
@@ -125,7 +125,7 @@ export async function getAttendanceHistoryCount(
   startDate: Date,
   endDate: Date
 ): Promise<number> {
-  const [result]: any = await pool.query(
+  const [result]: unknown = await pool.query(
     `SELECT COUNT(*) as total FROM attendances 
      WHERE tenant_id = ?
      AND employee_id = ? 
@@ -136,8 +136,8 @@ export async function getAttendanceHistoryCount(
   return result[0]?.total || 0;
 }
 
-export async function getTodayAttendance(tenantId: number, employeeId: number): Promise<any[]> {
-  const [rows]: any = await pool.query(
+export async function getTodayAttendance(tenantId: number, employeeId: number): Promise<unknown[]> {
+  const [rows]: unknown = await pool.query(
     `SELECT id, employee_id, shift_id, start_datetime, end_datetime,
       CASE
         WHEN end_datetime IS NOT NULL THEN ROUND(TIMESTAMPDIFF(SECOND, start_datetime, end_datetime)/3600, 2)
@@ -148,25 +148,25 @@ export async function getTodayAttendance(tenantId: number, employeeId: number): 
      ORDER BY start_datetime DESC`,
     [tenantId, employeeId]
   );
-  return rows as any[];
+  return rows as unknown[];
 }
 
-export async function getEmployeeShift(tenantId: number, employeeId: number): Promise<any | null> {
-  const [rows]: any = await pool.query(
+export async function getEmployeeShift(tenantId: number, employeeId: number): Promise<unknown | null> {
+  const [rows]: unknown = await pool.query(
     `SELECT s.id, s.name, s.start_time, s.end_time 
      FROM shifts s
      JOIN employees e ON e.department_id = s.department_id AND e.tenant_id = s.tenant_id
      WHERE e.tenant_id = ? AND e.id = ? LIMIT 1`,
     [tenantId, employeeId]
   );
-  return (rows[0] || null) as any | null;
+  return (rows[0] || null) as unknown | null;
 }
 
 export async function calculateWorkedHours(
   startDatetime: Date,
   endDatetime: Date
 ): Promise<number> {
-  const [rows]: any = await pool.query(
+  const [rows]: unknown = await pool.query(
     `SELECT ROUND((UNIX_TIMESTAMP(?) - UNIX_TIMESTAMP(?))/3600, 2) AS hours`,
     [endDatetime, startDatetime]
   );

@@ -24,15 +24,3 @@ export interface LeaveRequestFilter {
   limit?: number;
   offset?: number;
 }
-
-export interface LeaveRequestResponse {
-  id: number;
-  type: string;
-  startDate: Date;
-  endDate: Date;
-  motivation?: string;
-  status: string;
-  requestedAt: Date;
-  approver1Status?: string;
-  approver2Status?: string;
-}

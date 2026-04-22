@@ -47,7 +47,7 @@ export function verifyAuth(req: NextRequest): { payload?: AuthPayload; error?: s
     const decoded = jwt.verify(token, JWT_KEY) as AuthPayload;
 
     return { payload: decoded };
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error?.name === "TokenExpiredError") {
       return { error: "Token expired", status: 401, token_expired: true };
     }
@@ -55,7 +55,7 @@ export function verifyAuth(req: NextRequest): { payload?: AuthPayload; error?: s
   }
 }
 
-function isTenantData(data: any): data is TenantAuthData {
+function isTenantData(data: unknown): data is TenantAuthData {
   return (
     data?.context !== "platform" &&
     Number.isInteger(data?.role_id) &&
@@ -64,7 +64,7 @@ function isTenantData(data: any): data is TenantAuthData {
   );
 }
 
-function isPlatformData(data: any): data is PlatformAuthData {
+function isPlatformData(data: unknown): data is PlatformAuthData {
   return (
     data?.context === "platform" &&
     Number.isInteger(data?.role_id) &&
@@ -140,11 +140,11 @@ export function errorResponse(
 }
 
 export function successResponse(
-  data?: any,
+  data?: unknown,
   message?: string,
   httpStatus: number = 200
 ): NextResponse {
-  const response: Record<string, any> = {
+  const response: Record<string, unknown> = {
     status: "success",
   };
 

@@ -2,10 +2,6 @@
  * Shared dashboard/view-model types (API payloads used by UI components/pages)
  */
 
-export type EmployeeStatus = "active" | "inactive";
-export type AnomalyStatus = "open" | "in_progress" | "closed";
-export type RequestStatus = "pending" | "approved" | "rejected";
-
 export interface RoleOption {
   id: number;
   role_name: string;

@@ -19,12 +19,3 @@ export interface AnomalyFilter {
   limit?: number;
   offset?: number;
 }
-
-export interface AnomalyResponse {
-  id: number;
-  description: string;
-  status: string;
-  reportedAt: Date;
-  resolvedAt: Date | null;
-  resolutionNotes: string | null;
-}

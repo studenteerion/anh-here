@@ -176,8 +176,8 @@ export async function GET(req: NextRequest) {
     const limitParam = searchParams.get("limit");
     const hasPagination = pageParam !== null || limitParam !== null;
 
-    let attendances: any[];
-    let response: any;
+    let attendances: unknown[];
+    let response: unknown;
 
     if (hasPagination) {
       const page = pageParam ? parseInt(pageParam) : 1;
@@ -185,7 +185,7 @@ export async function GET(req: NextRequest) {
       const offset = (page - 1) * limit;
 
       // Build filters object same as anomalies pattern
-      const filters: any = {};
+      const filters: unknown = {};
       if (limit && limit > 0) filters.limit = limit;
       if (offset && offset > 0) filters.offset = offset;
 
@@ -215,9 +215,9 @@ export async function GET(req: NextRequest) {
       // Raggruppa le attendances paginate per giorno
       const daysByDate: Record<string, {
         date: string;
-        attendances: any[];
+        attendances: unknown[];
         totalHours: number;
-        leaves: any[];
+        leaves: unknown[];
       }> = {};
 
       for (const attendance of attendances) {
@@ -303,9 +303,9 @@ export async function GET(req: NextRequest) {
       // Raggruppa per giorno
       const daysByDate: Record<string, {
         date: string;
-        attendances: any[];
+        attendances: unknown[];
         totalHours: number;
-        leaves: any[];
+        leaves: unknown[];
       }> = {};
 
       for (const attendance of attendances) {

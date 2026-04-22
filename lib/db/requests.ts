@@ -11,7 +11,7 @@ export async function createLeaveRequest(
   approver1Id?: number,
   approver2Id?: number
 ) {
-  const [result]: any = await pool.query(
+  const [result]: unknown = await pool.query(
     `INSERT INTO leave_requests 
      (tenant_id, employee_id, start_datetime, end_datetime, type, motivation, approver1_id, approver2_id) 
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -31,7 +31,7 @@ export async function getUserLeaveRequests(
      FROM leave_requests 
      WHERE tenant_id = ? AND employee_id = ?`;
 
-  const params: any[] = [tenantId, employeeId];
+  const params: unknown[] = [tenantId, employeeId];
 
   if (filters?.status) {
     query += ` AND status = ?`;
@@ -45,7 +45,7 @@ export async function getUserLeaveRequests(
     params.push(filters.limit, filters.offset || 0);
   }
 
-  const [rows]: any = await pool.query(query, params);
+  const [rows]: unknown = await pool.query(query, params);
   return rows;
 }
 
@@ -55,19 +55,19 @@ export async function getUserLeaveRequestsCount(
   filters?: { status?: LeaveRequest["status"] }
 ) {
   let query = `SELECT COUNT(*) as total FROM leave_requests WHERE tenant_id = ? AND employee_id = ?`;
-  const params: any[] = [tenantId, employeeId];
+  const params: unknown[] = [tenantId, employeeId];
 
   if (filters?.status) {
     query += ` AND status = ?`;
     params.push(filters.status);
   }
 
-  const [result]: any = await pool.query(query, params);
+  const [result]: unknown = await pool.query(query, params);
   return result[0]?.total || 0;
 }
 
 export async function getLeaveRequestById(tenantId: number, requestId: number) {
-  const [rows]: any = await pool.query(
+  const [rows]: unknown = await pool.query(
     `SELECT id, employee_id, request_date, start_datetime, end_datetime, 
             type, motivation, approver1_id, approver1_status, approver1_date,
             approver2_id, approver2_status, approver2_date, status
@@ -84,7 +84,7 @@ export async function getLeaveRequestsByDateRange(
   startDate: Date,
   endDate: Date
 ) {
-  const [rows]: any = await pool.query(
+  const [rows]: unknown = await pool.query(
     `SELECT id, employee_id, type, start_datetime, end_datetime, status
      FROM leave_requests 
      WHERE tenant_id = ? AND employee_id = ? 
@@ -133,7 +133,7 @@ export async function assignAndUpdateApproval(
   }
 
   let updateQuery = "";
-  let params: any[] = [];
+  let params: unknown[] = [];
   let newApprover1Status = request.approver1_status;
   let newApprover2Status = request.approver2_status;
 
@@ -169,7 +169,7 @@ export async function assignAndUpdateApproval(
   }
 
   try {
-    const [result]: any = await pool.query(updateQuery, params);
+    const [result]: unknown = await pool.query(updateQuery, params);
 
     if (result.affectedRows > 0) {
       const newStatus = calculateLeaveRequestStatus(newApprover1Status, newApprover2Status);
@@ -183,7 +183,7 @@ export async function assignAndUpdateApproval(
       success: result.affectedRows > 0,
       request: await getLeaveRequestById(tenantId, requestId)
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error.message || "Failed to update approval"
@@ -197,7 +197,7 @@ export async function deleteLeaveRequest(tenantId: number, requestId: number) {
     return false;
   }
 
-  const [result]: any = await pool.query(
+  const [result]: unknown = await pool.query(
     `DELETE FROM leave_requests WHERE tenant_id = ? AND id = ?`,
     [tenantId, requestId]
   );

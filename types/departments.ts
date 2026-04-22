@@ -14,11 +14,3 @@ export interface DepartmentFilter {
   limit?: number;
   offset?: number;
 }
-
-export interface DepartmentResponse {
-  id: number;
-  name: string;
-  description?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}

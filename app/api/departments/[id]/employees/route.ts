@@ -134,7 +134,7 @@ export async function GET(
     const offset = (page - 1) * limit;
 
     let employees;
-    let response: any;
+    let response: unknown;
 
     if (hasPagination) {
       if (statusFilter && !isValidEmployeeStatus(statusFilter)) {
@@ -142,13 +142,13 @@ export async function GET(
       }
 
       employees = await getEmployeesByDepartment(tenantId, departmentId, {
-        status: statusFilter as any,
+        status: statusFilter as unknown,
         search: searchFilter || undefined,
         limit,
         offset,
       });
        let whereClause = 'department_id = ?';
-       const params: any[] = [departmentId];
+       const params: unknown[] = [departmentId];
       if (statusFilter) {
         whereClause += ' AND status = ?';
         params.push(statusFilter);
@@ -163,7 +163,7 @@ export async function GET(
         const term = `%${searchFilter}%`;
         params.push(term, term, term, term);
       }
-       let total = await countRows('employees', tenantId, whereClause, params);
+       const total = await countRows('employees', tenantId, whereClause, params);
 
       const totalPages = Math.ceil(total / limit) || 1;
 
@@ -172,7 +172,7 @@ export async function GET(
       }
 
       response = {
-        employees: employees.map((e: any) => ({
+        employees: employees.map((e: unknown) => ({
           id: e.id,
           firstName: e.first_name,
           lastName: e.last_name,
@@ -198,12 +198,12 @@ export async function GET(
       }
 
       employees = await getEmployeesByDepartment(tenantId, departmentId, {
-        status: statusFilter as any,
+        status: statusFilter as unknown,
         search: searchFilter || undefined,
       });
 
       response = {
-        employees: employees.map((e: any) => ({
+        employees: employees.map((e: unknown) => ({
           id: e.id,
           firstName: e.first_name,
           lastName: e.last_name,
@@ -218,7 +218,7 @@ export async function GET(
     }
 
     return successResponse(response, undefined, 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse("Server error", 500);
   }

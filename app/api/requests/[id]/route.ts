@@ -158,7 +158,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     return successResponse({ id: requestId }, "Leave request cancelled successfully", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to delete leave request", 500);
   }
 }
@@ -192,7 +192,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     return successResponse(request, "Leave request retrieved", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to retrieve leave request", 500);
   }
 }
@@ -239,7 +239,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const updatedRequest = result.request;
     return successResponse(updatedRequest, `Leave request ${status} successfully`, 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to update leave request", 500);
   }
 }

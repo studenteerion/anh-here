@@ -171,10 +171,10 @@ export async function GET(req: NextRequest) {
 
     const allowedSortBy = ["created_at", "first_name", "last_name", "id"] as const;
     const allowedSortOrder = ["asc", "desc"] as const;
-    const sortBy = allowedSortBy.includes(sortByParam as any)
+    const sortBy = allowedSortBy.includes(sortByParam as unknown)
       ? (sortByParam as (typeof allowedSortBy)[number])
       : "created_at";
-    const sortOrder = allowedSortOrder.includes(sortOrderParam as any)
+    const sortOrder = allowedSortOrder.includes(sortOrderParam as unknown)
       ? (sortOrderParam as (typeof allowedSortOrder)[number])
       : "desc";
     
@@ -186,7 +186,7 @@ export async function GET(req: NextRequest) {
 
     let employees;
     let total = 0;
-    let response: any;
+    let response: unknown;
 
     if (hasPagination) {
       if (statusFilter && !isValidEmployeeStatus(statusFilter)) {
@@ -194,7 +194,7 @@ export async function GET(req: NextRequest) {
       }
 
       employees = await getAllEmployees(tenantId, {
-        status: statusFilter as any,
+        status: statusFilter as unknown,
         search: searchFilter || undefined,
         sortBy,
         sortOrder,
@@ -203,7 +203,7 @@ export async function GET(req: NextRequest) {
       });
 
       total = await getEmployeesCount(tenantId, {
-        status: statusFilter as any,
+        status: statusFilter as unknown,
         search: searchFilter || undefined,
       });
 
@@ -232,7 +232,7 @@ export async function GET(req: NextRequest) {
 
       // Restituisci tutti i risultati
       employees = await getAllEmployees(tenantId, {
-        status: statusFilter as any,
+        status: statusFilter as unknown,
         search: searchFilter || undefined,
         sortBy,
         sortOrder,
@@ -243,7 +243,7 @@ export async function GET(req: NextRequest) {
     }
 
     return successResponse(response, "Employees retrieved", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return errorResponse(error.message || "Failed to retrieve employees", 500);
   }
 }
@@ -292,7 +292,7 @@ export async function POST(req: NextRequest) {
       departmentId,
       email,
     }, "Employee created successfully", 201);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error.code === "ER_DUP_ENTRY") {
       return errorResponse("Email already exists", 409);
     }

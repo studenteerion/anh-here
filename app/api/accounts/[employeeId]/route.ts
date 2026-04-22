@@ -190,7 +190,7 @@ export async function GET(
       "Account retrieved",
       200
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse(error.message || "Failed to retrieve account", 500);
   }
@@ -292,7 +292,7 @@ export async function PUT(
       "Account updated successfully",
       200
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse(error.message || "Failed to update account", 500);
   }
@@ -345,7 +345,7 @@ export async function DELETE(
     }
 
     return successResponse({}, "Account deleted successfully", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
     return errorResponse(error.message || "Failed to delete account", 500);
   }
