@@ -161,6 +161,24 @@ export async function updateGlobalUserLastLogin(globalUserId: number): Promise<b
   return result.affectedRows > 0;
 }
 
+export async function getGlobalUserPasswordHash(globalUserId: number): Promise<string | null> {
+  const [rows] = await pool.query<Array<RowDataPacket & { password_hash: string }>>(
+    `SELECT password_hash FROM global_users WHERE id = ? LIMIT 1`,
+    [globalUserId]
+  );
+  return rows[0]?.password_hash || null;
+}
+
+export async function updateGlobalUserPassword(globalUserId: number, passwordHash: string): Promise<boolean> {
+  const [result] = await pool.query<ResultSetHeader>(
+    `UPDATE global_users
+     SET password_hash = ?, updated_at = NOW()
+     WHERE id = ?`,
+    [passwordHash, globalUserId]
+  );
+  return result.affectedRows > 0;
+}
+
 export async function deleteUserAccount(tenantId: number, employeeId: number): Promise<boolean> {
   await deleteTokensByUser(tenantId, employeeId);
 

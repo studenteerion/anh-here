@@ -6,9 +6,9 @@ import { getAuthContext } from "@/lib/middleware";
 import { getUserById, getUsersByEmailForLogin } from "@/lib/db/users";
 import { getTenantMembershipByGlobalUserAndTenant, getTenantMembershipsByGlobalUser } from "@/lib/db/tenants";
 import { deleteTokensByUser, storeRefreshToken } from "@/lib/db/refreshTokens";
-import { deletePlatformTokensByUser, storePlatformRefreshToken } from "@/lib/db/platformRefreshTokens";
 import { getPlatformUserByEmail, getPlatformUserById, updatePlatformUserLastLogin } from "@/lib/db/platformUsers";
 import { updateGlobalUserLastLogin, updateLastLogin } from "@/lib/db/userAccounts";
+import { createPlatformRefreshToken } from "@/lib/platformRefreshToken";
 
 const JWT_KEY = process.env.JWT_KEY!;
 
@@ -162,7 +162,6 @@ export async function POST(req: NextRequest) {
         }
 
         await deleteTokensByUser(currentTenantId, currentEmployeeId);
-        await deletePlatformTokensByUser(platformUser.id);
         await updatePlatformUserLastLogin(platformUser.id);
 
         const accessToken = jwt.sign(
@@ -174,8 +173,7 @@ export async function POST(req: NextRequest) {
           JWT_KEY,
           { expiresIn: "10m" }
         );
-        const refreshToken = crypto.randomBytes(32).toString("hex");
-        await storePlatformRefreshToken(platformUser.id, crypto.createHash("sha256").update(refreshToken).digest("hex"));
+        const refreshToken = createPlatformRefreshToken(platformUser.id);
 
         const response = NextResponse.json({ status: "success", message: "Workspace switched", redirectTo: "/platform/dashboard" });
         setAuthCookies(response, accessToken, refreshToken);
@@ -248,7 +246,6 @@ export async function POST(req: NextRequest) {
     );
     if (!membership) return errorResponse("Tenant membership not found", 404);
 
-    await deletePlatformTokensByUser(platformUser.id);
     await deleteTokensByUser(targetTenantId, membership.employee_id);
     await updateLastLogin(targetTenantId, membership.employee_id);
     await updateGlobalUserLastLogin(membership.global_user_id);

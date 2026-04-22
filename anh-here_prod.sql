@@ -223,6 +223,16 @@ INSERT INTO `global_users` (`id`, `email`, `password_hash`, `status`, `created_a
 -- --------------------------------------------------------
 
 --
+-- Struttura della tabella `global_users_platform`
+--
+
+CREATE TABLE `global_users_platform` (
+  `global_user_id` bigint NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Struttura della tabella `global_users_tenants`
 --
 
@@ -660,6 +670,12 @@ ALTER TABLE `global_users`
   ADD UNIQUE KEY `uk_global_users_email` (`email`);
 
 --
+-- Indici per le tabelle `global_users_platform`
+--
+ALTER TABLE `global_users_platform`
+  ADD PRIMARY KEY (`global_user_id`);
+
+--
 -- Indici per le tabelle `global_users_tenants`
 --
 ALTER TABLE `global_users_tenants`
@@ -923,6 +939,12 @@ ALTER TABLE `employees`
   ADD CONSTRAINT `fk_employees_department_tenant_v2` FOREIGN KEY (`tenant_id`,`department_id`) REFERENCES `departments` (`tenant_id`, `id`),
   ADD CONSTRAINT `fk_employees_role_tenant_v2` FOREIGN KEY (`tenant_id`,`role_id`) REFERENCES `roles` (`tenant_id`, `id`),
   ADD CONSTRAINT `fk_employees_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`);
+
+--
+-- Limiti per la tabella `global_users_platform`
+--
+ALTER TABLE `global_users_platform`
+  ADD CONSTRAINT `fk_gup_global_user` FOREIGN KEY (`global_user_id`) REFERENCES `global_users` (`id`) ON DELETE CASCADE;
 
 --
 -- Limiti per la tabella `global_users_tenants`

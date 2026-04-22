@@ -6,7 +6,7 @@ import { getTenantMembershipByGlobalUserAndTenant, getTenantMembershipsByGlobalU
 import { deleteTokensByUser, storeRefreshToken } from "@/lib/db/refreshTokens";
 import { updateLastLogin, updateGlobalUserLastLogin } from "@/lib/db/userAccounts";
 import { getPlatformUserById, updatePlatformUserLastLogin } from "@/lib/db/platformUsers";
-import { deletePlatformTokensByUser, storePlatformRefreshToken } from "@/lib/db/platformRefreshTokens";
+import { createPlatformRefreshToken } from "@/lib/platformRefreshToken";
 
 const JWT_KEY = process.env.JWT_KEY!;
 const TENANT_SELECTION_COOKIE = "tenant_selection_token";
@@ -156,12 +156,7 @@ export async function POST(req: NextRequest) {
         { expiresIn: "10m" }
       );
 
-      const refreshToken = crypto.randomBytes(32).toString("hex");
-      await deletePlatformTokensByUser(platformUser.id);
-      await storePlatformRefreshToken(
-        platformUser.id,
-        crypto.createHash("sha256").update(refreshToken).digest("hex")
-      );
+      const refreshToken = createPlatformRefreshToken(platformUser.id);
 
       const response = NextResponse.json({
         status: "success",

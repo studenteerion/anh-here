@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, getAuthContext } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import { deleteTokensByUser } from "@/lib/db/refreshTokens";
-import { deletePlatformTokensByUser } from "@/lib/db/platformRefreshTokens";
 
 /**
  * @swagger
@@ -57,9 +56,7 @@ export async function POST(req: NextRequest) {
   const authContext = getAuthContext(authResult.payload!);
 
   try {
-    if (authContext === "platform") {
-      await deletePlatformTokensByUser(authResult.payload!.sub);
-    } else {
+    if (authContext !== "platform") {
       const employeeId = authResult.payload!.sub;
       const tenantId = "tenant_id" in authResult.payload!.data ? authResult.payload!.data.tenant_id : 0;
 

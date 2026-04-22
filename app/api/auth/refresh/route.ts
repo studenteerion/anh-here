@@ -5,8 +5,8 @@ import { findTokenByHash, deleteTokenByHash } from "@/lib/db/refreshTokens";
 import { getUserByGlobalIdAndTenant } from "@/lib/db/users";
 import { updateGlobalUserLastLogin, updateLastLogin } from "@/lib/db/userAccounts";
 import jwt from "jsonwebtoken";
-import { deletePlatformTokenByHash, findPlatformTokenByHash, storePlatformRefreshToken } from "@/lib/db/platformRefreshTokens";
 import { getPlatformUserById, updatePlatformUserLastLogin } from "@/lib/db/platformUsers";
+import { createPlatformRefreshToken, verifyPlatformRefreshToken } from "@/lib/platformRefreshToken";
 
 const JWT_KEY = process.env.JWT_KEY!;
 
@@ -129,18 +129,17 @@ export async function POST(req: NextRequest) {
         })
       );
     } else {
-      const platformToken = await findPlatformTokenByHash(tokenHash);
-      if (!platformToken) {
+      const platformGlobalUserId = verifyPlatformRefreshToken(providedToken);
+      if (!platformGlobalUserId) {
         return errorResponse("Invalid or expired token", 401);
       }
 
-      const platformUser = await getPlatformUserById(platformToken.platform_user_id);
+      const platformUser = await getPlatformUserById(platformGlobalUserId);
       if (!platformUser || platformUser.status !== "active") {
         return errorResponse("User not found", 404);
       }
 
       await updatePlatformUserLastLogin(platformUser.id);
-      await deletePlatformTokenByHash(tokenHash);
 
       accessToken = jwt.sign(
         {
@@ -154,9 +153,7 @@ export async function POST(req: NextRequest) {
       context = "platform";
       redirectTo = "/platform/dashboard";
 
-      newRefreshToken = crypto.randomBytes(32).toString("hex");
-      const newRefreshTokenHash = crypto.createHash("sha256").update(newRefreshToken).digest("hex");
-      await storePlatformRefreshToken(platformUser.id, newRefreshTokenHash);
+      newRefreshToken = createPlatformRefreshToken(platformUser.id);
     }
 
     const response = NextResponse.json({ 

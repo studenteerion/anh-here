@@ -36,9 +36,9 @@ export async function GET(req: NextRequest) {
     {
       id: user.id,
       email: user.email,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      fullName: `${user.first_name} ${user.last_name}`.trim(),
+      firstName: user.first_name || "",
+      lastName: user.last_name || "",
+      fullName: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email,
       status: user.status,
       lastLogin: user.last_login,
     },
