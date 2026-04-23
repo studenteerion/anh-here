@@ -97,7 +97,13 @@ export default function EmployeeDetailPage() {
         setAnomalies(anomaliesJson.data.anomalies || []);
       }
     } catch (err: unknown) {
-      setError(err?.message || 'Errore durante il caricamento dei dati');
+      let message = 'Errore durante il caricamento dei dati';
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (err !== undefined && err !== null) {
+        message = String(err);
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -137,7 +143,13 @@ export default function EmployeeDetailPage() {
       setSuccess('Informazioni aggiornate con successo');
       await loadAll();
     } catch (err: unknown) {
-      setError(err?.message || 'Errore durante il salvataggio');
+      let message = 'Errore durante il salvataggio';
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (err !== undefined && err !== null) {
+        message = String(err);
+      }
+      setError(message);
     } finally {
       setSaving(false);
     }

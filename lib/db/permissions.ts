@@ -8,7 +8,7 @@ export async function checkUserPermission(
 ): Promise<boolean> {
   try {
     // Prima controlla le eccezioni dell'utente
-    const [exceptions]: unknown = await pool.query(
+    const [exceptions]: any = await pool.query(
       `SELECT pe.is_allowed 
        FROM permission_exceptions pe
         JOIN permissions p ON pe.permission_id = p.id
@@ -23,7 +23,7 @@ export async function checkUserPermission(
     }
 
     // Altrimenti controlla i permessi del ruolo
-    const [permissions]: unknown = await pool.query(
+    const [permissions]: any = await pool.query(
       `SELECT rp.permission_id
        FROM employees e
        JOIN role_permission rp ON e.role_id = rp.role_id AND e.tenant_id = rp.tenant_id
@@ -43,7 +43,7 @@ export async function checkUserPermission(
 export async function getUserPermissionsById(tenantId: number, user_id: number): Promise<Permission[]> {
   // Costruisce i permessi dal ruolo dell'utente, escludendo eventuali negazioni esplicite,
   // poi include eventuali permessi esplicitamente consentiti in permission_exceptions.
-  const [rows]: unknown = await pool.query(
+  const [rows]: any = await pool.query(
     `
       (
         SELECT p.id, p.permission_code, p.description
@@ -73,7 +73,7 @@ export async function getUserPermissionsById(tenantId: number, user_id: number):
 }
 
 export async function getAllPermissions(): Promise<Permission[]> {
-  const [rows]: unknown = await pool.query(
+  const [rows]: any = await pool.query(
     `
       SELECT id, permission_code, description
       FROM permissions
@@ -102,7 +102,7 @@ export async function addPermissionToUser(tenantId: number, user_id: number, per
 
 export async function createPermission(permissionCode: string, description: string): Promise<number | null> {
   try {
-    const [res]: unknown = await pool.query(
+    const [res]: any = await pool.query(
       `INSERT INTO permissions (permission_code, description) VALUES (?, ?)`,
       [permissionCode, description]
     );
@@ -136,7 +136,7 @@ export async function editRolePermission(tenantId: number, roleId: number, permi
 
 export async function getRolePermissions(tenantId: number, roleId: number): Promise<Permission[]> {
   try {
-    const [rows]: unknown = await pool.query(
+    const [rows]: any = await pool.query(
       `SELECT p.id, p.permission_code, p.description
        FROM permissions p
         JOIN role_permission rp ON p.id = rp.permission_id

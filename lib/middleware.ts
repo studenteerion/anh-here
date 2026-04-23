@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { verify } from '@/lib/jwt';
 
 const JWT_KEY = process.env.JWT_KEY!;
 
@@ -44,31 +44,35 @@ export function verifyAuth(req: NextRequest): { payload?: AuthPayload; error?: s
       return { error: "Missing or malformed token", status: 401 };
     }
 
-    const decoded = jwt.verify(token, JWT_KEY) as AuthPayload;
+  const decoded = verify<AuthPayload>(token, JWT_KEY);
 
     return { payload: decoded };
   } catch (error: unknown) {
-    if (error?.name === "TokenExpiredError") {
+    if (error instanceof Error && error.name === "TokenExpiredError") {
+      console.error('verifyAuth token expired:', error);
       return { error: "Token expired", status: 401, token_expired: true };
     }
+    console.error('verifyAuth invalid token:', String(error));
     return { error: "Invalid token", status: 401 };
   }
 }
 
-function isTenantData(data: unknown): data is TenantAuthData {
+function isTenantData(data: any): data is TenantAuthData {
+  const d = data as any;
   return (
-    data?.context !== "platform" &&
-    Number.isInteger(data?.role_id) &&
-    Number.isInteger(data?.tenant_id) &&
-    data?.tenant_id > 0
+    d?.context !== "platform" &&
+    Number.isInteger(d?.role_id) &&
+    Number.isInteger(d?.tenant_id) &&
+    d?.tenant_id > 0
   );
 }
 
-function isPlatformData(data: unknown): data is PlatformAuthData {
+function isPlatformData(data: any): data is PlatformAuthData {
+  const d = data as any;
   return (
-    data?.context === "platform" &&
-    Number.isInteger(data?.role_id) &&
-    Number.isInteger(data?.tenant_id)
+    d?.context === "platform" &&
+    Number.isInteger(d?.role_id) &&
+    Number.isInteger(d?.tenant_id)
   );
 }
 

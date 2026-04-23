@@ -63,7 +63,7 @@ export async function getAllEmployees(
     params.push(filters.limit, filters.offset || 0);
   }
 
-  const [rows]: unknown = await pool.query(query, params);
+  const [rows]: any = await pool.query(query, params);
   return rows;
 }
 
@@ -93,7 +93,7 @@ export async function getEmployeesCount(
     params.push(term, term, term, term);
   }
 
-  const [rows]: unknown = await pool.query(query, params);
+  const [rows]: any = await pool.query(query, params);
   return rows[0]?.total || 0;
 }
 
@@ -144,7 +144,7 @@ export async function getEmployeesByDepartment(
     params.push(filters.limit, filters.offset || 0);
   }
 
-  const [rows]: unknown = await pool.query(query, params);
+  const [rows]: any = await pool.query(query, params);
   return rows;
 }
 
@@ -161,7 +161,7 @@ export async function createEmployee(
   try {
     await connection.beginTransaction();
 
-    const [result]: unknown = await connection.query(
+  const [result]: any = await connection.query(
       `INSERT INTO employees (tenant_id, first_name, last_name, role_id, department_id, status)
        VALUES (?, ?, ?, ?, ?, 'active')`,
       [tenantId, firstName, lastName, roleId, departmentId]
@@ -169,7 +169,7 @@ export async function createEmployee(
 
     const employeeId = result.insertId;
 
-    const [existingGlobalUsers]: unknown = await connection.query(
+  const [existingGlobalUsers]: any = await connection.query(
       `SELECT id, password_hash FROM global_users WHERE email = ? LIMIT 1`,
       [email]
     );
@@ -181,7 +181,7 @@ export async function createEmployee(
       }
       globalUserId = Number(existingGlobalUsers[0].id);
     } else {
-      const [globalResult]: unknown = await connection.query(
+  const [globalResult]: any = await connection.query(
         `INSERT INTO global_users (email, password_hash, status) VALUES (?, ?, 'active')`,
         [email, passwordHash]
       );
@@ -194,7 +194,7 @@ export async function createEmployee(
       [globalUserId, tenantId, employeeId]
     );
 
-    const [defaultRows]: unknown = await connection.query(
+  const [defaultRows]: any = await connection.query(
       `SELECT COUNT(*) AS total_defaults
        FROM global_users_tenants
        WHERE global_user_id = ? AND is_default = 1`,
@@ -247,7 +247,7 @@ export async function updateEmployee(
   const values = Object.values(updateFields);
   values.push(tenantId, employeeId);
 
-  const [result]: unknown = await pool.query(
+  const [result]: any = await pool.query(
     `UPDATE employees SET ${setClauses.join(", ")} WHERE tenant_id = ? AND id = ?`,
     values
   );
@@ -260,19 +260,19 @@ export async function deleteEmployee(tenantId: number, employeeId: number) {
   try {
     await connection.beginTransaction();
 
-    const [membershipRows]: unknown = await connection.query(
+  const [membershipRows]: any = await connection.query(
       `SELECT global_user_id FROM global_users_tenants WHERE tenant_id = ? AND employee_id = ? LIMIT 1`,
       [tenantId, employeeId]
     );
     const globalUserId = membershipRows[0]?.global_user_id as number | undefined;
 
-    const [result]: unknown = await connection.query(
+  const [result]: any = await connection.query(
       `DELETE FROM employees WHERE tenant_id = ? AND id = ?`,
       [tenantId, employeeId]
     );
 
     if (result.affectedRows > 0 && globalUserId) {
-      const [remainingRows]: unknown = await connection.query(
+  const [remainingRows]: any = await connection.query(
         `SELECT COUNT(*) AS total FROM global_users_tenants WHERE global_user_id = ?`,
         [globalUserId]
       );

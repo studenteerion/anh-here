@@ -88,7 +88,7 @@ export default function DepartmentDetailPage() {
         setRoles(rolesJson.data.roles || []);
       }
     } catch (err: unknown) {
-      setError(err?.message || 'Errore durante il caricamento dei dati');
+      setError(err instanceof Error ? err.message : String(err) || 'Errore durante il caricamento dei dati');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -130,7 +130,7 @@ export default function DepartmentDetailPage() {
       setSuccess('Dipartimento aggiornato con successo');
       await fetchData(page, true);
     } catch (err: unknown) {
-      setError(err?.message || 'Errore durante il salvataggio');
+      setError(err instanceof Error ? err.message : String(err) || 'Errore durante il salvataggio');
     } finally {
       setSaving(false);
     }

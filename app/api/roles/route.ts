@@ -145,7 +145,8 @@ export async function GET(req: NextRequest) {
 
     return successResponse(response, "Roles retrieved", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to retrieve roles", 500);
+    const msg = error instanceof Error ? error.message : "Failed to retrieve roles";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -175,9 +176,17 @@ export async function POST(req: NextRequest) {
       roleName,
     }, "Role created successfully", 201);
   } catch (error: unknown) {
-    if (error.code === "ER_DUP_ENTRY") {
+    const errAny = error as any;
+    if (errAny?.code === "ER_DUP_ENTRY") {
       return errorResponse("Role with this name already exists", 409);
     }
-    return errorResponse(error.message || "Failed to create role", 500);
+    let message = "Failed to create role";
+    if (error instanceof Error) {
+      console.error('POST /api/roles error:', error);
+      message = error.message;
+    } else {
+      console.error('POST /api/roles error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

@@ -5,6 +5,7 @@ import {
   getAttendanceHistory,
   calculateWorkedHours,
 } from "@/lib/db/attendances";
+import { AttendanceHistoryRow } from "@/lib/db/attendances";
 import { getLeaveRequestsByDateRange } from "@/lib/db/requests";
 
 /**
@@ -124,12 +125,12 @@ export async function GET(req: NextRequest) {
     }
 
     // Ottieni presenze nel periodo
-    const attendances = await getAttendanceHistory(
+    const attendances = (await getAttendanceHistory(
       tenantId,
       employeeId,
       startDate,
       endDate
-    );
+    )) as AttendanceHistoryRow[];
 
     // Ottieni permessi approvati nel periodo
     const leaveRequests = await getLeaveRequestsByDateRange(
@@ -145,15 +146,16 @@ export async function GET(req: NextRequest) {
     const uniqueDays = new Set<string>();
 
     for (const attendance of attendances) {
-      const day = new Date(attendance.start_datetime)
+      const att = attendance as AttendanceHistoryRow;
+      const day = new Date(att.start_datetime)
         .toISOString()
         .split("T")[0];
       uniqueDays.add(day);
 
-      if (attendance.end_datetime) {
+      if (att.end_datetime) {
         const hours = await calculateWorkedHours(
-          attendance.start_datetime,
-          attendance.end_datetime
+          new Date(att.start_datetime),
+          new Date(att.end_datetime)
         );
         totalWorkedHours += hours;
       }

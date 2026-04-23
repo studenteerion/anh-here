@@ -5,6 +5,7 @@ import {
   getOpenAttendance,
   getTodayAttendance,
   calculateWorkedHours,
+  TodayAttendance,
 } from "@/lib/db/attendances";
 
 /**
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
     const openAttendance = await getOpenAttendance(tenantId, employeeId);
 
     // Ottieni tutti i timbri di oggi (DB fornisce "hours" per ciascuna riga)
-    const todayAttendances = await getTodayAttendance(tenantId, employeeId);
+  const todayAttendances = (await getTodayAttendance(tenantId, employeeId)) as TodayAttendance[];
 
     // Somma ore calcolate dal DB
     let totalHoursToday = 0;
@@ -72,7 +73,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Cerca l'ultima uscita (primo record con end_datetime)
-    const lastClosedAttendance = todayAttendances.find((att: unknown) => att.end_datetime);
+  const lastClosedAttendance = todayAttendances.find((att: TodayAttendance) => att.end_datetime);
 
     return successResponse({
       clockedIn: !!openAttendance,

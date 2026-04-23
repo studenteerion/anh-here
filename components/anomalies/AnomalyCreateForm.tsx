@@ -64,7 +64,7 @@ export function AnomalyCreateForm({ onCreated, embedded }: AnomalyCreateFormProp
         setError(json.message || 'Errore durante la creazione');
       }
     } catch (err: unknown) {
-      setError(err?.message || 'Errore durante la creazione');
+      setError(err instanceof Error ? err.message : String(err) || 'Errore durante la creazione');
     } finally {
       setLoading(false);
     }

@@ -99,12 +99,12 @@ export async function GET(req: NextRequest) {
       }
 
       accounts = await getAllUserAccounts(tenantId, {
-        status: statusFilter as unknown,
+        status: statusFilter as "active" | "inactive" | undefined,
         limit,
         offset,
       });
       const total = await getUserAccountsCount(tenantId, {
-        status: statusFilter as unknown,
+        status: statusFilter as "active" | "inactive" | undefined,
       });
       const totalPages = Math.ceil(total / limit) || 1;
 
@@ -149,7 +149,7 @@ export async function GET(req: NextRequest) {
       }
 
       accounts = await getAllUserAccounts(tenantId, {
-        status: statusFilter as unknown,
+        status: statusFilter as "active" | "inactive" | undefined,
       });
 
       response = {
@@ -173,7 +173,13 @@ export async function GET(req: NextRequest) {
 
     return successResponse(response, "User accounts retrieved", 200);
   } catch (error: unknown) {
-    console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to retrieve accounts", 500);
+    let message = "Failed to retrieve accounts";
+    if (error instanceof Error) {
+      console.error('GET /api/accounts error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/accounts error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

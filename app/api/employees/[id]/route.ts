@@ -112,7 +112,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return successResponse(employee, "Employee retrieved", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to retrieve employee", 500);
+    let message = "Failed to retrieve employee";
+    if (error instanceof Error) {
+      console.error('GET /api/employees/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/employees/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -154,7 +161,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const updatedEmployee = await getEmployeeById(tenantId, targetId);
     return successResponse(updatedEmployee, "Employee updated successfully", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to update employee", 500);
+    let message = "Failed to update employee";
+    if (error instanceof Error) {
+      console.error('PUT /api/employees/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('PUT /api/employees/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -186,6 +200,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return successResponse({ id: targetId }, "Employee deleted successfully", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to delete employee", 500);
+    let message = "Failed to delete employee";
+    if (error instanceof Error) {
+      console.error('DELETE /api/employees/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('DELETE /api/employees/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

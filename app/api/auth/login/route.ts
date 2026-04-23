@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { errorResponse } from "@/lib/middleware";
-import jwt from "jsonwebtoken";
+import { sign } from '@/lib/jwt';
 import crypto from "crypto";
 import { getUsersByEmailForLogin } from "@/lib/db/users";
 import { storeRefreshToken, deleteTokensByUser } from "@/lib/db/refreshTokens";
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
       const parsedTenantId = Number(selectedMembership.tenant_id);
       await updateLastLogin(parsedTenantId, selectedMembership.employee_id);
 
-      const accessToken = jwt.sign(
+      const accessToken = sign(
         {
           iss: "ANH-here",
           sub: selectedMembership.employee_id,
@@ -203,7 +203,7 @@ export async function POST(req: NextRequest) {
     if (canUsePlatform && activeMemberships.length === 0) {
       await updatePlatformUserLastLogin(platformUser!.id);
 
-      const accessToken = jwt.sign(
+      const accessToken = sign(
         {
           iss: "ANH-here",
           sub: platformUser!.id,
@@ -252,7 +252,7 @@ export async function POST(req: NextRequest) {
       return response;
     }
 
-    const selectionToken = jwt.sign(
+    const selectionToken = sign(
       {
         iss: "ANH-here",
         sub: userRoot?.global_user_id || 0,

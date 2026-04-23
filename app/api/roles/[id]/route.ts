@@ -115,7 +115,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return successResponse(role, "Role retrieved", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to retrieve role", 500);
+    const msg = error instanceof Error ? error.message : "Failed to retrieve role";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -155,7 +156,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const updatedRole = await getRoleById(tenantId, roleId);
     return successResponse(updatedRole, "Role updated successfully", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to update role", 500);
+    const msg = error instanceof Error ? error.message : "Failed to update role";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -183,6 +185,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return successResponse({ id: roleId }, "Role deleted successfully", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to delete role", 500);
+    const msg = error instanceof Error ? error.message : "Failed to delete role";
+    return errorResponse(msg, 500);
   }
 }

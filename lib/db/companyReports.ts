@@ -20,7 +20,7 @@ export async function getAllCompanyReports(
     params.push(filters.limit, filters.offset || 0);
   }
 
-  const [rows]: unknown = await pool.query(query, params);
+  const [rows]: any = await pool.query(query, params);
   return rows;
 }
 
@@ -36,7 +36,7 @@ export async function getCompanyReportsCount(
     params.push(filters.employeeId);
   }
 
-  const [result]: unknown = await pool.query(query, params);
+  const [result]: any = await pool.query(query, params);
   return result[0]?.total || 0;
 }
 
@@ -44,7 +44,7 @@ export async function getCompanyReportById(
   tenantId: number,
   reportId: number
 ): Promise<CompanyReport | null> {
-  const [rows]: unknown = await pool.query(
+  const [rows]: any = await pool.query(
     `SELECT id, employee_id, created_at, link FROM company_reports WHERE tenant_id = ? AND id = ?`,
     [tenantId, reportId]
   );
@@ -56,7 +56,7 @@ export async function createCompanyReport(
   employeeId: number,
   link: string
 ): Promise<number> {
-  const [result]: unknown = await pool.query(
+  const [result]: any = await pool.query(
     `INSERT INTO company_reports (tenant_id, employee_id, link, created_at)
      VALUES (?, ?, ?, NOW())`,
     [tenantId, employeeId, link]
@@ -69,7 +69,7 @@ export async function updateCompanyReport(
   reportId: number,
   link: string
 ): Promise<boolean> {
-  const [result]: unknown = await pool.query(
+  const [result]: any = await pool.query(
     `UPDATE company_reports SET link = ? WHERE tenant_id = ? AND id = ?`,
     [link, tenantId, reportId]
   );
@@ -77,7 +77,7 @@ export async function updateCompanyReport(
 }
 
 export async function deleteCompanyReport(tenantId: number, reportId: number): Promise<boolean> {
-  const [result]: unknown = await pool.query(
+  const [result]: any = await pool.query(
     `DELETE FROM company_reports WHERE tenant_id = ? AND id = ?`,
     [tenantId, reportId]
   );

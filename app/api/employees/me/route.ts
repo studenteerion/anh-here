@@ -35,6 +35,13 @@ export async function GET(req: NextRequest) {
 
     return successResponse(employee, "Your profile retrieved", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to retrieve your profile", 500);
+    let message = "Failed to retrieve your profile";
+    if (error instanceof Error) {
+      console.error('GET /api/employees/me error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/employees/me error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

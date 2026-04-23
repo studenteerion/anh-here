@@ -119,7 +119,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return successResponse(shift, "Shift retrieved", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to retrieve shift", 500);
+    let message = "Failed to retrieve shift";
+    if (error instanceof Error) {
+      console.error('GET /api/shifts/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/shifts/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -164,8 +171,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const updated = await updateShift(tenantId, shiftId, {
       name,
-      startTime: startTimeStr as unknown,
-      endTime: endTimeStr as unknown,
+      startTime: startTimeStr as string | undefined,
+      endTime: endTimeStr as string | undefined,
       departmentId,
     });
 
@@ -176,7 +183,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const updatedShift = await getShiftById(tenantId, shiftId);
     return successResponse(updatedShift, "Shift updated successfully", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to update shift", 500);
+    let message = "Failed to update shift";
+    if (error instanceof Error) {
+      console.error('PUT /api/shifts/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('PUT /api/shifts/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -204,6 +218,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return successResponse({ id: shiftId }, "Shift deleted successfully", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to delete shift", 500);
+    let message = "Failed to delete shift";
+    if (error instanceof Error) {
+      console.error('DELETE /api/shifts/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('DELETE /api/shifts/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

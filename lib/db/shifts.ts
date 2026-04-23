@@ -22,7 +22,7 @@ export async function getAllShifts(
     params.push(filters.limit, filters.offset || 0);
   }
 
-  const [rows]: unknown = await pool.query(query, params);
+  const [rows]: any = await pool.query(query, params);
   return rows as Shift[];
 }
 
@@ -31,7 +31,7 @@ export async function getShiftsCount(tenantId: number): Promise<number> {
 }
 
 export async function getShiftById(tenantId: number, shiftId: number): Promise<Shift | null> {
-  const [rows]: unknown = await pool.query(
+  const [rows]: any = await pool.query(
     `SELECT id, department_id, name, 
       DATE_FORMAT(start_time, '%Y-%m-%d %H:%i:%s') as start_time,
       DATE_FORMAT(end_time, '%Y-%m-%d %H:%i:%s') as end_time
@@ -42,7 +42,7 @@ export async function getShiftById(tenantId: number, shiftId: number): Promise<S
 }
 
 export async function getShiftsByDepartment(tenantId: number, departmentId: number): Promise<Shift[]> {
-  const [rows]: unknown = await pool.query(
+  const [rows]: any = await pool.query(
     `SELECT id, department_id, name, 
       DATE_FORMAT(start_time, '%Y-%m-%d %H:%i:%s') as start_time,
       DATE_FORMAT(end_time, '%Y-%m-%d %H:%i:%s') as end_time
@@ -60,7 +60,7 @@ export async function createShift(
   startTime: Date | string,
   endTime: Date | string
 ): Promise<number> {
-  const [result]: unknown = await pool.query(
+  const [result]: any = await pool.query(
     `INSERT INTO shifts (tenant_id, department_id, name, start_time, end_time)
      VALUES (?, ?, ?, ?, ?)`,
     [tenantId, departmentId, name, startTime, endTime]
@@ -105,7 +105,7 @@ export async function updateShift(
 
   values.push(tenantId, shiftId);
 
-  const [result]: unknown = await pool.query(
+  const [result]: any = await pool.query(
     `UPDATE shifts SET ${setClauses.join(", ")} WHERE tenant_id = ? AND id = ?`,
     values
   );
@@ -114,7 +114,7 @@ export async function updateShift(
 }
 
 export async function deleteShift(tenantId: number, shiftId: number): Promise<boolean> {
-  const [result]: unknown = await pool.query(
+  const [result]: any = await pool.query(
     `DELETE FROM shifts WHERE tenant_id = ? AND id = ?`,
     [tenantId, shiftId]
   );
@@ -123,7 +123,7 @@ export async function deleteShift(tenantId: number, shiftId: number): Promise<bo
 }
 
 export async function getShiftsByEmployee(tenantId: number, employeeId: number): Promise<Shift[]> {
-  const [rows]: unknown = await pool.query(
+  const [rows]: any = await pool.query(
     `SELECT s.id, s.department_id, s.name, 
       DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') as start_time,
       DATE_FORMAT(s.end_time, '%Y-%m-%d %H:%i:%s') as end_time
@@ -137,7 +137,7 @@ export async function getShiftsByEmployee(tenantId: number, employeeId: number):
 }
 
 export async function getEmployeesByShift(tenantId: number, shiftId: number): Promise<unknown[]> {
-  const [rows]: unknown = await pool.query(
+  const [rows]: any = await pool.query(
     `SELECT DISTINCT
       e.id,
       e.first_name,

@@ -115,7 +115,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return successResponse(department, "Department retrieved", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to retrieve department", 500);
+    const msg = error instanceof Error ? error.message : "Failed to retrieve department";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -155,7 +156,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const updatedDepartment = await getDepartmentById(tenantId, departmentId);
     return successResponse(updatedDepartment, "Department updated successfully", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to update department", 500);
+    const msg = error instanceof Error ? error.message : "Failed to update department";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -183,6 +185,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return successResponse({ id: departmentId }, "Department deleted successfully", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to delete department", 500);
+    const msg = error instanceof Error ? error.message : "Failed to delete department";
+    return errorResponse(msg, 500);
   }
 }

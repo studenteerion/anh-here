@@ -89,7 +89,7 @@ export default function ShiftDetailPage() {
         setEmployees(convertedEmps);
       }
     } catch (err: unknown) {
-      setError(err?.message || 'Errore durante il caricamento');
+      setError(err instanceof Error ? err.message : String(err) || 'Errore durante il caricamento');
       console.error(err);
     } finally {
       setLoading(false);
@@ -143,7 +143,7 @@ export default function ShiftDetailPage() {
       setSuccess('Turno salvato con successo');
       await fetchData();
     } catch (err: unknown) {
-      setError(err?.message || 'Errore di comunicazione');
+      setError(err instanceof Error ? err.message : String(err) || 'Errore di comunicazione');
     } finally {
       setSaving(false);
     }

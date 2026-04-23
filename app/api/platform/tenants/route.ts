@@ -110,19 +110,29 @@ export async function POST(req: NextRequest) {
       201
     );
   } catch (error: unknown) {
-    if (error?.code === "ER_DUP_ENTRY") {
+    // Some DB/logic errors are thrown as plain objects with a `code` property
+    const errAny = error as any;
+    if (errAny?.code === "ER_DUP_ENTRY") {
       return errorResponse("Tenant already exists or unique constraint violated", 409);
     }
-    if (error?.code === "PASSWORD_MISMATCH") {
+    if (errAny?.code === "PASSWORD_MISMATCH") {
       return errorResponse(
         "Global user already exists with a different password. Use the existing password or another email.",
         409
       );
     }
-    if (error?.code === "GLOBAL_USER_INACTIVE") {
+    if (errAny?.code === "GLOBAL_USER_INACTIVE") {
       return errorResponse("The selected admin email belongs to an inactive global account", 409);
     }
-    return errorResponse(error?.message || "Failed to create tenant", 500);
+
+    let message = "Failed to create tenant";
+    if (error instanceof Error) {
+      console.error('POST /api/platform/tenants error:', error);
+      message = error.message;
+    } else {
+      console.error('POST /api/platform/tenants error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -163,6 +173,13 @@ export async function GET(req: NextRequest) {
       200
     );
   } catch (error: unknown) {
-    return errorResponse(error?.message || "Failed to retrieve tenants", 500);
+    let message = "Failed to retrieve tenants";
+    if (error instanceof Error) {
+      console.error('GET /api/platform/tenants error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/platform/tenants error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

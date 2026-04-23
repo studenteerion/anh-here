@@ -159,7 +159,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return successResponse({ id: requestId }, "Leave request cancelled successfully", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to delete leave request", 500);
+    let message = "Failed to delete leave request";
+    if (error instanceof Error) {
+      console.error('DELETE /api/requests/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('DELETE /api/requests/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -193,7 +200,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return successResponse(request, "Leave request retrieved", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to retrieve leave request", 500);
+    let message = "Failed to retrieve leave request";
+    if (error instanceof Error) {
+      console.error('GET /api/requests/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/requests/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -240,6 +254,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const updatedRequest = result.request;
     return successResponse(updatedRequest, `Leave request ${status} successfully`, 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to update leave request", 500);
+    let message = "Failed to update leave request";
+    if (error instanceof Error) {
+      console.error('PUT /api/requests/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('PUT /api/requests/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

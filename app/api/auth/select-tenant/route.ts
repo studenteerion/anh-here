@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { sign, verify } from '@/lib/jwt';
 import crypto from "crypto";
 import { errorResponse, successResponse } from "@/lib/middleware";
 import { TenantSelectionPayload } from "@/types/auth";
+type TenantSelectionExtended = TenantSelectionPayload & {
+  data?: { purpose?: string; global_user_id?: number; platform_user_id?: number };
+};
 import { getTenantMembershipByGlobalUserAndTenant, getTenantMembershipsByGlobalUser } from "@/lib/db/tenants";
 import { deleteTokensByUser, storeRefreshToken } from "@/lib/db/refreshTokens";
 import { updateLastLogin, updateGlobalUserLastLogin } from "@/lib/db/userAccounts";
@@ -12,15 +15,13 @@ import { createPlatformRefreshToken } from "@/lib/platformRefreshToken";
 const JWT_KEY = process.env.JWT_KEY!;
 const TENANT_SELECTION_COOKIE = "tenant_selection_token";
 
-function readSelectionPayload(req: NextRequest): TenantSelectionPayload | null {
+function readSelectionPayload(req: NextRequest): TenantSelectionExtended | null {
   const selectionToken = req.cookies.get(TENANT_SELECTION_COOKIE)?.value;
   if (!selectionToken) return null;
   try {
-    const payload = jwt.verify(selectionToken, JWT_KEY) as unknown as TenantSelectionPayload & {
-      data?: { purpose?: string; global_user_id?: number; platform_user_id?: number };
-    };
+    const payload = verify<any>(selectionToken, JWT_KEY) as TenantSelectionExtended;
     if (payload.data?.purpose !== "tenant_selection" && payload.data?.purpose !== "workspace_selection") return null;
-    return payload as TenantSelectionPayload;
+    return payload;
   } catch {
     return null;
   }
@@ -80,8 +81,8 @@ export async function GET(req: NextRequest) {
     return errorResponse("Tenant selection token missing or invalid", 401);
   }
 
-  const globalUserId = Number(payload.data.global_user_id || payload.sub || 0);
-  const platformUserId = Number(payload.data.platform_user_id || 0);
+  const globalUserId = Number(payload.data?.global_user_id || payload.sub || 0);
+  const platformUserId = Number(payload.data?.platform_user_id || 0);
   const memberships = globalUserId > 0 ? await getTenantMembershipsByGlobalUser(globalUserId) : [];
   const activeMemberships = memberships.filter(
     (membership) =>
@@ -118,8 +119,8 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const context = String(body.context || "tenant");
-    const globalUserId = Number(payload.data.global_user_id || payload.sub || 0);
-    const platformUserId = Number(payload.data.platform_user_id || 0);
+  const globalUserId = Number(payload.data?.global_user_id || payload.sub || 0);
+  const platformUserId = Number(payload.data?.platform_user_id || 0);
 
     if (context === "platform") {
       if (platformUserId <= 0) {
@@ -133,7 +134,7 @@ export async function POST(req: NextRequest) {
 
       await updatePlatformUserLastLogin(platformUser.id);
 
-      const accessToken = jwt.sign(
+      const accessToken = sign(
         {
           iss: "ANH-here",
           sub: platformUser.id,
@@ -206,7 +207,7 @@ export async function POST(req: NextRequest) {
     await updateLastLogin(parsedTenantId, membership.employee_id);
     await updateGlobalUserLastLogin(globalUserId);
 
-    const accessToken = jwt.sign(
+    const accessToken = sign(
       {
         iss: "ANH-here",
         sub: membership.employee_id,

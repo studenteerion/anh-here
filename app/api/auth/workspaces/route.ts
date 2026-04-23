@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { sign } from '@/lib/jwt';
 import crypto from "crypto";
 import { authErrorResponse, errorResponse, successResponse, verifyAuth } from "@/lib/middleware";
 import { getAuthContext } from "@/lib/middleware";
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
         await deleteTokensByUser(currentTenantId, currentEmployeeId);
         await updatePlatformUserLastLogin(platformUser.id);
 
-        const accessToken = jwt.sign(
+        const accessToken = sign(
           {
             iss: "ANH-here",
             sub: platformUser.id,
@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
       await updateLastLogin(targetTenantId, targetMembership.employee_id);
       await updateGlobalUserLastLogin(user.global_user_id);
 
-      const accessToken = jwt.sign(
+      const accessToken = sign(
         {
           iss: "ANH-here",
           sub: targetMembership.employee_id,
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
     await updateLastLogin(targetTenantId, membership.employee_id);
     await updateGlobalUserLastLogin(membership.global_user_id);
 
-    const accessToken = jwt.sign(
+    const accessToken = sign(
       {
         iss: "ANH-here",
         sub: membership.employee_id,

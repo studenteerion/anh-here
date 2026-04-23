@@ -93,7 +93,13 @@ export async function GET(req: NextRequest) {
       200
     );
   } catch (error: unknown) {
-    console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to retrieve shifts", 500);
+    let message = "Failed to retrieve shifts";
+    if (error instanceof Error) {
+      console.error('GET /api/shifts/me error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/shifts/me error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

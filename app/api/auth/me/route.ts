@@ -51,6 +51,13 @@ export async function GET(req: NextRequest) {
       200
     );
   } catch (error: unknown) {
-    return errorResponse(error.message || 'Failed to retrieve current user', 500);
+    let message = 'Failed to retrieve current user';
+    if (error instanceof Error) {
+      console.error('GET /api/auth/me error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/auth/me error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

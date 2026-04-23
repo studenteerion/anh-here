@@ -30,9 +30,15 @@ export async function GET(
       },
     });
   } catch (error: unknown) {
-    console.error('Error fetching employees for shift:', error);
+    let message = 'Internal server error';
+    if (error instanceof Error) {
+      console.error('Error fetching employees for shift:', error);
+      message = error.message;
+    } else {
+      console.error('Error fetching employees for shift:', String(error));
+    }
     return NextResponse.json(
-      { status: 'error', message: error?.message || 'Internal server error' },
+      { status: 'error', message },
       { status: 500 }
     );
   }

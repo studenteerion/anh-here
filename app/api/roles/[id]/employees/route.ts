@@ -77,7 +77,7 @@ export async function GET(
       }
 
       return successResponse({
-        employees: employees.map((e: unknown) => ({
+        employees: employees.map((e: any) => ({
           id: e.id,
           firstName: e.first_name,
           lastName: e.last_name,
@@ -100,7 +100,7 @@ export async function GET(
     }
 
     return successResponse({
-      employees: employees.map((e: unknown) => ({
+      employees: employees.map((e: any) => ({
         id: e.id,
         firstName: e.first_name,
         lastName: e.last_name,
@@ -113,6 +113,13 @@ export async function GET(
       roleId,
     }, undefined, 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || 'Server error', 500);
+    let message = 'Server error';
+    if (error instanceof Error) {
+      console.error('GET /api/roles/[id]/employees error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/roles/[id]/employees error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

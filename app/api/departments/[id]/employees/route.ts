@@ -142,7 +142,7 @@ export async function GET(
       }
 
       employees = await getEmployeesByDepartment(tenantId, departmentId, {
-        status: statusFilter as unknown,
+        status: statusFilter as "active" | "inactive" | undefined,
         search: searchFilter || undefined,
         limit,
         offset,
@@ -172,7 +172,7 @@ export async function GET(
       }
 
       response = {
-        employees: employees.map((e: unknown) => ({
+        employees: employees.map((e: any) => ({
           id: e.id,
           firstName: e.first_name,
           lastName: e.last_name,
@@ -198,12 +198,12 @@ export async function GET(
       }
 
       employees = await getEmployeesByDepartment(tenantId, departmentId, {
-        status: statusFilter as unknown,
+        status: statusFilter as "active" | "inactive" | undefined,
         search: searchFilter || undefined,
       });
 
       response = {
-        employees: employees.map((e: unknown) => ({
+        employees: employees.map((e: any) => ({
           id: e.id,
           firstName: e.first_name,
           lastName: e.last_name,
@@ -219,7 +219,13 @@ export async function GET(
 
     return successResponse(response, undefined, 200);
   } catch (error: unknown) {
-    console.error("Endpoint error:", error);
-    return errorResponse("Server error", 500);
+    let message = "Server error";
+    if (error instanceof Error) {
+      console.error('GET /api/departments/[id]/employees error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/departments/[id]/employees error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

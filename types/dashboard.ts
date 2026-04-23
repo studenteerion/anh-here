@@ -2,6 +2,8 @@
  * Shared dashboard/view-model types (API payloads used by UI components/pages)
  */
 
+import { EmployeeStatus, LeaveRequestStatus as RequestStatus, AnomalyStatus } from '@/lib/validation/enums';
+
 export interface RoleOption {
   id: number;
   role_name: string;

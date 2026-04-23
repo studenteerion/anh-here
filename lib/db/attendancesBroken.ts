@@ -9,7 +9,7 @@ import { PoolConnection } from 'mysql2/promise';
  */
 
 export async function getOpenAttendanceBroken(tenantId: number, employeeId: number): Promise<unknown | null> {
-  const [rows]: unknown = await pool.query(
+  const [rows]: any = await pool.query(
     `SELECT id, employee_id, shift_id, start_datetime 
      FROM attendances 
      WHERE tenant_id = ? AND employee_id = ? AND end_datetime IS NULL 
@@ -27,7 +27,7 @@ export async function createAttendanceBroken(
 ): Promise<number> {
   // RACE CONDITION HERE: No atomic check
   // If called twice simultaneously, both can succeed
-  const [result]: unknown = await pool.query(
+  const [result]: any = await pool.query(
     `INSERT INTO attendances (tenant_id, employee_id, shift_id, start_datetime) 
      VALUES (?, ?, ?, ?)`,
     [tenantId, employeeId, shiftId, startDatetime]

@@ -55,6 +55,13 @@ export async function DELETE(
       200
     );
   } catch (error: unknown) {
-    return errorResponse(error?.message || "Failed to delete tenant", 500);
+    let message = "Failed to delete tenant";
+    if (error instanceof Error) {
+      console.error('DELETE /api/platform/tenants/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('DELETE /api/platform/tenants/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

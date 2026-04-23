@@ -121,7 +121,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     );
   } catch (error: unknown) {
     console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to retrieve role permissions", 500);
+    const msg = error instanceof Error ? error.message : "Failed to retrieve role permissions";
+    return errorResponse(msg, 500);
   }
 }
 

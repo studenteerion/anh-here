@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { findTokenByHash, deleteTokenByHash } from "@/lib/db/refreshTokens";
 import { getUserByGlobalIdAndTenant } from "@/lib/db/users";
 import { updateGlobalUserLastLogin, updateLastLogin } from "@/lib/db/userAccounts";
-import jwt from "jsonwebtoken";
+import { sign } from '@/lib/jwt';
 import { getPlatformUserById, updatePlatformUserLastLogin } from "@/lib/db/platformUsers";
 import { createPlatformRefreshToken, verifyPlatformRefreshToken } from "@/lib/platformRefreshToken";
 
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
       await updateGlobalUserLastLogin(tenantToken.global_user_id);
       await deleteTokenByHash(tokenHash, tenantToken.tenant_id);
 
-      accessToken = jwt.sign(
+      accessToken = sign(
         {
           iss: "ANH-here",
           sub: user.employee_id,
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
 
       await updatePlatformUserLastLogin(platformUser.id);
 
-      accessToken = jwt.sign(
+      accessToken = sign(
         {
           iss: "ANH-here",
           sub: platformUser.id,

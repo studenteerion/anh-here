@@ -103,7 +103,7 @@ export default function AnomaliesPage() {
         const res = await authFetch('/api/permissions');
         const json = await res.json();
         if (json.status === 'success') {
-          const permissionCodes = json.data.permissions?.map((p: unknown) => p.permission_code) ?? [];
+          const permissionCodes = json.data.permissions?.map((p: any) => p.permission_code) ?? [];
           setHasAdminPermission(permissionCodes.includes('anomalies_view_all'));
         }
       } catch (err) {

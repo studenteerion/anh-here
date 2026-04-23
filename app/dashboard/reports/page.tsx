@@ -92,7 +92,7 @@ export default function ReportsPage() {
         setAllItems(allJson.data.reports || []);
       }
     } catch (err: unknown) {
-      setError(err?.message || 'Errore durante il caricamento report');
+      setError(err instanceof Error ? err.message : String(err) || 'Errore durante il caricamento report');
     } finally {
       setLoading(false);
       setRefreshing(false);

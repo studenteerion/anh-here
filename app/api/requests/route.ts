@@ -185,12 +185,12 @@ export async function GET(req: NextRequest) {
       }
 
       requests = await getUserLeaveRequests(tenantId, targetEmployeeId, {
-        status: statusFilter as unknown,
+  status: statusFilter as "approved" | "rejected" | "pending" | undefined,
         limit,
         offset,
       });
       const total = await getUserLeaveRequestsCount(tenantId, targetEmployeeId, {
-        status: statusFilter as unknown,
+        status: statusFilter as "approved" | "rejected" | "pending" | undefined,
       });
 
       const totalPages = Math.ceil(total / limit) || 1;
@@ -201,7 +201,7 @@ export async function GET(req: NextRequest) {
 
       response = {
         count: requests.length,
-        requests: requests.map((r: unknown) => ({
+        requests: requests.map((r: any) => ({
           id: r.id,
           type: r.type,
           startDate: r.start_datetime,
@@ -228,12 +228,12 @@ export async function GET(req: NextRequest) {
       }
 
       requests = await getUserLeaveRequests(tenantId, targetEmployeeId, {
-        status: statusFilter as unknown,
+        status: statusFilter as "approved" | "rejected" | "pending" | undefined,
       });
 
       response = {
         count: requests.length,
-        requests: requests.map((r: unknown) => ({
+        requests: requests.map((r: any) => ({
           id: r.id,
           type: r.type,
           startDate: r.start_datetime,
@@ -250,8 +250,14 @@ export async function GET(req: NextRequest) {
 
     return successResponse(response, undefined, 200);
   } catch (error: unknown) {
-    console.error("Endpoint error:", error);
-    return errorResponse("Server error", 500);
+      let message = "Failed to retrieve requests";
+      if (error instanceof Error) {
+        console.error('GET /api/requests error:', error);
+        message = error.message;
+      } else {
+        console.error('GET /api/requests error:', String(error));
+      }
+      return errorResponse(message, 500);
   }
 }
 
@@ -295,7 +301,7 @@ export async function POST(req: NextRequest) {
       employeeId,
       start,
       end,
-      type as unknown,
+      type as "sick" | "vacation" | "personal" | "other",
       motivation
     );
 
@@ -307,7 +313,13 @@ export async function POST(req: NextRequest) {
       status: "pending",
     }, "Richiesta creata con successo", 200);
   } catch (error) {
-    console.error("Endpoint error:", error);
-    return errorResponse("Server error", 500);
+      let message = "Server error";
+      if (error instanceof Error) {
+        console.error('POST /api/requests error:', error);
+        message = error.message;
+      } else {
+        console.error('POST /api/requests error:', String(error));
+      }
+      return errorResponse(message, 500);
   }
 }

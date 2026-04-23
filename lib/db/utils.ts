@@ -64,7 +64,7 @@ export async function countRows(
     }
   }
   const finalParams = hasTenant ? [tenantId, ...params] : params;
-  const [result]: unknown = await pool.query(query, finalParams);
+    const [result]: any = await pool.query(query, finalParams);
   return result[0]?.total || 0;
 }
 
@@ -84,7 +84,7 @@ export async function getById<T = unknown>(
 ): Promise<T | null> {
   validateTableName(table);
   const query = `SELECT ${selectFields} FROM ${table} WHERE tenant_id = ? AND id = ? LIMIT 1`;
-  const [rows]: unknown = await pool.query(query, [tenantId, id]);
+    const [rows]: any = await pool.query(query, [tenantId, id]);
   return rows[0] || null;
 }
 
@@ -106,7 +106,7 @@ export async function getByField<T = unknown>(
 ): Promise<T | null> {
   validateTableName(table);
   const query = `SELECT ${selectFields} FROM ${table} WHERE tenant_id = ? AND ${field} = ? LIMIT 1`;
-  const [rows]: unknown = await pool.query(query, [tenantId, value]);
+    const [rows]: any = await pool.query(query, [tenantId, value]);
   return rows[0] || null;
 }
 
@@ -118,7 +118,7 @@ export async function getByField<T = unknown>(
  */
 export async function exists(table: string, tenantId: number, id: number): Promise<boolean> {
   validateTableName(table);
-  const [rows]: unknown = await pool.query(
+    const [rows]: any = await pool.query(
     `SELECT id FROM ${table} WHERE tenant_id = ? AND id = ? LIMIT 1`,
     [tenantId, id]
   );
@@ -133,7 +133,7 @@ export async function exists(table: string, tenantId: number, id: number): Promi
  */
 export async function deleteById(table: string, tenantId: number, id: number): Promise<boolean> {
   validateTableName(table);
-  const [result]: unknown = await pool.query(`DELETE FROM ${table} WHERE tenant_id = ? AND id = ?`, [
+    const [result]: any = await pool.query(`DELETE FROM ${table} WHERE tenant_id = ? AND id = ?`, [
     tenantId,
     id,
   ]);
@@ -154,7 +154,7 @@ export async function deleteWhere(
 ): Promise<number> {
   validateTableName(table);
   const query = `DELETE FROM ${table} WHERE ${whereClause}`;
-  const [result]: unknown = await pool.query(query, params);
+    const [result]: any = await pool.query(query, params);
   return result.affectedRows;
 }
 
@@ -173,7 +173,7 @@ export async function insert(
   const placeholders = keys.map(() => '?').join(',');
   const values = Object.values(fields);
   const query = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
-  const [result]: unknown = await pool.query(query, values);
+    const [result]: any = await pool.query(query, values);
   return result.insertId;
 }
 
@@ -200,7 +200,7 @@ export async function updateById(
   const query = `UPDATE ${table} SET ${setClauses.join(', ')} WHERE tenant_id = ? AND id = ?`;
   values.push(tenantId, id);
 
-  const [result]: unknown = await pool.query(query, values);
+    const [result]: any = await pool.query(query, values);
   return result.affectedRows > 0;
 }
 
@@ -227,6 +227,6 @@ export async function updateWhere(
   const values = [...Object.values(updates), ...whereParams];
   const query = `UPDATE ${table} SET ${setClauses.join(', ')} WHERE ${whereClause}`;
 
-  const [result]: unknown = await pool.query(query, values);
+    const [result]: any = await pool.query(query, values);
   return result.affectedRows;
 }

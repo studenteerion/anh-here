@@ -148,7 +148,14 @@ export async function GET(req: NextRequest) {
 
     return successResponse(response, "Shifts retrieved", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to retrieve shifts", 500);
+    let message = "Failed to retrieve shifts";
+    if (error instanceof Error) {
+      console.error('GET /api/shifts error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/shifts error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -191,7 +198,7 @@ export async function POST(req: NextRequest) {
     const startTimeStr = startTime.replace('Z', '').replace('T', ' ').slice(0, 19);
     const endTimeStr = endTime.replace('Z', '').replace('T', ' ').slice(0, 19);
 
-    const shiftId = await createShift(tenantId, departmentId, name || null, startTimeStr as unknown, endTimeStr as unknown);
+  const shiftId = await createShift(tenantId, departmentId, name || null, startTimeStr as string, endTimeStr as string);
 
     return successResponse({
       id: shiftId,
@@ -201,6 +208,13 @@ export async function POST(req: NextRequest) {
       endTime,
     }, "Shift created successfully", 201);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to create shift", 500);
+    let message = "Failed to create shift";
+    if (error instanceof Error) {
+      console.error('POST /api/shifts error:', error);
+      message = error.message;
+    } else {
+      console.error('POST /api/shifts error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

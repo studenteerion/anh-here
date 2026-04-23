@@ -140,7 +140,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return successResponse(anomaly, "Anomaly retrieved", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to retrieve anomaly", 500);
+    let message = "Failed to retrieve anomaly";
+    if (error instanceof Error) {
+      console.error('GET /api/anomalies/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/anomalies/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -194,7 +201,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // Build update object
-    const updateData: unknown = {};
+    const updateData: Record<string, unknown> = {};
     if (description !== undefined) {
       updateData.description = description;
     }
@@ -220,7 +227,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const updatedAnomaly = await getAnomalyById(tenantId, anomalyId);
     return successResponse(updatedAnomaly, "Anomaly updated successfully", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to update anomaly", 500);
+    let message = "Failed to update anomaly";
+    if (error instanceof Error) {
+      console.error('PUT /api/anomalies/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('PUT /api/anomalies/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -256,6 +270,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return successResponse({ id: anomalyId }, "Anomaly deleted successfully", 200);
   } catch (error: unknown) {
-    return errorResponse(error.message || "Failed to delete anomaly", 500);
+    let message = "Failed to delete anomaly";
+    if (error instanceof Error) {
+      console.error('DELETE /api/anomalies/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('DELETE /api/anomalies/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

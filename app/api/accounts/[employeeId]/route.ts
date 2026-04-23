@@ -191,8 +191,14 @@ export async function GET(
       200
     );
   } catch (error: unknown) {
-    console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to retrieve account", 500);
+    let message = "Failed to retrieve account";
+    if (error instanceof Error) {
+      console.error("Endpoint error:", error);
+      message = error.message;
+    } else {
+      console.error("Endpoint error:", String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -293,8 +299,14 @@ export async function PUT(
       200
     );
   } catch (error: unknown) {
-    console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to update account", 500);
+    let message = "Failed to update account";
+    if (error instanceof Error) {
+      console.error("Endpoint error:", error);
+      message = error.message;
+    } else {
+      console.error("Endpoint error:", String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -346,7 +358,13 @@ export async function DELETE(
 
     return successResponse({}, "Account deleted successfully", 200);
   } catch (error: unknown) {
-    console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to delete account", 500);
+    let message = "Failed to delete account";
+    if (error instanceof Error) {
+      console.error("Endpoint error:", error);
+      message = error.message;
+    } else {
+      console.error("Endpoint error:", String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

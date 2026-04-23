@@ -211,7 +211,8 @@ export async function GET(req: NextRequest) {
     return successResponse(response, "Company reports retrieved", 200);
   } catch (error: unknown) {
     console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to retrieve reports", 500);
+    const msg = error instanceof Error ? error.message : "Failed to retrieve reports";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -258,6 +259,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (error: unknown) {
     console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to create report", 500);
+    const msg = error instanceof Error ? error.message : "Failed to create report";
+    return errorResponse(msg, 500);
   }
 }

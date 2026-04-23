@@ -18,7 +18,7 @@ export async function getAllRoles(
     params.push(filters.limit, filters.offset || 0);
   }
 
-  const [rows]: unknown = await pool.query(query, params);
+  const [rows]: any = await pool.query(query, params);
   return rows as Role[];
 }
 
@@ -90,6 +90,6 @@ export async function getEmployeesByRole(
     params.push(filters.limit, filters.offset || 0);
   }
 
-  const [rows]: unknown = await pool.query(query, params);
+  const [rows]: any = await pool.query(query, params);
   return rows;
 }

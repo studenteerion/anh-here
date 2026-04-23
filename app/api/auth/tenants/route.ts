@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { sign } from '@/lib/jwt';
 import crypto from "crypto";
 import { verifyTenantAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { getUserById } from "@/lib/db/users";
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
     await updateLastLogin(tenantId, targetMembership.employee_id);
     await updateGlobalUserLastLogin(user.global_user_id);
 
-    const accessToken = jwt.sign(
+    const accessToken = sign(
       {
         iss: "ANH-here",
         sub: targetMembership.employee_id,

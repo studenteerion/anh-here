@@ -163,7 +163,8 @@ export async function GET(
     );
   } catch (error: unknown) {
     console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to retrieve report", 500);
+    const msg = error instanceof Error ? error.message : "Failed to retrieve report";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -237,7 +238,8 @@ export async function PUT(
     );
   } catch (error: unknown) {
     console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to update report", 500);
+    const msg = error instanceof Error ? error.message : "Failed to update report";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -288,6 +290,7 @@ export async function DELETE(
     return successResponse({}, "Report deleted successfully", 200);
   } catch (error: unknown) {
     console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to delete report", 500);
+    const msg = error instanceof Error ? error.message : "Failed to delete report";
+    return errorResponse(msg, 500);
   }
 }
