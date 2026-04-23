@@ -29,6 +29,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
       - name: Install dependencies
         run: npm ci
@@ -62,6 +64,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
       - name: Install dependencies
         run: npm ci
