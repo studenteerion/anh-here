@@ -176,19 +176,19 @@ export async function GET(req: NextRequest) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
-    let requests: unknown[];
-    let response: unknown;
+  let requests: LeaveRequest[] = [];
+  let response: unknown;
 
      if (hasPagination) {
       if (statusFilter && !isValidLeaveRequestStatus(statusFilter)) {
         return errorResponse(`Status deve essere uno di: ${LEAVE_REQUEST_STATUSES.join(", ")}`, 400);
       }
 
-      requests = await getUserLeaveRequests(tenantId, targetEmployeeId, {
+  requests = (await getUserLeaveRequests(tenantId, targetEmployeeId, {
   status: statusFilter as "approved" | "rejected" | "pending" | undefined,
-        limit,
-        offset,
-      });
+    limit,
+    offset,
+  })) as LeaveRequest[];
       const total = await getUserLeaveRequestsCount(tenantId, targetEmployeeId, {
         status: statusFilter as "approved" | "rejected" | "pending" | undefined,
       });
@@ -201,7 +201,7 @@ export async function GET(req: NextRequest) {
 
       response = {
         count: requests.length,
-        requests: requests.map((r: any) => ({
+        requests: requests.map((r) => ({
           id: r.id,
           type: r.type,
           startDate: r.start_datetime,
@@ -227,13 +227,13 @@ export async function GET(req: NextRequest) {
         return errorResponse(`Status deve essere uno di: ${LEAVE_REQUEST_STATUSES.join(", ")}`, 400);
       }
 
-      requests = await getUserLeaveRequests(tenantId, targetEmployeeId, {
+      requests = (await getUserLeaveRequests(tenantId, targetEmployeeId, {
         status: statusFilter as "approved" | "rejected" | "pending" | undefined,
-      });
+      })) as LeaveRequest[];
 
       response = {
         count: requests.length,
-        requests: requests.map((r: any) => ({
+        requests: requests.map((r) => ({
           id: r.id,
           type: r.type,
           startDate: r.start_datetime,

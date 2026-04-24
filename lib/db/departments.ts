@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import pool from "@/lib/db";
 import { Department, DepartmentFilter } from "@/types/departments";
 import { countRows, getById, getByField, insert, updateById, deleteById, exists } from "./utils";

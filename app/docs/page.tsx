@@ -5,8 +5,8 @@ import { useEffect, useRef } from 'react';
 
 declare global {
   interface Window {
-    SwaggerUIBundle: any;
-    SwaggerUIStandalonePreset: any;
+    SwaggerUIBundle: unknown;
+    SwaggerUIStandalonePreset: unknown;
   }
 }
 
@@ -17,15 +17,18 @@ export default function DocsPage() {
     const initSwagger = () => {
       if (window.SwaggerUIBundle && containerRef.current) {
         try {
-          window.SwaggerUIBundle({
+          const Swagger = window.SwaggerUIBundle as unknown as {
+            (opts: Record<string, unknown>): void;
+            presets: { apis: unknown };
+            plugins: { DownloadUrl: unknown };
+          };
+          const Standalone = window.SwaggerUIStandalonePreset as unknown;
+          Swagger({
             url: '/api/docs',
             dom_id: '#swagger-ui',
             deepLinking: true,
-            presets: [
-              window.SwaggerUIBundle.presets.apis,
-              window.SwaggerUIStandalonePreset,
-            ],
-            plugins: [window.SwaggerUIBundle.plugins.DownloadUrl],
+            presets: [Swagger.presets.apis, Standalone],
+            plugins: [Swagger.plugins.DownloadUrl],
             layout: 'StandaloneLayout',
             defaultModelsExpandDepth: 1,
             docExpansion: 'list',

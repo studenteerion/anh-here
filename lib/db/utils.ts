@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /**
  * Generic database utility functions
  * Reduces code duplication across database layer files

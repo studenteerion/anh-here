@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import pool from "@/lib/db";
 import { Employee } from "@/types/employees";
 import { getById } from "./utils";

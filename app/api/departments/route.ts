@@ -176,8 +176,8 @@ export async function POST(req: NextRequest) {
       departmentName,
     }, "Department created successfully", 201);
   } catch (error: unknown) {
-    const errAny = error as any;
-    if (errAny?.code === "ER_DUP_ENTRY") {
+    const sqlErr = error as { code?: string };
+    if (sqlErr?.code === "ER_DUP_ENTRY") {
       return errorResponse("Department with this name already exists", 409);
     }
     let message = "Failed to create department";

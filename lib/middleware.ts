@@ -57,22 +57,24 @@ export function verifyAuth(req: NextRequest): { payload?: AuthPayload; error?: s
   }
 }
 
-function isTenantData(data: any): data is TenantAuthData {
-  const d = data as any;
+function isTenantData(data: unknown): data is TenantAuthData {
+  const d = data as Record<string, unknown> | null;
+  if (!d) return false;
   return (
-    d?.context !== "platform" &&
-    Number.isInteger(d?.role_id) &&
-    Number.isInteger(d?.tenant_id) &&
-    d?.tenant_id > 0
+    d['context'] !== 'platform' &&
+    Number.isInteger(d['role_id'] as number) &&
+    Number.isInteger(d['tenant_id'] as number) &&
+    (d['tenant_id'] as number) > 0
   );
 }
 
-function isPlatformData(data: any): data is PlatformAuthData {
-  const d = data as any;
+function isPlatformData(data: unknown): data is PlatformAuthData {
+  const d = data as Record<string, unknown> | null;
+  if (!d) return false;
   return (
-    d?.context === "platform" &&
-    Number.isInteger(d?.role_id) &&
-    Number.isInteger(d?.tenant_id)
+    d['context'] === 'platform' &&
+    Number.isInteger(d['role_id'] as number) &&
+    Number.isInteger(d['tenant_id'] as number)
   );
 }
 
