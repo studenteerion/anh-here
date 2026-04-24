@@ -27,4 +27,4 @@ COPY --from=builder /app/.next/static ./.next/static
 USER nextjs
 EXPOSE 8000
 
-CMD ["node", ".next/standalone/server.js"]
+CMD ["node", "server.js"]
