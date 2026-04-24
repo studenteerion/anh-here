@@ -111,17 +111,17 @@ export async function POST(req: NextRequest) {
     );
   } catch (error: unknown) {
     // Some DB/logic errors are thrown as plain objects with a `code` property
-    const errAny = error as any;
-    if (errAny?.code === "ER_DUP_ENTRY") {
+    const errObj = error as { code?: string };
+    if (errObj?.code === "ER_DUP_ENTRY") {
       return errorResponse("Tenant already exists or unique constraint violated", 409);
     }
-    if (errAny?.code === "PASSWORD_MISMATCH") {
+    if (errObj?.code === "PASSWORD_MISMATCH") {
       return errorResponse(
         "Global user already exists with a different password. Use the existing password or another email.",
         409
       );
     }
-    if (errAny?.code === "GLOBAL_USER_INACTIVE") {
+    if (errObj?.code === "GLOBAL_USER_INACTIVE") {
       return errorResponse("The selected admin email belongs to an inactive global account", 409);
     }
 

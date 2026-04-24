@@ -172,7 +172,7 @@ export async function GET(
       }
 
       response = {
-        employees: employees.map((e: any) => ({
+        employees: employees.map((e: Employee) => ({
           id: e.id,
           firstName: e.first_name,
           lastName: e.last_name,
@@ -203,7 +203,7 @@ export async function GET(
       });
 
       response = {
-        employees: employees.map((e: any) => ({
+        employees: employees.map((e: Employee) => ({
           id: e.id,
           firstName: e.first_name,
           lastName: e.last_name,

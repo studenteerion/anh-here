@@ -171,10 +171,10 @@ export async function GET(req: NextRequest) {
 
     const allowedSortBy = ["created_at", "first_name", "last_name", "id"] as const;
     const allowedSortOrder = ["asc", "desc"] as const;
-    const sortBy = allowedSortBy.includes(sortByParam as any)
+    const sortBy = allowedSortBy.includes(sortByParam as unknown as (typeof allowedSortBy)[number])
       ? (sortByParam as (typeof allowedSortBy)[number])
       : "created_at";
-    const sortOrder = allowedSortOrder.includes(sortOrderParam as any)
+    const sortOrder = allowedSortOrder.includes(sortOrderParam as unknown as (typeof allowedSortOrder)[number])
       ? (sortOrderParam as (typeof allowedSortOrder)[number])
       : "desc";
     
@@ -184,23 +184,23 @@ export async function GET(req: NextRequest) {
     const limit = limitParam ? parseInt(limitParam) : 50;
     const offset = (page - 1) * limit;
 
-    let employees;
-    let total = 0;
-    let response: unknown;
+  let employees: Employee[] = [];
+  let total = 0;
+  let response: unknown;
 
     if (hasPagination) {
       if (statusFilter && !isValidEmployeeStatus(statusFilter)) {
         return errorResponse(`Status deve essere uno di: ${EMPLOYEE_STATUSES.join(", ")}`, 400);
       }
 
-      employees = await getAllEmployees(tenantId, {
+      employees = (await getAllEmployees(tenantId, {
         status: statusFilter as "active" | "inactive" | undefined,
         search: searchFilter || undefined,
         sortBy,
         sortOrder,
         limit,
         offset,
-      });
+      })) as Employee[];
 
       total = await getEmployeesCount(tenantId, {
         status: statusFilter as "active" | "inactive" | undefined,
@@ -231,12 +231,12 @@ export async function GET(req: NextRequest) {
       }
 
       // Restituisci tutti i risultati
-      employees = await getAllEmployees(tenantId, {
+      employees = (await getAllEmployees(tenantId, {
         status: statusFilter as "active" | "inactive" | undefined,
         search: searchFilter || undefined,
         sortBy,
         sortOrder,
-      });
+      })) as Employee[];
       response = {
         employees,
       };
@@ -300,8 +300,8 @@ export async function POST(req: NextRequest) {
       email,
     }, "Employee created successfully", 201);
   } catch (error: unknown) {
-    const errAny = error as any;
-    if (errAny?.code === "ER_DUP_ENTRY") {
+    const errObj = error as { code?: string };
+    if (errObj?.code === "ER_DUP_ENTRY") {
       return errorResponse("Email already exists", 409);
     }
     let message = "Failed to create employee";

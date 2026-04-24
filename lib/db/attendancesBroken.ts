@@ -1,5 +1,5 @@
 import pool from "@/lib/db";
-import { PoolConnection } from 'mysql2/promise';
+import type { RowDataPacket, ResultSetHeader } from 'mysql2';
 
 /**
  * BROKEN VERSION - Race condition vulnerable
@@ -8,8 +8,15 @@ import { PoolConnection } from 'mysql2/promise';
  * and create duplicate attendances
  */
 
-export async function getOpenAttendanceBroken(tenantId: number, employeeId: number): Promise<unknown | null> {
-  const [rows]: any = await pool.query(
+type OpenAttendanceRow = RowDataPacket & {
+  id: number;
+  employee_id: number;
+  shift_id: number | null;
+  start_datetime: string;
+};
+
+export async function getOpenAttendanceBroken(tenantId: number, employeeId: number): Promise<OpenAttendanceRow | null> {
+  const [rows] = await pool.query<OpenAttendanceRow[]>(
     `SELECT id, employee_id, shift_id, start_datetime 
      FROM attendances 
      WHERE tenant_id = ? AND employee_id = ? AND end_datetime IS NULL 
@@ -27,7 +34,7 @@ export async function createAttendanceBroken(
 ): Promise<number> {
   // RACE CONDITION HERE: No atomic check
   // If called twice simultaneously, both can succeed
-  const [result]: any = await pool.query(
+  const [result] = await pool.query<ResultSetHeader>(
     `INSERT INTO attendances (tenant_id, employee_id, shift_id, start_datetime) 
      VALUES (?, ?, ?, ?)`,
     [tenantId, employeeId, shiftId, startDatetime]

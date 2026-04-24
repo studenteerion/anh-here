@@ -19,7 +19,7 @@ function readSelectionPayload(req: NextRequest): TenantSelectionExtended | null 
   const selectionToken = req.cookies.get(TENANT_SELECTION_COOKIE)?.value;
   if (!selectionToken) return null;
   try {
-    const payload = verify<any>(selectionToken, JWT_KEY) as TenantSelectionExtended;
+    const payload = verify<unknown>(selectionToken, JWT_KEY) as TenantSelectionExtended;
     if (payload.data?.purpose !== "tenant_selection" && payload.data?.purpose !== "workspace_selection") return null;
     return payload;
   } catch {

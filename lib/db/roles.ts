@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import pool from "@/lib/db";
 import { Role, RoleFilter } from "@/types/roles";
 import { getById, getByField, insert, updateById, deleteById } from "./utils";

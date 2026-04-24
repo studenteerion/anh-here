@@ -177,18 +177,18 @@ export async function GET(req: NextRequest) {
     const limitParam = searchParams.get("limit");
     const hasPagination = pageParam !== null || limitParam !== null;
 
-     let attendances: any[];
-    let response: any;
+  let attendances: AttendanceHistoryRow[] = [];
+    let response: unknown;
 
     if (hasPagination) {
       const page = pageParam ? parseInt(pageParam) : 1;
       const limit = limitParam ? parseInt(limitParam) : 50;
       const offset = (page - 1) * limit;
 
-      // Build filters object same as anomalies pattern
-      const filters: any = {};
-      if (limit && limit > 0) filters.limit = limit;
-      if (offset && offset > 0) filters.offset = offset;
+  // Build filters object same as anomalies pattern
+  const filters: { limit?: number; offset?: number } = {};
+  if (limit && limit > 0) filters.limit = limit;
+  if (offset && offset > 0) filters.offset = offset;
 
       // Ottieni count totale delle attendances
       const totalAttendances = await getAttendanceHistoryCount(
@@ -205,20 +205,20 @@ export async function GET(req: NextRequest) {
       }
 
       // Ottieni attendances PAGINATE dal database
-      attendances = await getAttendanceHistory(
+      attendances = (await getAttendanceHistory(
         tenantId,
         requestedEmployeeId,
         startDate,
         endDate,
         filters
-      ) as AttendanceHistoryRow[];
+      )) as AttendanceHistoryRow[];
 
       // Raggruppa le attendances paginate per giorno
       const daysByDate: Record<string, {
         date: string;
-        attendances: any[];
+        attendances: { id: number; checkin: Date; checkout: Date | null; hours: number | null }[];
         totalHours: number;
-        leaves: any[];
+        leaves: { id: number; type: string; startDate: Date; endDate: Date }[];
       }> = {};
 
       for (const attendance of attendances) {
@@ -241,8 +241,8 @@ export async function GET(req: NextRequest) {
 
         daysByDate[date].attendances.push({
           id: att.id,
-          checkin: att.start_datetime,
-          checkout: att.end_datetime,
+          checkin: new Date(att.start_datetime),
+          checkout: att.end_datetime ? new Date(att.end_datetime) : null,
           hours,
         });
 
@@ -295,19 +295,19 @@ export async function GET(req: NextRequest) {
       };
     } else {
       // Nessuna paginazione - ottieni tutto (pass no filters)
-      attendances = await getAttendanceHistory(
+      attendances = (await getAttendanceHistory(
         tenantId,
         requestedEmployeeId,
         startDate,
         endDate
-      ) as AttendanceHistoryRow[];
+      )) as AttendanceHistoryRow[];
 
       // Raggruppa per giorno
       const daysByDate: Record<string, {
         date: string;
-        attendances: unknown[];
+        attendances: { id: number; checkin: Date; checkout: Date | null; hours: number | null }[];
         totalHours: number;
-        leaves: unknown[];
+        leaves: { id: number; type: string; startDate: Date; endDate: Date }[];
       }> = {};
 
       for (const attendance of attendances) {
@@ -329,8 +329,8 @@ export async function GET(req: NextRequest) {
 
         daysByDate[date].attendances.push({
           id: att.id,
-          checkin: att.start_datetime,
-          checkout: att.end_datetime,
+          checkin: new Date(att.start_datetime),
+          checkout: att.end_datetime ? new Date(att.end_datetime) : null,
           hours,
         });
 

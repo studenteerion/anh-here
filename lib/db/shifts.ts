@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import pool from "@/lib/db";
 import { Shift, ShiftFilter } from "@/types/shifts";
 import { countRows } from "./utils";

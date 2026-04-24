@@ -4,6 +4,7 @@ import { checkUserPermission } from '@/lib/db/permissions';
 import { getRoleById, getEmployeesByRole } from '@/lib/db/roles';
 import { countRows } from '@/lib/db/utils';
 import { isValidEmployeeStatus, EMPLOYEE_STATUSES } from '@/lib/validation/enums';
+import { Employee } from '@/types/employees';
 
 export async function GET(
   req: NextRequest,
@@ -50,8 +51,8 @@ export async function GET(
     });
 
     if (hasPagination) {
-      let whereClause = 'role_id = ?';
-      const params: unknown[] = [roleId];
+  let whereClause = 'role_id = ?';
+  const params: (string | number)[] = [roleId];
 
       if (statusFilter) {
         whereClause += ' AND status = ?';
@@ -77,7 +78,7 @@ export async function GET(
       }
 
       return successResponse({
-        employees: employees.map((e: any) => ({
+        employees: employees.map((e: Employee) => ({
           id: e.id,
           firstName: e.first_name,
           lastName: e.last_name,
@@ -100,7 +101,7 @@ export async function GET(
     }
 
     return successResponse({
-      employees: employees.map((e: any) => ({
+      employees: employees.map((e: Employee) => ({
         id: e.id,
         firstName: e.first_name,
         lastName: e.last_name,
