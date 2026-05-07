@@ -6,8 +6,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    ports:
+      - "8000:8000"
     environment:
       NODE_ENV: production
+      HOSTNAME: 0.0.0.0
       PORT: 8000
       API_URL: ${API_URL}
       DB_HOST: db
@@ -20,18 +23,16 @@ services:
     volumes:
       - ./uploads:/app/uploads
     networks:
-      - caddy_net
       - app_net
 
   db:
     container_name: anh-here-db
     image: mysql:8.4
     restart: always
-    command: --default-authentication-plugin=mysql_native_password
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
@@ -46,8 +47,6 @@ services:
       start_period: 30s
 
 networks:
-  caddy_net:
-    external: true
   app_net:
     driver: bridge
 
