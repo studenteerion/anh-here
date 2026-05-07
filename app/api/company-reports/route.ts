@@ -112,9 +112,10 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "view_reports");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_reports");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",
@@ -142,6 +143,7 @@ export async function GET(req: NextRequest) {
       // Solo gli admin possono vedere i reports di altri utenti
       if (targetEmployeeId !== employeeId) {
         const hasAdminPerm = await checkUserPermission(
+          tenantId,
           employeeId,
           "generate_reports"
         );
@@ -155,15 +157,15 @@ export async function GET(req: NextRequest) {
     }
 
     let reports;
-    let response: any;
+    let response: unknown;
 
     if (hasPagination) {
-      reports = await getAllCompanyReports({
+      reports = await getAllCompanyReports(tenantId, {
         employeeId: targetEmployeeId,
         limit,
         offset,
       });
-      const total = await getCompanyReportsCount({
+      const total = await getCompanyReportsCount(tenantId, {
         employeeId: targetEmployeeId,
       });
       const totalPages = Math.ceil(total / limit) || 1;
@@ -192,7 +194,7 @@ export async function GET(req: NextRequest) {
         },
       };
     } else {
-      reports = await getAllCompanyReports({
+      reports = await getAllCompanyReports(tenantId, {
         employeeId: targetEmployeeId,
       });
 
@@ -207,9 +209,10 @@ export async function GET(req: NextRequest) {
     }
 
     return successResponse(response, "Company reports retrieved", 200);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to retrieve reports", 500);
+    const msg = error instanceof Error ? error.message : "Failed to retrieve reports";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -217,9 +220,10 @@ export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "generate_reports");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "generate_reports");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",
@@ -241,7 +245,7 @@ export async function POST(req: NextRequest) {
       return errorResponse("Invalid URL format for link", 422);
     }
 
-    const reportId = await createCompanyReport(employeeId, link);
+    const reportId = await createCompanyReport(tenantId, employeeId, link);
 
     return successResponse(
       {
@@ -253,8 +257,9 @@ export async function POST(req: NextRequest) {
       "Company report created successfully",
       201
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to create report", 500);
+    const msg = error instanceof Error ? error.message : "Failed to create report";
+    return errorResponse(msg, 500);
   }
 }

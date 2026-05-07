@@ -2,9 +2,7 @@
  * Shared dashboard/view-model types (API payloads used by UI components/pages)
  */
 
-export type EmployeeStatus = "active" | "inactive";
-export type AnomalyStatus = "open" | "in_progress" | "closed";
-export type RequestStatus = "pending" | "approved" | "rejected";
+import { EmployeeStatus, LeaveRequestStatus as RequestStatus, AnomalyStatus } from '@/lib/validation/enums';
 
 export interface RoleOption {
   id: number;
@@ -78,6 +76,8 @@ export interface AnomalyListItem {
   resolverId?: number;
   reporterName?: string;
   resolverName?: string;
+  assignedEmployeeId?: number;
+  assignedEmployeeName?: string;
 }
 
 export interface CompanyReportListItem {

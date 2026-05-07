@@ -1,5 +1,5 @@
 declare module 'jsonwebtoken' {
-  const sign: any;
-  const verify: any;
+  const sign: unknown;
+  const verify: unknown;
   export default { sign, verify };
 }

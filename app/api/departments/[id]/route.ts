@@ -98,23 +98,25 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_read");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const departmentId = parseInt(id);
-    const department = await getDepartmentById(departmentId);
+    const department = await getDepartmentById(tenantId, departmentId);
 
     if (!department) {
       return errorResponse("Department not found", 404);
     }
 
     return successResponse(department, "Department retrieved", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to retrieve department", 500);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Failed to retrieve department";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -123,15 +125,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_update");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_update");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const departmentId = parseInt(id);
-    const department = await getDepartmentById(departmentId);
+    const department = await getDepartmentById(tenantId, departmentId);
 
     if (!department) {
       return errorResponse("Department not found", 404);
@@ -144,16 +147,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return errorResponse("Missing required field: departmentName", 422);
     }
 
-    const updated = await updateDepartment(departmentId, departmentName);
+    const updated = await updateDepartment(tenantId, departmentId, departmentName);
 
     if (!updated) {
       return errorResponse("Failed to update department", 422);
     }
 
-    const updatedDepartment = await getDepartmentById(departmentId);
+    const updatedDepartment = await getDepartmentById(tenantId, departmentId);
     return successResponse(updatedDepartment, "Department updated successfully", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to update department", 500);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Failed to update department";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -162,24 +166,26 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "delete_departments");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "delete_departments");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const departmentId = parseInt(id);
-    const department = await getDepartmentById(departmentId);
+    const department = await getDepartmentById(tenantId, departmentId);
 
     if (!department) {
       return errorResponse("Department not found", 404);
     }
 
-    await deleteDepartment(departmentId);
+    await deleteDepartment(tenantId, departmentId);
 
     return successResponse({ id: departmentId }, "Department deleted successfully", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to delete department", 500);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Failed to delete department";
+    return errorResponse(msg, 500);
   }
 }

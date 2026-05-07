@@ -97,9 +97,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (authResult.error) return authErrorResponse(authResult);
 
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_read");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",
@@ -108,7 +109,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const roleId = parseInt(id);
-    const permissions = await getRolePermissions(roleId);
+    const permissions = await getRolePermissions(tenantId, roleId);
 
     return successResponse(
       {
@@ -118,9 +119,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       "Role permissions retrieved successfully",
       200
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to retrieve role permissions", 500);
+    const msg = error instanceof Error ? error.message : "Failed to retrieve role permissions";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -130,6 +132,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (authResult.error) return authErrorResponse(authResult);
 
   const myUserId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     const body = await req.json();
@@ -141,12 +144,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return errorResponse("Dati mancanti (permissionId)", 400);
     }
 
-    const hasPerm = await checkUserPermission(myUserId, "roles_permissions_update");
+    const hasPerm = await checkUserPermission(tenantId, myUserId, "roles_permissions_update");
     if (!hasPerm) {
       return errorResponse("Permessi insufficienti per modificare le autorizzazioni dei ruoli", 403);
     }
 
-    const result = await editRolePermission(roleId, Number(permissionId), allowed);
+    const result = await editRolePermission(tenantId, roleId, Number(permissionId), allowed);
     if (!result) {
       return errorResponse("Errore durante la modifica del permesso al ruolo", 409);
     }

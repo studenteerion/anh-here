@@ -97,9 +97,10 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_read");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -114,11 +115,11 @@ export async function GET(req: NextRequest) {
     const offset = (page - 1) * limit;
 
     let departments;
-    let response: any;
+    let response: unknown;
 
     if (hasPagination) {
-      departments = await getAllDepartments({ limit, offset });
-      const total = await countRows('departments');
+      departments = await getAllDepartments(tenantId, { limit, offset });
+      const total = await countRows('departments', tenantId);
       const totalPages = Math.ceil(total / limit) || 1;
 
       // Valida pagina fuori range
@@ -138,13 +139,14 @@ export async function GET(req: NextRequest) {
         },
       };
     } else {
-      departments = await getAllDepartments();
+      departments = await getAllDepartments(tenantId);
       response = { departments };
     }
 
     return successResponse(response, "Departments retrieved", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to retrieve departments", 500);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Failed to retrieve departments";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -152,9 +154,10 @@ export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_create");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_create");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -166,16 +169,24 @@ export async function POST(req: NextRequest) {
       return errorResponse("Missing required field: departmentName", 422);
     }
 
-    const departmentId = await createDepartment(departmentName);
+    const departmentId = await createDepartment(tenantId, departmentName);
 
     return successResponse({
       id: departmentId,
       departmentName,
     }, "Department created successfully", 201);
-  } catch (error: any) {
-    if (error.code === "ER_DUP_ENTRY") {
+  } catch (error: unknown) {
+    const sqlErr = error as { code?: string };
+    if (sqlErr?.code === "ER_DUP_ENTRY") {
       return errorResponse("Department with this name already exists", 409);
     }
-    return errorResponse(error.message || "Failed to create department", 500);
+    let message = "Failed to create department";
+    if (error instanceof Error) {
+      console.error('POST /api/departments error:', error);
+      message = error.message;
+    } else {
+      console.error('POST /api/departments error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

@@ -1,12 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import pool from "@/lib/db";
 import { Role, RoleFilter } from "@/types/roles";
-import { countRows, getById, getByField, insert, updateById, deleteById, exists } from "./utils";
+import { getById, getByField, insert, updateById, deleteById } from "./utils";
 
-export async function getAllRoles(filters?: RoleFilter): Promise<Role[]> {
+export async function getAllRoles(
+  tenantId: number,
+  filters?: RoleFilter
+): Promise<Role[]> {
   let query = `SELECT id, role_name
-    FROM roles ORDER BY role_name ASC`;
-  
-  const params: any[] = [];
+    FROM roles
+    WHERE tenant_id = ?
+    ORDER BY role_name ASC`;
+
+  const params: unknown[] = [tenantId];
 
   if (filters?.limit) {
     query += ` LIMIT ? OFFSET ?`;
@@ -17,47 +24,50 @@ export async function getAllRoles(filters?: RoleFilter): Promise<Role[]> {
   return rows as Role[];
 }
 
-export async function getRoleById(roleId: number): Promise<Role | null> {
+export async function getRoleById(tenantId: number, roleId: number): Promise<Role | null> {
   return await getById<Role>(
-    'roles',
+    "roles",
+    tenantId,
     roleId,
-    'id, role_name'
+    "id, role_name"
   );
 }
 
-export async function getRoleByName(roleName: string): Promise<Role | null> {
+export async function getRoleByName(tenantId: number, roleName: string): Promise<Role | null> {
   return await getByField<Role>(
-    'roles',
-    'role_name',
+    "roles",
+    tenantId,
+    "role_name",
     roleName,
-    'id, role_name'
+    "id, role_name"
   );
 }
 
-export async function createRole(roleName: string): Promise<number> {
-  return await insert('roles', { role_name: roleName });
+export async function createRole(tenantId: number, roleName: string): Promise<number> {
+  return await insert("roles", { tenant_id: tenantId, role_name: roleName });
 }
 
-export async function updateRole(roleId: number, roleName: string): Promise<boolean> {
-  return await updateById('roles', roleId, { role_name: roleName });
+export async function updateRole(tenantId: number, roleId: number, roleName: string): Promise<boolean> {
+  return await updateById("roles", tenantId, roleId, { role_name: roleName });
 }
 
-export async function deleteRole(roleId: number): Promise<boolean> {
-  return await deleteById('roles', roleId);
+export async function deleteRole(tenantId: number, roleId: number): Promise<boolean> {
+  return await deleteById("roles", tenantId, roleId);
 }
 
 export async function getEmployeesByRole(
+  tenantId: number,
   roleId: number,
   filters?: {
-    status?: 'active' | 'inactive';
+    status?: "active" | "inactive";
     search?: string;
     limit?: number;
     offset?: number;
   }
 ) {
   let query = `SELECT id, first_name, last_name, role_id, department_id, status, created_at, updated_at
-    FROM employees WHERE role_id = ?`;
-  const params: any[] = [roleId];
+    FROM employees WHERE tenant_id = ? AND role_id = ?`;
+  const params: unknown[] = [tenantId, roleId];
 
   if (filters?.status) {
     query += ` AND status = ?`;

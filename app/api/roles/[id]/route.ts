@@ -98,23 +98,25 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "permissions_read_all");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "permissions_read_all");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const roleId = parseInt(id);
-    const role = await getRoleById(roleId);
+    const role = await getRoleById(tenantId, roleId);
 
     if (!role) {
       return errorResponse("Role not found", 404);
     }
 
     return successResponse(role, "Role retrieved", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to retrieve role", 500);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Failed to retrieve role";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -123,15 +125,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_update");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_update");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const roleId = parseInt(id);
-    const role = await getRoleById(roleId);
+    const role = await getRoleById(tenantId, roleId);
 
     if (!role) {
       return errorResponse("Role not found", 404);
@@ -144,16 +147,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return errorResponse("Missing required field: roleName", 422);
     }
 
-    const updated = await updateRole(roleId, roleName);
+    const updated = await updateRole(tenantId, roleId, roleName);
 
     if (!updated) {
       return errorResponse("Failed to update role", 422);
     }
 
-    const updatedRole = await getRoleById(roleId);
+    const updatedRole = await getRoleById(tenantId, roleId);
     return successResponse(updatedRole, "Role updated successfully", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to update role", 500);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Failed to update role";
+    return errorResponse(msg, 500);
   }
 }
 
@@ -162,24 +166,26 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "delete_roles");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "delete_roles");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const roleId = parseInt(id);
-    const role = await getRoleById(roleId);
+    const role = await getRoleById(tenantId, roleId);
 
     if (!role) {
       return errorResponse("Role not found", 404);
     }
 
-    await deleteRole(roleId);
+    await deleteRole(tenantId, roleId);
 
     return successResponse({ id: roleId }, "Role deleted successfully", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to delete role", 500);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Failed to delete role";
+    return errorResponse(msg, 500);
   }
 }

@@ -1,3 +1,5 @@
+import { PaginationMetadata } from './common';
+
 export interface AttendanceHistory {
   id: number;
   checkin: string;
@@ -19,22 +21,13 @@ export interface DayAttendance {
   leaves: Leave[];
 }
 
-export interface PaginationInfo {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
-}
-
 export interface AttendanceHistoryData {
   period: string;
   startDate: string;
   endDate: string;
   history: DayAttendance[];
   totalDays: number;
-  pagination?: PaginationInfo;
+  pagination?: PaginationMetadata;
 }
 
 export type AttendancePeriod = 'today' | 'week' | 'month' | 'custom' | 'all';

@@ -104,19 +104,20 @@ export async function GET(
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     const { id } = await context.params;
     const departmentId = parseInt(id);
 
     // Verifica che il dipartimento esista
-    const department = await getDepartmentById(departmentId);
+    const department = await getDepartmentById(tenantId, departmentId);
     if (!department) {
       return errorResponse("Department not found", 404);
     }
 
     // Verifica permessi
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_read");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -133,21 +134,21 @@ export async function GET(
     const offset = (page - 1) * limit;
 
     let employees;
-    let response: any;
+    let response: unknown;
 
     if (hasPagination) {
       if (statusFilter && !isValidEmployeeStatus(statusFilter)) {
         return errorResponse(`Status deve essere uno di: ${EMPLOYEE_STATUSES.join(", ")}`, 400);
       }
 
-      employees = await getEmployeesByDepartment(departmentId, {
-        status: statusFilter as any,
+      employees = await getEmployeesByDepartment(tenantId, departmentId, {
+        status: statusFilter as "active" | "inactive" | undefined,
         search: searchFilter || undefined,
         limit,
         offset,
       });
-      let whereClause = 'department_id = ?';
-      const params: any[] = [departmentId];
+       let whereClause = 'department_id = ?';
+       const params: unknown[] = [departmentId];
       if (statusFilter) {
         whereClause += ' AND status = ?';
         params.push(statusFilter);
@@ -162,7 +163,7 @@ export async function GET(
         const term = `%${searchFilter}%`;
         params.push(term, term, term, term);
       }
-      let total = await countRows('employees', whereClause, params);
+       const total = await countRows('employees', tenantId, whereClause, params);
 
       const totalPages = Math.ceil(total / limit) || 1;
 
@@ -171,7 +172,7 @@ export async function GET(
       }
 
       response = {
-        employees: employees.map((e: any) => ({
+        employees: employees.map((e: Employee) => ({
           id: e.id,
           firstName: e.first_name,
           lastName: e.last_name,
@@ -196,13 +197,13 @@ export async function GET(
         return errorResponse(`Status deve essere uno di: ${EMPLOYEE_STATUSES.join(", ")}`, 400);
       }
 
-      employees = await getEmployeesByDepartment(departmentId, {
-        status: statusFilter as any,
+      employees = await getEmployeesByDepartment(tenantId, departmentId, {
+        status: statusFilter as "active" | "inactive" | undefined,
         search: searchFilter || undefined,
       });
 
       response = {
-        employees: employees.map((e: any) => ({
+        employees: employees.map((e: Employee) => ({
           id: e.id,
           firstName: e.first_name,
           lastName: e.last_name,
@@ -217,8 +218,14 @@ export async function GET(
     }
 
     return successResponse(response, undefined, 200);
-  } catch (error: any) {
-    console.error("Endpoint error:", error);
-    return errorResponse("Server error", 500);
+  } catch (error: unknown) {
+    let message = "Server error";
+    if (error instanceof Error) {
+      console.error('GET /api/departments/[id]/employees error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/departments/[id]/employees error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

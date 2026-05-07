@@ -11,9 +11,9 @@ export const config = {
   database: {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '3306', 10),
-    name: process.env.DB_NAME || 'anhere_db',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
+    name: process.env.DB_NAME || process.env.MYSQL_DATABASE || 'anhere_db',
+    user: process.env.DB_USER || process.env.MYSQL_USER || 'root',
+    password: process.env.DB_PASSWORD || process.env.MYSQL_PASSWORD || '',
   },
 
   // Security Configuration
@@ -29,6 +29,10 @@ export const config = {
   isTest: process.env.NODE_ENV === 'test',
 };
 
+const skipStrictValidationAtBuild =
+  process.env.SKIP_ENV_VALIDATION === 'true' ||
+  process.env.NEXT_PHASE === 'phase-production-build';
+
 // Validate critical configuration on startup
 if (!process.env.JWT_KEY) {
   console.warn(
@@ -42,9 +46,9 @@ if (!process.env.PEPPER) {
   );
 }
 
-if (config.isProduction) {
-  if (!process.env.DB_PASSWORD) {
-    throw new Error('DB_PASSWORD must be set in production environment');
+if (config.isProduction && !skipStrictValidationAtBuild) {
+  if (!config.database.password) {
+    throw new Error('DB_PASSWORD or MYSQL_PASSWORD must be set in production environment');
   }
   if (process.env.JWT_KEY === undefined) {
     throw new Error('JWT_KEY must be set in production environment');

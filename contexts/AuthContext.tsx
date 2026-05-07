@@ -17,6 +17,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const isProtectedPath = pathname?.startsWith('/dashboard') || pathname?.startsWith('/platform');
+  const expectedContext = pathname?.startsWith('/platform') ? 'platform' : 'tenant';
 
   const refreshToken = useCallback(async (): Promise<boolean> => {
     try {
@@ -26,6 +28,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (response.ok) {
+        const payload = await response.json();
+        const actualContext = payload?.context === 'platform' ? 'platform' : 'tenant';
+        if (isProtectedPath && actualContext !== expectedContext) {
+          router.push(payload?.redirectTo || (actualContext === 'platform' ? '/platform/dashboard' : '/dashboard'));
+          setIsAuthenticated(false);
+          return false;
+        }
         setIsAuthenticated(true);
         return true;
       } else {
@@ -37,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(false);
       return false;
     }
-  }, []);
+  }, [expectedContext, isProtectedPath, router]);
 
   const validateToken = useCallback(async () => {
     try {
@@ -47,18 +56,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (response.ok) {
+        const payload = await response.json();
+        const actualContext = payload?.data?.data?.context === 'platform' ? 'platform' : 'tenant';
+        if (isProtectedPath && actualContext !== expectedContext) {
+          router.push(actualContext === 'platform' ? '/platform/dashboard' : '/dashboard');
+          setIsAuthenticated(false);
+          return false;
+        }
         setIsAuthenticated(true);
         return true;
       } else if (response.status === 401) {
         // Token scaduto, prova a fare refresh
         const refreshed = await refreshToken();
-        if (!refreshed && pathname?.startsWith('/dashboard')) {
+        if (!refreshed && isProtectedPath) {
           router.push('/login');
         }
         return refreshed;
       } else {
         setIsAuthenticated(false);
-        if (pathname?.startsWith('/dashboard')) {
+        if (isProtectedPath) {
           router.push('/login');
         }
         return false;
@@ -70,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [refreshToken, router, pathname]);
+  }, [refreshToken, router, isProtectedPath, expectedContext]);
 
   const logout = useCallback(async () => {
     try {
@@ -88,27 +104,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Valida il token all'avvio
   useEffect(() => {
-    if (pathname?.startsWith('/dashboard')) {
+    if (isProtectedPath) {
       validateToken();
     } else {
       setIsLoading(false);
     }
-  }, [pathname, validateToken]);
+  }, [pathname, validateToken, isProtectedPath]);
 
   // Auto-refresh ogni 5 minuti (300000ms) - il token dura 10 minuti
   useEffect(() => {
-    if (!isAuthenticated || !pathname?.startsWith('/dashboard')) return;
+    if (!isAuthenticated || !isProtectedPath) return;
 
     const interval = setInterval(() => {
       refreshToken();
     }, 5 * 60 * 1000); // 5 minuti
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, refreshToken, pathname]);
+  }, [isAuthenticated, refreshToken, pathname, isProtectedPath]);
 
   // Refresh al ritorno da tab inattivo (dopo 5 minuti)
   useEffect(() => {
-    if (!isAuthenticated || !pathname?.startsWith('/dashboard')) return;
+    if (!isAuthenticated || !isProtectedPath) return;
 
     let lastActive = Date.now();
 
@@ -126,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isAuthenticated, refreshToken, pathname]);
+  }, [isAuthenticated, refreshToken, pathname, isProtectedPath]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, isLoading, refreshToken, logout }}>

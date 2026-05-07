@@ -88,8 +88,8 @@ export default function ShiftDetailPage() {
         }));
         setEmployees(convertedEmps);
       }
-    } catch (err: any) {
-      setError(err?.message || 'Errore durante il caricamento');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err) || 'Errore durante il caricamento');
       console.error(err);
     } finally {
       setLoading(false);
@@ -142,8 +142,8 @@ export default function ShiftDetailPage() {
 
       setSuccess('Turno salvato con successo');
       await fetchData();
-    } catch (err: any) {
-      setError(err?.message || 'Errore di comunicazione');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err) || 'Errore di comunicazione');
     } finally {
       setSaving(false);
     }
@@ -174,7 +174,7 @@ export default function ShiftDetailPage() {
       <div className="flex items-center justify-between gap-3">
         <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/shifts')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Torna all'elenco
+          Torna all&apos;elenco
         </Button>
       </div>
 

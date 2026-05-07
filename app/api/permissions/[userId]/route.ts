@@ -52,6 +52,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ us
   if (authResult.error) return authErrorResponse(authResult);
 
   const myUserId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
   const targetUserId = parseInt(userId);
 
   try {
@@ -67,12 +68,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ us
       return errorResponse("You cannot change your own permissions", 403);
     }
 
-    const hasPerm = await checkUserPermission(myUserId, "user_permissions_update");
+    const hasPerm = await checkUserPermission(tenantId, myUserId, "user_permissions_update");
     if (!hasPerm) {
       return errorResponse("Insufficient permissions to change other users' authorizations", 403);
     }
 
-    await addPermissionToUser(targetUserId, Number(permissionId), isAllowed);
+    await addPermissionToUser(tenantId, targetUserId, Number(permissionId), isAllowed);
 
     return successResponse(undefined, "Permission successfully changed", 200);
   } catch (e) {

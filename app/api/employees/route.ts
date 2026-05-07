@@ -5,18 +5,7 @@ import { getAllEmployees, getEmployeeById, createEmployee, getEmployeesCount } f
 import { exists } from "@/lib/db/utils";
 import { Employee } from "@/types/employees";
 import { isValidEmployeeStatus, EMPLOYEE_STATUSES } from "@/lib/validation/enums";
-import crypto from "crypto";
-
-const PEPPER = process.env.PEPPER || "";
-
-function hashPassword(password: string): string {
-  const salt = crypto.randomBytes(12).toString("hex");
-  const hashedPassword = crypto
-    .createHash("sha256")
-    .update(salt + password + PEPPER)
-    .digest("hex");
-  return salt + hashedPassword;
-}
+import { hashPassword } from "@/lib/auth";
 
 /**
  * @swagger
@@ -164,9 +153,10 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_read");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -181,10 +171,10 @@ export async function GET(req: NextRequest) {
 
     const allowedSortBy = ["created_at", "first_name", "last_name", "id"] as const;
     const allowedSortOrder = ["asc", "desc"] as const;
-    const sortBy = allowedSortBy.includes(sortByParam as any)
+    const sortBy = allowedSortBy.includes(sortByParam as unknown as (typeof allowedSortBy)[number])
       ? (sortByParam as (typeof allowedSortBy)[number])
       : "created_at";
-    const sortOrder = allowedSortOrder.includes(sortOrderParam as any)
+    const sortOrder = allowedSortOrder.includes(sortOrderParam as unknown as (typeof allowedSortOrder)[number])
       ? (sortOrderParam as (typeof allowedSortOrder)[number])
       : "desc";
     
@@ -194,26 +184,26 @@ export async function GET(req: NextRequest) {
     const limit = limitParam ? parseInt(limitParam) : 50;
     const offset = (page - 1) * limit;
 
-    let employees;
-    let total = 0;
-    let response: any;
+  let employees: Employee[] = [];
+  let total = 0;
+  let response: unknown;
 
     if (hasPagination) {
       if (statusFilter && !isValidEmployeeStatus(statusFilter)) {
         return errorResponse(`Status deve essere uno di: ${EMPLOYEE_STATUSES.join(", ")}`, 400);
       }
 
-      employees = await getAllEmployees({
-        status: statusFilter as any,
+      employees = (await getAllEmployees(tenantId, {
+        status: statusFilter as "active" | "inactive" | undefined,
         search: searchFilter || undefined,
         sortBy,
         sortOrder,
         limit,
         offset,
-      });
+      })) as Employee[];
 
-      total = await getEmployeesCount({
-        status: statusFilter as any,
+      total = await getEmployeesCount(tenantId, {
+        status: statusFilter as "active" | "inactive" | undefined,
         search: searchFilter || undefined,
       });
 
@@ -241,20 +231,27 @@ export async function GET(req: NextRequest) {
       }
 
       // Restituisci tutti i risultati
-      employees = await getAllEmployees({
-        status: statusFilter as any,
+      employees = (await getAllEmployees(tenantId, {
+        status: statusFilter as "active" | "inactive" | undefined,
         search: searchFilter || undefined,
         sortBy,
         sortOrder,
-      });
+      })) as Employee[];
       response = {
         employees,
       };
     }
 
     return successResponse(response, "Employees retrieved", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to retrieve employees", 500);
+  } catch (error: unknown) {
+    let message = "Failed to retrieve employees";
+    if (error instanceof Error) {
+      console.error('GET /api/employees error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/employees error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -262,9 +259,10 @@ export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_create");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_create");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -278,8 +276,8 @@ export async function POST(req: NextRequest) {
 
     // Validate foreign keys
     const [roleValid, deptValid] = await Promise.all([
-      exists('roles', roleId),
-      exists('departments', departmentId)
+      exists('roles', tenantId, roleId),
+      exists('departments', tenantId, departmentId)
     ]);
 
     if (!roleValid) {
@@ -291,7 +289,7 @@ export async function POST(req: NextRequest) {
     }
 
     const passwordHash = hashPassword(password);
-    const newEmployeeId = await createEmployee(firstName, lastName, roleId, departmentId, email, passwordHash);
+    const newEmployeeId = await createEmployee(tenantId, firstName, lastName, roleId, departmentId, email, passwordHash);
 
     return successResponse({
       id: newEmployeeId,
@@ -301,10 +299,18 @@ export async function POST(req: NextRequest) {
       departmentId,
       email,
     }, "Employee created successfully", 201);
-  } catch (error: any) {
-    if (error.code === "ER_DUP_ENTRY") {
+  } catch (error: unknown) {
+    const errObj = error as { code?: string };
+    if (errObj?.code === "ER_DUP_ENTRY") {
       return errorResponse("Email already exists", 409);
     }
-    return errorResponse(error.message || "Failed to create employee", 500);
+    let message = "Failed to create employee";
+    if (error instanceof Error) {
+      console.error('POST /api/employees error:', error);
+      message = error.message;
+    } else {
+      console.error('POST /api/employees error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

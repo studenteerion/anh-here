@@ -40,7 +40,7 @@ export function RolePermissionsSection({
 
   // Filtra e ordina i permessi
   const filteredPermissions = useMemo(() => {
-    let filtered = permissions.filter((perm) => {
+    const filtered = permissions.filter((perm) => {
       const matchesSearch =
         perm.permission_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
         perm.description.toLowerCase().includes(searchTerm.toLowerCase());

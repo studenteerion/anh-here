@@ -96,8 +96,14 @@ export default function EmployeeDetailPage() {
       if (anomaliesJson.status === 'success') {
         setAnomalies(anomaliesJson.data.anomalies || []);
       }
-    } catch (err: any) {
-      setError(err?.message || 'Errore durante il caricamento dei dati');
+    } catch (err: unknown) {
+      let message = 'Errore durante il caricamento dei dati';
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (err !== undefined && err !== null) {
+        message = String(err);
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -136,8 +142,14 @@ export default function EmployeeDetailPage() {
 
       setSuccess('Informazioni aggiornate con successo');
       await loadAll();
-    } catch (err: any) {
-      setError(err?.message || 'Errore durante il salvataggio');
+    } catch (err: unknown) {
+      let message = 'Errore durante il salvataggio';
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (err !== undefined && err !== null) {
+        message = String(err);
+      }
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -185,7 +197,7 @@ export default function EmployeeDetailPage() {
       <div className="flex items-center justify-between gap-3">
         <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/employees')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Torna all'elenco
+          Torna all&apos;elenco
         </Button>
       </div>
 

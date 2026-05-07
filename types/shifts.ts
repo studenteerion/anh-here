@@ -16,13 +16,3 @@ export interface ShiftFilter {
   limit?: number;
   offset?: number;
 }
-
-export interface ShiftResponse {
-  id: number;
-  departmentId?: number;
-  name: string;
-  startTime: string;
-  endTime: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}

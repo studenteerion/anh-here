@@ -141,6 +141,7 @@ export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     const searchParams = req.nextUrl.searchParams;
@@ -163,33 +164,33 @@ export async function GET(req: NextRequest) {
       
       // Solo gli admin con permesso possono vedere le requests di altri utenti
       if (targetEmployeeId !== employeeId) {
-        const hasPermission = await checkUserPermission(employeeId, "user_permissions_read");
+        const hasPermission = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
         if (!hasPermission) {
           return errorResponse("Permission denied: you can only view your own requests", 403);
         }
       }
     }
 
-    const hasPerm = await checkUserPermission(employeeId, "view_history");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
-    let requests: any[];
-    let response: any;
+  let requests: LeaveRequest[] = [];
+  let response: unknown;
 
      if (hasPagination) {
       if (statusFilter && !isValidLeaveRequestStatus(statusFilter)) {
         return errorResponse(`Status deve essere uno di: ${LEAVE_REQUEST_STATUSES.join(", ")}`, 400);
       }
 
-      requests = await getUserLeaveRequests(targetEmployeeId, {
-        status: statusFilter as any,
-        limit,
-        offset,
-      });
-      let total = await getUserLeaveRequestsCount(targetEmployeeId, {
-        status: statusFilter as any,
+  requests = (await getUserLeaveRequests(tenantId, targetEmployeeId, {
+  status: statusFilter as "approved" | "rejected" | "pending" | undefined,
+    limit,
+    offset,
+  })) as LeaveRequest[];
+      const total = await getUserLeaveRequestsCount(tenantId, targetEmployeeId, {
+        status: statusFilter as "approved" | "rejected" | "pending" | undefined,
       });
 
       const totalPages = Math.ceil(total / limit) || 1;
@@ -200,7 +201,7 @@ export async function GET(req: NextRequest) {
 
       response = {
         count: requests.length,
-        requests: requests.map((r: any) => ({
+        requests: requests.map((r) => ({
           id: r.id,
           type: r.type,
           startDate: r.start_datetime,
@@ -226,13 +227,13 @@ export async function GET(req: NextRequest) {
         return errorResponse(`Status deve essere uno di: ${LEAVE_REQUEST_STATUSES.join(", ")}`, 400);
       }
 
-      requests = await getUserLeaveRequests(targetEmployeeId, {
-        status: statusFilter as any,
-      });
+      requests = (await getUserLeaveRequests(tenantId, targetEmployeeId, {
+        status: statusFilter as "approved" | "rejected" | "pending" | undefined,
+      })) as LeaveRequest[];
 
       response = {
         count: requests.length,
-        requests: requests.map((r: any) => ({
+        requests: requests.map((r) => ({
           id: r.id,
           type: r.type,
           startDate: r.start_datetime,
@@ -248,9 +249,15 @@ export async function GET(req: NextRequest) {
     }
 
     return successResponse(response, undefined, 200);
-  } catch (error: any) {
-    console.error("Endpoint error:", error);
-    return errorResponse("Server error", 500);
+  } catch (error: unknown) {
+      let message = "Failed to retrieve requests";
+      if (error instanceof Error) {
+        console.error('GET /api/requests error:', error);
+        message = error.message;
+      } else {
+        console.error('GET /api/requests error:', String(error));
+      }
+      return errorResponse(message, 500);
   }
 }
 
@@ -258,9 +265,10 @@ export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "request_leave");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "request_leave");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
@@ -289,10 +297,11 @@ export async function POST(req: NextRequest) {
     }
 
     const requestId = await createLeaveRequest(
+      tenantId,
       employeeId,
       start,
       end,
-      type as any,
+      type as "sick" | "vacation" | "personal" | "other",
       motivation
     );
 
@@ -304,7 +313,13 @@ export async function POST(req: NextRequest) {
       status: "pending",
     }, "Richiesta creata con successo", 200);
   } catch (error) {
-    console.error("Endpoint error:", error);
-    return errorResponse("Server error", 500);
+      let message = "Server error";
+      if (error instanceof Error) {
+        console.error('POST /api/requests error:', error);
+        message = error.message;
+      } else {
+        console.error('POST /api/requests error:', String(error));
+      }
+      return errorResponse(message, 500);
   }
 }

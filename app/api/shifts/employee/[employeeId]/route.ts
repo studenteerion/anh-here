@@ -80,10 +80,11 @@ export async function GET(
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const authenticatedEmployeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     // Check permission to view employee information
-    const hasPerm = await checkUserPermission(authenticatedEmployeeId, "user_permissions_read");
+    const hasPerm = await checkUserPermission(tenantId, authenticatedEmployeeId, "user_permissions_read");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to view employee information",
@@ -99,13 +100,13 @@ export async function GET(
     }
 
     // Verify employee exists
-    const employee = await getEmployeeById(employeeId);
+    const employee = await getEmployeeById(tenantId, employeeId);
     if (!employee) {
       return errorResponse("Employee not found", 404);
     }
 
     // Get shifts for the employee
-    const shifts = await getShiftsByEmployee(employeeId);
+    const shifts = await getShiftsByEmployee(tenantId, employeeId);
 
     return successResponse(
       {
@@ -121,8 +122,9 @@ export async function GET(
       "Shifts retrieved successfully",
       200
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to retrieve shifts", 500);
+    const msg = error instanceof Error ? error.message : "Failed to retrieve shifts";
+    return errorResponse(msg, 500);
   }
 }

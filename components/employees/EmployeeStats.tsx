@@ -73,10 +73,6 @@ export default function EmployeeStats({ refreshKey = 0 }: { refreshKey?: number 
 
   return (
     <div className="border rounded-lg bg-card p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl sm:text-2xl font-semibold">Statistiche dipendenti</h2>
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <StatsCard
           title="Totale dipendenti"

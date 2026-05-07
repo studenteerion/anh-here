@@ -85,6 +85,7 @@ export async function GET(req: NextRequest) {
   if (authResult.error) return authErrorResponse(authResult);
 
   const userId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
   const roleId = authResult.payload!.data?.role_id ?? null;
 
   try {
@@ -102,15 +103,15 @@ export async function GET(req: NextRequest) {
 
     if (idParam && idParam !== String(userId)) {
       // need permission to read others
-      const hasPerm = await checkUserPermission(userId, "user_permissions_read");
+      const hasPerm = await checkUserPermission(tenantId, userId, "user_permissions_read");
       if (!hasPerm) {
         return errorResponse("Insufficient permissions to view other users' authorizations", 403);
       }
       targetUserId = Number(idParam);
     }
 
-    let permissionsList = await getUserPermissionsById(targetUserId);
-    let response: any;
+    const permissionsList = await getUserPermissionsById(tenantId, targetUserId);
+    let response: unknown;
 
     if (hasPagination) {
       const total = permissionsList.length;
@@ -156,6 +157,7 @@ export async function POST(req: NextRequest) {
   if (authResult.error) return authErrorResponse(authResult);
 
   const myUserId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
     const body = await req.json();
@@ -166,7 +168,7 @@ export async function POST(req: NextRequest) {
       return errorResponse("Dati mancanti (permissionCode o description)", 400);
     }
 
-    const hasPerm = await checkUserPermission(myUserId, "user_permissions_create");
+    const hasPerm = await checkUserPermission(tenantId, myUserId, "user_permissions_create");
     if (!hasPerm) {
       return errorResponse("Permessi insufficienti per creare le autorizzazioni", 403);
     }

@@ -57,9 +57,10 @@ export async function GET(req: NextRequest) {
   if (authResult.error) return authErrorResponse(authResult);
 
   const userId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(userId, "permissions_read_all");
+    const hasPerm = await checkUserPermission(tenantId, userId, "permissions_read_all");
     if (!hasPerm) {
       return errorResponse("Insufficient permissions to access all authorizations", 403);
     }
@@ -73,8 +74,8 @@ export async function GET(req: NextRequest) {
     const limit = limitParam ? parseInt(limitParam) : 50;
     const offset = (page - 1) * limit;
 
-    let allPermissions = await getAllPermissions();
-    let response: any;
+    const allPermissions = await getAllPermissions();
+    let response: unknown;
 
     if (hasPagination) {
       const total = allPermissions.length;

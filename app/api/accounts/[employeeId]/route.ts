@@ -154,9 +154,10 @@ export async function GET(
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "manage_accounts");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "manage_accounts");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",
@@ -167,7 +168,7 @@ export async function GET(
     const { employeeId: targetEmployeeIdStr } = await params;
     const targetEmployeeId = parseInt(targetEmployeeIdStr);
 
-    const account = await getUserAccountByEmployeeId(targetEmployeeId);
+    const account = await getUserAccountByEmployeeId(tenantId, targetEmployeeId);
     if (!account) {
       return errorResponse("Account not found", 404);
     }
@@ -189,9 +190,15 @@ export async function GET(
       "Account retrieved",
       200
     );
-  } catch (error: any) {
-    console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to retrieve account", 500);
+  } catch (error: unknown) {
+    let message = "Failed to retrieve account";
+    if (error instanceof Error) {
+      console.error("Endpoint error:", error);
+      message = error.message;
+    } else {
+      console.error("Endpoint error:", String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -202,9 +209,10 @@ export async function PUT(
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "manage_accounts");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "manage_accounts");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",
@@ -215,7 +223,7 @@ export async function PUT(
     const { employeeId: targetEmployeeIdStr } = await params;
     const targetEmployeeId = parseInt(targetEmployeeIdStr);
 
-    const account = await getUserAccountByEmployeeId(targetEmployeeId);
+    const account = await getUserAccountByEmployeeId(tenantId, targetEmployeeId);
     if (!account) {
       return errorResponse("Account not found", 404);
     }
@@ -239,6 +247,7 @@ export async function PUT(
 
       // Check if email already exists for another employee
       const existingAccount = await getUserAccountByEmailExcluding(
+        tenantId,
         email,
         targetEmployeeId
       );
@@ -246,7 +255,7 @@ export async function PUT(
         return errorResponse("Email already in use by another account", 409);
       }
 
-      const emailUpdated = await updateUserAccountEmail(targetEmployeeId, email);
+      const emailUpdated = await updateUserAccountEmail(tenantId, targetEmployeeId, email);
       if (!emailUpdated) {
         return errorResponse("Failed to update email", 500);
       }
@@ -260,6 +269,7 @@ export async function PUT(
 
       const passwordHash = hashPassword(password);
       const passwordUpdated = await updateUserAccountPassword(
+        tenantId,
         targetEmployeeId,
         passwordHash
       );
@@ -269,7 +279,7 @@ export async function PUT(
     }
 
     // Fetch updated account
-    const updatedAccount = await getUserAccountByEmployeeId(targetEmployeeId);
+    const updatedAccount = await getUserAccountByEmployeeId(tenantId, targetEmployeeId);
 
     return successResponse(
       {
@@ -288,9 +298,15 @@ export async function PUT(
       "Account updated successfully",
       200
     );
-  } catch (error: any) {
-    console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to update account", 500);
+  } catch (error: unknown) {
+    let message = "Failed to update account";
+    if (error instanceof Error) {
+      console.error("Endpoint error:", error);
+      message = error.message;
+    } else {
+      console.error("Endpoint error:", String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -301,9 +317,10 @@ export async function DELETE(
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_delete");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_delete");
     if (!hasPerm) {
       return errorResponse(
         "Permission denied: you don't have access to this feature",
@@ -322,26 +339,32 @@ export async function DELETE(
       );
     }
 
-    const account = await getUserAccountByEmployeeId(targetEmployeeId);
+    const account = await getUserAccountByEmployeeId(tenantId, targetEmployeeId);
     if (!account) {
       return errorResponse("Account not found", 404);
     }
 
     // Verify employee exists
-    const employee = await getEmployeeById(targetEmployeeId);
+    const employee = await getEmployeeById(tenantId, targetEmployeeId);
     if (!employee) {
       return errorResponse("Associated employee not found", 404);
     }
 
-    const success = await deleteUserAccount(targetEmployeeId);
+    const success = await deleteUserAccount(tenantId, targetEmployeeId);
 
     if (!success) {
       return errorResponse("Failed to delete account", 500);
     }
 
     return successResponse({}, "Account deleted successfully", 200);
-  } catch (error: any) {
-    console.error("Endpoint error:", error);
-    return errorResponse(error.message || "Failed to delete account", 500);
+  } catch (error: unknown) {
+    let message = "Failed to delete account";
+    if (error instanceof Error) {
+      console.error("Endpoint error:", error);
+      message = error.message;
+    } else {
+      console.error("Endpoint error:", String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

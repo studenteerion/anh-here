@@ -14,11 +14,3 @@ export interface RoleFilter {
   limit?: number;
   offset?: number;
 }
-
-export interface RoleResponse {
-  id: number;
-  name: string;
-  description?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}

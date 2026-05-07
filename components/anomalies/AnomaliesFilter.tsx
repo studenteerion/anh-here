@@ -47,7 +47,7 @@ export function AnomaliesFilter({
 
       <select
         value={statusFilter}
-        onChange={(e) => onStatusChange(e.target.value as any)}
+        onChange={(e) => onStatusChange(e.target.value as 'all' | 'open' | 'in_progress' | 'closed')}
         className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
       >
         <option value="all">Tutti gli stati</option>
