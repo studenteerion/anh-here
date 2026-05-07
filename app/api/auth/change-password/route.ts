@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
+import { NextRequest } from "next/server";
+import { verifyAuth, authErrorResponse, errorResponse, successResponse, getAuthContext } from "@/lib/middleware";
 import { checkPassword } from "@/lib/auth";
 import { getUserPasswordHash, updateUserPassword } from "@/lib/db/users";
+import { getGlobalUserPasswordHash, updateGlobalUserPassword } from "@/lib/db/userAccounts";
 import crypto from "crypto";
 
 const PEPPER = process.env.PEPPER || "";
@@ -57,7 +58,7 @@ function hashPassword(password: string): string {
 export async function POST(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
-  const employeeId = authResult.payload!.sub;
+  const authContext = getAuthContext(authResult.payload!);
 
   try {
     const body = await req.json();
@@ -80,7 +81,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Verifica la password corrente
-    const currentHash = await getUserPasswordHash(employeeId);
+    const employeeId = authResult.payload!.sub;
+    const tenantId = authResult.payload!.data.tenant_id;
+    const currentHash =
+      authContext === "platform"
+        ? await getGlobalUserPasswordHash(employeeId)
+        : await getUserPasswordHash(tenantId, employeeId);
     if (!currentHash) {
       return errorResponse("User account not found", 404);
     }
@@ -91,7 +97,10 @@ export async function POST(req: NextRequest) {
 
     // Aggiorna la password
     const newHash = hashPassword(newPassword);
-    const updated = await updateUserPassword(employeeId, newHash);
+    const updated =
+      authContext === "platform"
+        ? await updateGlobalUserPassword(employeeId, newHash)
+        : await updateUserPassword(tenantId, employeeId, newHash);
 
     if (!updated) {
       return errorResponse("Failed to update password", 500);
@@ -102,7 +111,7 @@ export async function POST(req: NextRequest) {
       "Your password has been updated",
       200
     );
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to change password", 500);
+  } catch (error: unknown) {
+    return errorResponse(error instanceof Error ? error.message : "Failed to change password", 500);
   }
 }

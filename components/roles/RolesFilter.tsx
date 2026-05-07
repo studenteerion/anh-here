@@ -1,7 +1,7 @@
 'use client';
 
-import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
 
 type RolesFilterProps = {
   onFilterChange: (searchTerm: string) => void;
@@ -26,20 +26,17 @@ export function RolesFilter({
 
   useEffect(() => {
     onFilterChange(searchTerm);
-  }, [searchTerm]);
+  }, [searchTerm, onFilterChange]);
 
   return (
-    <div className="flex flex-row items-center gap-3 w-full">
-      <div className="flex-1 relative min-w-0">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Cerca per nome..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full h-9 pl-10 pr-3 rounded-md border border-input bg-background text-sm"
-        />
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end w-full">
+      <Input
+        type="text"
+        placeholder="Cerca per nome..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="h-9 text-sm"
+      />
 
       <select
         value={sortBy}

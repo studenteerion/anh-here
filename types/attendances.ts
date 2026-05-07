@@ -15,12 +15,3 @@ export interface AttendanceFilter {
   limit?: number;
   offset?: number;
 }
-
-export interface AttendanceResponse {
-  id: number;
-  employeeId: number;
-  shiftId: number;
-  startDatetime: Date;
-  endDatetime?: Date;
-  createdAt: Date;
-}

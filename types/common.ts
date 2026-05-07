@@ -16,8 +16,3 @@ export interface ApiResponse<T> {
   error?: string;
   pagination?: PaginationMetadata;
 }
-
-export interface ErrorResponse {
-  error: string;
-  status: number;
-}

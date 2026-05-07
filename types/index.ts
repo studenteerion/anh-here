@@ -17,3 +17,7 @@ export * from "./companyReports";
 export * from "./userAccounts";
 export * from "./dashboard";
 export * from "./auth";
+export * from "./sidebar";
+export * from "./settings";
+export * from "./tenants";
+export * from "./api";

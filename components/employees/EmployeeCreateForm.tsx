@@ -86,8 +86,14 @@ export default function EmployeeCreateForm({ onCreated, embedded = false }: { on
         setSuccess('Dipendente creato con successo');
         onCreated && onCreated();
       }
-    } catch (err: any) {
-      setError(err?.message || 'Errore nella creazione');
+    } catch (err: unknown) {
+      let message = 'Errore nella creazione';
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (err !== undefined && err !== null) {
+        message = String(err);
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }

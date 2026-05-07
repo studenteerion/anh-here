@@ -14,10 +14,3 @@ export interface CompanyReportFilter {
   limit?: number;
   offset?: number;
 }
-
-export interface CompanyReportResponse {
-  id: number;
-  employeeId: number;
-  createdAt: Date;
-  link: string;
-}

@@ -9,7 +9,6 @@ node_modules/
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-package-lock.json
 pnpm-lock.yaml
 yarn.lock
 
@@ -171,7 +170,9 @@ vercel.json.local
 
 # Docker
 docker-compose.override.yml
-.dockerignore
+
+# Local server deployment templates (copy manually on host)
+server-deploy/
 
 
 docs/

@@ -34,7 +34,7 @@ export function ShiftsList({ items, loading, departments, onEdit, onDelete }: Sh
 
   return (
     <div className="overflow-x-auto p-4 sm:p-6 pt-4">
-      <table className="w-full text-sm">
+      <table className="w-full min-w-[700px] text-sm">
         <thead>
           <tr className="text-left text-muted-foreground border-b bg-muted/40">
             <th className="py-3 px-3 font-semibold">ID</th>

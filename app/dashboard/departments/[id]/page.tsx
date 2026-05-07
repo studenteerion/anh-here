@@ -87,8 +87,8 @@ export default function DepartmentDetailPage() {
       if (rolesJson.status === 'success') {
         setRoles(rolesJson.data.roles || []);
       }
-    } catch (err: any) {
-      setError(err?.message || 'Errore durante il caricamento dei dati');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err) || 'Errore durante il caricamento dei dati');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -129,8 +129,8 @@ export default function DepartmentDetailPage() {
 
       setSuccess('Dipartimento aggiornato con successo');
       await fetchData(page, true);
-    } catch (err: any) {
-      setError(err?.message || 'Errore durante il salvataggio');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err) || 'Errore durante il salvataggio');
     } finally {
       setSaving(false);
     }
@@ -253,7 +253,7 @@ export default function DepartmentDetailPage() {
       <div className="flex items-center justify-between gap-3">
         <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/departments')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Torna all'elenco
+          Torna all&apos;elenco
         </Button>
       </div>
 

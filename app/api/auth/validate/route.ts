@@ -11,6 +11,7 @@ import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@
  *     description: |
  *       Verify that the provided JWT token is valid.
  *       The token is read from the **HttpOnly cookie** automatically.
+ *       The payload includes tenant context (`data.tenant_id`) for multitenancy.
  *       
  *       **Client Usage**: Use `credentials: 'include'` in fetch to send cookies.
  *       
@@ -46,6 +47,9 @@ import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@
  *                       type: object
  *                       properties:
  *                         role_id:
+ *                           type: integer
+ *                           example: 1
+ *                         tenant_id:
  *                           type: integer
  *                           example: 1
  *                     iat:

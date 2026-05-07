@@ -25,9 +25,3 @@ export interface PermissionFilter {
   limit?: number;
   offset?: number;
 }
-
-export interface PermissionResponse {
-  id: number;
-  permissionCode: string;
-  description: string;
-}

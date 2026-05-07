@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
+import { errorResponse } from "@/lib/middleware";
 import crypto from "crypto";
 import { findTokenByHash, deleteTokenByHash } from "@/lib/db/refreshTokens";
-import { getUserById } from "@/lib/db/users";
-import { updateLastLogin } from "@/lib/db/userAccounts";
-import jwt from "jsonwebtoken";
+import { getUserByGlobalIdAndTenant } from "@/lib/db/users";
+import { updateGlobalUserLastLogin, updateLastLogin } from "@/lib/db/userAccounts";
+import { sign } from '@/lib/jwt';
+import { getPlatformUserById, updatePlatformUserLastLogin } from "@/lib/db/platformUsers";
+import { createPlatformRefreshToken, verifyPlatformRefreshToken } from "@/lib/platformRefreshToken";
 
 const JWT_KEY = process.env.JWT_KEY!;
 
@@ -18,6 +20,7 @@ const JWT_KEY = process.env.JWT_KEY!;
  *     description: |
  *       Generate a new access token using a valid refresh token.
  *       The refresh token is read from the **HttpOnly cookie** automatically sent by the browser.
+ *       Tenant context is resolved from the stored refresh token.
  *       
  *       **Token Rotation**: Each refresh invalidates the old refresh token and issues a new one (rotation for security).
  *       
@@ -87,43 +90,77 @@ export async function POST(req: NextRequest) {
 
     const tokenHash = crypto.createHash("sha256").update(providedToken).digest("hex");
 
-    const dbToken = await findTokenByHash(tokenHash);
-    if (!dbToken) {
-      return errorResponse("Invalid or expired token", 401);
+    const tenantToken = await findTokenByHash(tokenHash);
+    let accessToken: string;
+    let newRefreshToken: string;
+    let context: "tenant" | "platform";
+    let redirectTo: string;
+
+    if (tenantToken) {
+      const user = await getUserByGlobalIdAndTenant(tenantToken.global_user_id, tenantToken.tenant_id);
+      if (!user) {
+        return errorResponse("User not found", 404);
+      }
+
+      await updateLastLogin(tenantToken.tenant_id, tenantToken.employee_id);
+      await updateGlobalUserLastLogin(tenantToken.global_user_id);
+      await deleteTokenByHash(tokenHash, tenantToken.tenant_id);
+
+      accessToken = sign(
+        {
+          iss: "ANH-here",
+          sub: user.employee_id,
+          data: { context: "tenant", role_id: user.role_id, tenant_id: tenantToken.tenant_id },
+        },
+        JWT_KEY,
+        { expiresIn: "10m" }
+      );
+      context = "tenant";
+      redirectTo = "/dashboard";
+
+      newRefreshToken = crypto.randomBytes(32).toString("hex");
+      const newRefreshTokenHash = crypto.createHash("sha256").update(newRefreshToken).digest("hex");
+      await import("@/lib/db/refreshTokens").then((m) =>
+        m.storeRefreshToken({
+          tenant_id: tenantToken.tenant_id,
+          global_user_id: tenantToken.global_user_id,
+          employee_id: user.employee_id,
+          refresh_token: newRefreshTokenHash,
+        })
+      );
+    } else {
+      const platformGlobalUserId = verifyPlatformRefreshToken(providedToken);
+      if (!platformGlobalUserId) {
+        return errorResponse("Invalid or expired token", 401);
+      }
+
+      const platformUser = await getPlatformUserById(platformGlobalUserId);
+      if (!platformUser || platformUser.status !== "active") {
+        return errorResponse("User not found", 404);
+      }
+
+      await updatePlatformUserLastLogin(platformUser.id);
+
+      accessToken = sign(
+        {
+          iss: "ANH-here",
+          sub: platformUser.id,
+          data: { context: "platform", role_id: 0, tenant_id: 0 },
+        },
+        JWT_KEY,
+        { expiresIn: "10m" }
+      );
+      context = "platform";
+      redirectTo = "/platform/dashboard";
+
+      newRefreshToken = createPlatformRefreshToken(platformUser.id);
     }
-
-    const user = await getUserById(dbToken.user_id);
-    if (!user) {
-      return errorResponse("User not found", 404);
-    }
-
-    // Update last_login timestamp
-    await updateLastLogin(dbToken.user_id);
-
-    // Invalidate used refresh token
-    await deleteTokenByHash(tokenHash);
-
-    // Issue new access token
-    const accessToken = jwt.sign(
-      {
-        iss: "AlpineNode",
-        sub: user.employee_id,
-        data: { role_id: user.role_id },
-      },
-      JWT_KEY,
-      { expiresIn: "10m" }
-    );
-
-    // Issue new refresh token (rotazione)
-    const newRefreshToken = crypto.randomBytes(32).toString("hex");
-    await import("@/lib/db/refreshTokens").then(m => m.storeRefreshToken({
-      user_id: user.employee_id,
-      refresh_token: crypto.createHash("sha256").update(newRefreshToken).digest("hex"),
-    }));
 
     const response = NextResponse.json({ 
       status: "success",
-      message: "Token refreshed"
+      message: "Token refreshed",
+      context,
+      redirectTo,
     });
 
     // Access token in cookie HttpOnly

@@ -102,23 +102,31 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_read");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const shiftId = parseInt(id);
-    const shift = await getShiftById(shiftId);
+    const shift = await getShiftById(tenantId, shiftId);
 
     if (!shift) {
       return errorResponse("Shift not found", 404);
     }
 
     return successResponse(shift, "Shift retrieved", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to retrieve shift", 500);
+  } catch (error: unknown) {
+    let message = "Failed to retrieve shift";
+    if (error instanceof Error) {
+      console.error('GET /api/shifts/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/shifts/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -127,15 +135,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "user_permissions_update");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_update");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const shiftId = parseInt(id);
-    const shift = await getShiftById(shiftId);
+    const shift = await getShiftById(tenantId, shiftId);
 
     if (!shift) {
       return errorResponse("Shift not found", 404);
@@ -160,10 +169,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const startTimeStr = startTime ? startTime.replace('Z', '').replace('T', ' ').slice(0, 19) : undefined;
     const endTimeStr = endTime ? endTime.replace('Z', '').replace('T', ' ').slice(0, 19) : undefined;
 
-    const updated = await updateShift(shiftId, {
+    const updated = await updateShift(tenantId, shiftId, {
       name,
-      startTime: startTimeStr as any,
-      endTime: endTimeStr as any,
+      startTime: startTimeStr as string | undefined,
+      endTime: endTimeStr as string | undefined,
       departmentId,
     });
 
@@ -171,10 +180,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return errorResponse("No fields to update", 400);
     }
 
-    const updatedShift = await getShiftById(shiftId);
+    const updatedShift = await getShiftById(tenantId, shiftId);
     return successResponse(updatedShift, "Shift updated successfully", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to update shift", 500);
+  } catch (error: unknown) {
+    let message = "Failed to update shift";
+    if (error instanceof Error) {
+      console.error('PUT /api/shifts/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('PUT /api/shifts/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -183,24 +199,32 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "delete_shifts");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "delete_shifts");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const shiftId = parseInt(id);
-    const shift = await getShiftById(shiftId);
+    const shift = await getShiftById(tenantId, shiftId);
 
     if (!shift) {
       return errorResponse("Shift not found", 404);
     }
 
-    await deleteShift(shiftId);
+    await deleteShift(tenantId, shiftId);
 
     return successResponse({ id: shiftId }, "Shift deleted successfully", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to delete shift", 500);
+  } catch (error: unknown) {
+    let message = "Failed to delete shift";
+    if (error instanceof Error) {
+      console.error('DELETE /api/shifts/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('DELETE /api/shifts/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }

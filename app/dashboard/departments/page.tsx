@@ -111,21 +111,23 @@ export default function DepartmentsPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
       <div className="border rounded-lg bg-card">
-        <div className="p-4 sm:p-6 border-b flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-lg sm:text-xl font-semibold">Elenco dipartimenti</h2>
-          </div>
+        <div className="p-4 sm:p-6 border-b space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-lg sm:text-xl font-semibold">Elenco dipartimenti</h2>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuovo dipartimento
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => fetchDepartments(page, true)} disabled={refreshing}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Aggiorna
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={() => setShowCreateModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuovo dipartimento
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => fetchDepartments(page, true)} disabled={refreshing}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                Aggiorna
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -142,7 +144,7 @@ export default function DepartmentsPage() {
         </div>
 
         <div className="overflow-x-auto p-4 sm:p-6 pt-4">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="text-left text-muted-foreground border-b">
                 <th className="py-2 pr-2">ID</th>

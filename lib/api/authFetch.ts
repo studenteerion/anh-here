@@ -1,8 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
-
-interface FetchOptions extends RequestInit {
-  skipAuth?: boolean;
-}
+import { FetchOptions } from '@/types/api';
 
 export async function authFetch(url: string, options: FetchOptions = {}): Promise<Response> {
   const { skipAuth, ...fetchOptions } = options;

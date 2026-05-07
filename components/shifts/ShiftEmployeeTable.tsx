@@ -27,14 +27,14 @@ export default function ShiftEmployeeTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full table-fixed text-sm">
+      <table className="w-full min-w-[720px] table-fixed text-sm">
         <thead>
           <tr className="text-left text-muted-foreground border-b bg-muted/40">
             <th className="w-1/12 py-3 px-3 font-semibold">ID</th>
             <th className="w-3/12 py-3 px-3 font-semibold">Nome</th>
             <th className="w-3/12 py-3 px-3 font-semibold">Cognome</th>
             <th className="w-2/12 py-3 px-3 font-semibold">Stato</th>
-            <th className="w-2/12 py-3 px-3 font-semibold">Presenze</th>
+            <th className="w-2/12 py-3 px-3 font-semibold hidden sm:table-cell">Presenze</th>
             <th className="w-1/12 py-3 px-3 text-right font-semibold">Azioni</th>
           </tr>
         </thead>
@@ -81,7 +81,7 @@ export default function ShiftEmployeeTable({
                     {emp.status === 'active' ? 'Attivo' : 'Inattivo'}
                   </span>
                 </td>
-                <td className="py-2.5 px-3 text-muted-foreground">
+                <td className="py-2.5 px-3 text-muted-foreground hidden sm:table-cell">
                   {emp.attendance_count || 0}
                 </td>
                 <td className="py-2.5 px-3 text-right" onClick={(event) => event.stopPropagation()}>

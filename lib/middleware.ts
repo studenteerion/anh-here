@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { verify } from '@/lib/jwt';
 
 const JWT_KEY = process.env.JWT_KEY!;
+
+export type TenantAuthData = {
+  context?: "tenant";
+  role_id: number;
+  tenant_id: number;
+};
+
+export type PlatformAuthData = {
+  context: "platform";
+  role_id: number;
+  tenant_id: number;
+};
 
 export interface AuthPayload {
   iss: string;
   sub: number;
   data: {
+    context?: "tenant" | "platform";
     role_id: number;
+    tenant_id: number;
   };
   iat: number;
   exp: number;
@@ -30,15 +44,78 @@ export function verifyAuth(req: NextRequest): { payload?: AuthPayload; error?: s
       return { error: "Missing or malformed token", status: 401 };
     }
 
-    const decoded = jwt.verify(token, JWT_KEY) as AuthPayload;
+  const decoded = verify<AuthPayload>(token, JWT_KEY);
 
     return { payload: decoded };
-  } catch (error: any) {
-    if (error?.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === "TokenExpiredError") {
+      console.error('verifyAuth token expired:', error);
       return { error: "Token expired", status: 401, token_expired: true };
     }
+    console.error('verifyAuth invalid token:', String(error));
     return { error: "Invalid token", status: 401 };
   }
+}
+
+function isTenantData(data: unknown): data is TenantAuthData {
+  const d = data as Record<string, unknown> | null;
+  if (!d) return false;
+  return (
+    d['context'] !== 'platform' &&
+    Number.isInteger(d['role_id'] as number) &&
+    Number.isInteger(d['tenant_id'] as number) &&
+    (d['tenant_id'] as number) > 0
+  );
+}
+
+function isPlatformData(data: unknown): data is PlatformAuthData {
+  const d = data as Record<string, unknown> | null;
+  if (!d) return false;
+  return (
+    d['context'] === 'platform' &&
+    Number.isInteger(d['role_id'] as number) &&
+    Number.isInteger(d['tenant_id'] as number)
+  );
+}
+
+export function getAuthContext(payload: AuthPayload): "tenant" | "platform" {
+  return isPlatformData(payload.data) ? "platform" : "tenant";
+}
+
+export function verifyTenantAuth(req: NextRequest): { payload?: AuthPayload & { data: TenantAuthData }; error?: string; status?: number; token_expired?: boolean } {
+  const result = verifyAuth(req);
+  if (result.error) {
+    return { error: result.error, status: result.status, token_expired: result.token_expired };
+  }
+
+  if (!result.payload || !isTenantData(result.payload.data)) {
+    return { error: "Tenant token required", status: 403 };
+  }
+
+  return {
+    payload: {
+      ...result.payload,
+      data: result.payload.data,
+    },
+  };
+}
+
+export function verifyPlatformAuth(req: NextRequest): { payload?: AuthPayload & { data: PlatformAuthData }; error?: string; status?: number; token_expired?: boolean } {
+  const result = verifyAuth(req);
+  if (result.error) {
+    return { error: result.error, status: result.status, token_expired: result.token_expired };
+  }
+
+  if (!result.payload || !isPlatformData(result.payload.data)) {
+    return { error: "Platform token required", status: 403 };
+  }
+
+  return {
+    payload: {
+      ...result.payload,
+      data: result.payload.data,
+    },
+  };
 }
 
 export function authErrorResponse(result: { error?: string; status?: number; token_expired?: boolean }) {
@@ -69,11 +146,11 @@ export function errorResponse(
 }
 
 export function successResponse(
-  data?: any,
+  data?: unknown,
   message?: string,
   httpStatus: number = 200
 ): NextResponse {
-  const response: Record<string, any> = {
+  const response: Record<string, unknown> = {
     status: "success",
   };
 

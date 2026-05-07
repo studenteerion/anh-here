@@ -37,14 +37,15 @@ import { isValidAnomalyStatus, ANOMALY_STATUSES } from "@/lib/validation/enums";
  *       - Anomalies
  *     summary: Update anomaly
  *     description: |
- *       Update anomaly status and/or description.
- *       Status can be: open, in_progress, closed
- *       Description is optional and maintained if not provided.
+ *       Update anomaly status, description, and/or resolution notes.
+ *       Status can be: open, in_progress, closed.
+ *       When closing an anomaly, resolver_id and resolved_at are automatically set.
  *       
  *       Examples:
- *       - Close anomaly: {"status": "closed"}
+ *       - Close anomaly with notes: {"status": "closed", "resolutionNotes": "Issue resolved"}
+ *       - Update resolution notes: {"resolutionNotes": "Additional notes"}
  *       - Reopen anomaly: {"status": "open"}
- *       - Update description: {"description": "New notes"}
+ *       - Update description: {"description": "New description"}
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -64,10 +65,13 @@ import { isValidAnomalyStatus, ANOMALY_STATUSES } from "@/lib/validation/enums";
  *               status:
  *                 type: string
  *                 enum: [open, in_progress, closed]
- *                 description: New status for the anomaly
+ *                 description: New status for the anomaly (optional)
  *               description:
  *                 type: string
- *                 description: Optional updated description
+ *                 description: Updated description (optional)
+ *               resolutionNotes:
+ *                 type: string
+ *                 description: Resolution notes/comments (optional)
  *     responses:
  *       200:
  *         description: Anomaly updated successfully
@@ -111,15 +115,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "view_history");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "view_history");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const anomalyId = parseInt(id);
-    const anomaly = await getAnomalyById(anomalyId);
+    const anomaly = await getAnomalyById(tenantId, anomalyId);
 
     if (!anomaly) {
       return errorResponse("Anomaly not found", 404);
@@ -127,15 +132,22 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Check ownership: only allow viewing if anomaly belongs to user OR user is admin with permission
     if (anomaly.employee_id !== employeeId) {
-      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       if (!hasAdminPerm) {
         return errorResponse("Permission denied: you can only view your own anomalies", 403);
       }
     }
 
     return successResponse(anomaly, "Anomaly retrieved", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to retrieve anomaly", 500);
+  } catch (error: unknown) {
+    let message = "Failed to retrieve anomaly";
+    if (error instanceof Error) {
+      console.error('GET /api/anomalies/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('GET /api/anomalies/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -144,15 +156,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "resolve_anomalies");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "resolve_anomalies");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const anomalyId = parseInt(id);
-    const anomaly = await getAnomalyById(anomalyId);
+    const anomaly = await getAnomalyById(tenantId, anomalyId);
 
     if (!anomaly) {
       return errorResponse("Anomaly not found", 404);
@@ -160,17 +173,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Only allow modification if anomaly belongs to user OR user is admin
     if (anomaly.employee_id !== employeeId) {
-      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       if (!hasAdminPerm) {
         return errorResponse("Permission denied: you can only modify your own anomalies", 403);
       }
     }
 
     const body = await req.json();
-    const { description, status } = body;
+    const { description, status, resolutionNotes } = body;
 
-    if (!description && !status) {
-      return errorResponse("At least one field to update required: description or status", 422);
+    if (!description && !status && resolutionNotes === undefined) {
+      return errorResponse("At least one field to update required: description, status, or resolutionNotes", 422);
     }
 
     if (status && !isValidAnomalyStatus(status)) {
@@ -187,19 +200,41 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       }
     }
 
-    const updated = await updateAnomaly(anomalyId, { 
-      description: description !== undefined ? description : anomaly.description, 
-      status 
-    });
+    // Build update object
+    const updateData: Record<string, unknown> = {};
+    if (description !== undefined) {
+      updateData.description = description;
+    }
+    if (status !== undefined) {
+      updateData.status = status;
+    }
+    if (resolutionNotes !== undefined) {
+      updateData.resolutionNotes = resolutionNotes;
+    }
+
+    // If closing, set resolver and resolved_at
+    if (status === "closed") {
+      updateData.resolvedAt = new Date();
+      updateData.resolverId = employeeId;
+    }
+
+    const updated = await updateAnomaly(tenantId, anomalyId, updateData);
 
     if (!updated) {
       return errorResponse("Failed to update anomaly", 422);
     }
 
-    const updatedAnomaly = await getAnomalyById(anomalyId);
+    const updatedAnomaly = await getAnomalyById(tenantId, anomalyId);
     return successResponse(updatedAnomaly, "Anomaly updated successfully", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to update anomaly", 500);
+  } catch (error: unknown) {
+    let message = "Failed to update anomaly";
+    if (error instanceof Error) {
+      console.error('PUT /api/anomalies/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('PUT /api/anomalies/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
 
@@ -208,15 +243,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const authResult = verifyAuth(req);
   if (authResult.error) return authErrorResponse(authResult);
   const employeeId = authResult.payload!.sub;
+  const tenantId = authResult.payload!.data.tenant_id;
 
   try {
-    const hasPerm = await checkUserPermission(employeeId, "resolve_anomalies");
+    const hasPerm = await checkUserPermission(tenantId, employeeId, "resolve_anomalies");
     if (!hasPerm) {
       return errorResponse("Permission denied: you don't have access to this feature", 403);
     }
 
     const anomalyId = parseInt(id);
-    const anomaly = await getAnomalyById(anomalyId);
+    const anomaly = await getAnomalyById(tenantId, anomalyId);
 
     if (!anomaly) {
       return errorResponse("Anomaly not found", 404);
@@ -224,16 +260,23 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     // Only allow deletion if anomaly belongs to user OR user is admin
     if (anomaly.employee_id !== employeeId) {
-      const hasAdminPerm = await checkUserPermission(employeeId, "user_permissions_read");
+      const hasAdminPerm = await checkUserPermission(tenantId, employeeId, "user_permissions_read");
       if (!hasAdminPerm) {
         return errorResponse("Permission denied: you can only delete your own anomalies", 403);
       }
     }
 
-    await deleteAnomaly(anomalyId);
+    await deleteAnomaly(tenantId, anomalyId);
 
     return successResponse({ id: anomalyId }, "Anomaly deleted successfully", 200);
-  } catch (error: any) {
-    return errorResponse(error.message || "Failed to delete anomaly", 500);
+  } catch (error: unknown) {
+    let message = "Failed to delete anomaly";
+    if (error instanceof Error) {
+      console.error('DELETE /api/anomalies/[id] error:', error);
+      message = error.message;
+    } else {
+      console.error('DELETE /api/anomalies/[id] error:', String(error));
+    }
+    return errorResponse(message, 500);
   }
 }
