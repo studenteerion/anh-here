@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import {
   getAttendanceHistory,
   calculateWorkedHours,
+  AttendanceHistoryRow,
 } from "@/lib/db/attendances";
-import { AttendanceHistoryRow } from "@/lib/db/attendances";
 import { getLeaveRequestsByDateRange } from "@/lib/db/requests";
 
 /**

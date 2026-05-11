@@ -26,7 +26,7 @@ export function ReportsFilter({
 
   useEffect(() => {
     onFilterChange(searchTerm);
-  }, [searchTerm]);
+  }, [searchTerm, onFilterChange]);
 
   return (
     <div className="flex flex-row items-center gap-3 w-full">

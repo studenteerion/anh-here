@@ -12,7 +12,6 @@ import type { CompanyReportListItem } from '@/types';
 export default function ReportsPage() {
   const authFetch = useAuthFetch();
   const [items, setItems] = useState<CompanyReportListItem[]>([]);
-  const [allItems, setAllItems] = useState<CompanyReportListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,30 +54,14 @@ export default function ReportsPage() {
     return result;
   }, [items, searchTerm, sortBy, sortOrder]);
 
-  const reportsThisMonth = useMemo(() => {
-    const now = new Date();
-    return allItems.filter((report) => {
-      const d = new Date(report.createdAt);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }).length;
-  }, [allItems]);
-
-  const latestReportDate = useMemo(() => {
-    if (allItems.length === 0) return null;
-    return allItems[0]?.createdAt || null;
-  }, [allItems]);
-
   const fetchReports = async (targetPage = page, isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
 
     try {
-      const [listRes, allRes] = await Promise.all([
-        authFetch(`/api/company-reports?page=${targetPage}&limit=${limit}`),
-        authFetch('/api/company-reports'),
-      ]);
-      const [listJson, allJson] = await Promise.all([listRes.json(), allRes.json()]);
+      const listRes = await authFetch(`/api/company-reports?page=${targetPage}&limit=${limit}`);
+      const listJson = await listRes.json();
 
       if (listJson.status !== 'success') {
         throw new Error(listJson.message || 'Errore caricamento report');
@@ -87,10 +70,6 @@ export default function ReportsPage() {
       setItems(listJson.data.reports || []);
       setTotal(listJson.data.pagination?.total || (listJson.data.reports?.length ?? 0));
       setPage(listJson.data.pagination?.page || 1);
-
-      if (allJson.status === 'success') {
-        setAllItems(allJson.data.reports || []);
-      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err) || 'Errore durante il caricamento report');
     } finally {

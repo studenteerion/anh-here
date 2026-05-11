@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import type { NavItem, SidebarNavProps } from '@/types/sidebar';
+import type { SidebarNavProps } from '@/types/sidebar';
 
 export function SidebarNav({ items, pathname, isCollapsed, isMobileOpen, onNavigate }: SidebarNavProps) {
   return (

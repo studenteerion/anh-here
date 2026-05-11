@@ -10,7 +10,7 @@ interface AnomalyCreateFormProps {
   embedded?: boolean;
 }
 
-export function AnomalyCreateForm({ onCreated, embedded }: AnomalyCreateFormProps) {
+export function AnomalyCreateForm({ onCreated }: AnomalyCreateFormProps) {
   const authFetch = useAuthFetch();
   const [employees, setEmployees] = useState<Pick<EmployeeTableRow, 'id' | 'first_name' | 'last_name'>[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | ''>('');
@@ -26,13 +26,13 @@ export function AnomalyCreateForm({ onCreated, embedded }: AnomalyCreateFormProp
         if (json.status === 'success') {
           setEmployees(json.data.employees || []);
         }
-      } catch (err) {
-        console.error('Failed to fetch employees', err);
+      } catch {
+        console.error('Failed to fetch employees');
       }
     };
 
     fetchEmployees();
-  }, []);
+  }, [authFetch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

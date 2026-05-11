@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission, addPermissionToUser } from "@/lib/db/permissions";
 

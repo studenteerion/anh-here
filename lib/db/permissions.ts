@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import pool from "@/lib/db";
-import { Permission, PermissionException, RolePermission, PermissionFilter } from "@/types/permissions";
+import { Permission } from "@/types/permissions";
 
 export async function checkUserPermission(
   tenantId: number,
@@ -97,7 +97,7 @@ export async function addPermissionToUser(tenantId: number, user_id: number, per
       [tenantId, user_id, permission_id, isAllowed ? 1 : 0, isAllowed ? 1 : 0]
     );
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -109,8 +109,8 @@ export async function createPermission(permissionCode: string, description: stri
       [permissionCode, description]
     );
     return res.insertId;
-  } catch (e: unknown) {
-  // errore di duplicato o altro
+  } catch {
+   // errore di duplicato o altro
     return null;
   }
 }

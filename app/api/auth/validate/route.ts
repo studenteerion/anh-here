@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
+import { NextRequest } from "next/server";
+import { verifyAuth, authErrorResponse, successResponse } from "@/lib/middleware";
 
 /**
  * @swagger

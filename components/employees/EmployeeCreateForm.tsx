@@ -51,7 +51,7 @@ export default function EmployeeCreateForm({ onCreated, embedded = false }: { on
     };
 
     fetchOptions();
-  }, []);
+  }, [authFetch]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,16 +84,10 @@ export default function EmployeeCreateForm({ onCreated, embedded = false }: { on
       } else {
         setFirstName(''); setLastName(''); setEmail(''); setRoleId(''); setDepartmentId(''); setPassword('');
         setSuccess('Dipendente creato con successo');
-        onCreated && onCreated();
+        onCreated?.();
       }
-    } catch (err: unknown) {
-      let message = 'Errore nella creazione';
-      if (err instanceof Error) {
-        message = err.message;
-      } else if (err !== undefined && err !== null) {
-        message = String(err);
-      }
-      setError(message);
+    } catch {
+      setError('Errore nella creazione');
     } finally {
       setLoading(false);
     }

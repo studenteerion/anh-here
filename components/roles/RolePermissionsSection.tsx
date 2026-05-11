@@ -16,7 +16,6 @@ interface RolePermissionsProps {
 }
 
 export function RolePermissionsSection({
-  roleId,
   permissions,
   onTogglePermission,
   isExpanded: isExpandedProp = false,
@@ -62,7 +61,6 @@ export function RolePermissionsSection({
   }, [permissions, searchTerm, filterStatus, sortOrder]);
 
   const activeCount = permissions.filter((p) => p.assigned).length;
-  const inactiveCount = permissions.length - activeCount;
   const hasFilters = searchTerm !== '' || filterStatus !== 'all' || sortOrder !== 'asc';
 
   return (

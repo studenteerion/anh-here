@@ -1,9 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import { getAllDepartments, createDepartment } from "@/lib/db/departments";
 import { countRows } from "@/lib/db/utils";
-import { Department } from "@/types/departments";
 
 /**
  * @swagger

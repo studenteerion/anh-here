@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission, getUserPermissionsById, createPermission } from "@/lib/db/permissions";
-import { Permission } from "@/types/permissions";
 
 /**
  * @swagger

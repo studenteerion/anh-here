@@ -19,7 +19,6 @@ import {
 export default function RolesPage() {
   const router = useRouter();
   const authFetch = useAuthFetch();
-  const [allItems, setAllItems] = useState<RoleOption[]>([]);
   const [items, setItems] = useState<RoleOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

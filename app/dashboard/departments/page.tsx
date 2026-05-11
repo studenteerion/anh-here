@@ -19,7 +19,6 @@ import {
 export default function DepartmentsPage() {
   const router = useRouter();
   const authFetch = useAuthFetch();
-  const [allItems, setAllItems] = useState<DepartmentOption[]>([]);
   const [items, setItems] = useState<DepartmentOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

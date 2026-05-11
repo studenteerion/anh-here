@@ -20,17 +20,11 @@ const getLocalDateStr = () => {
   return `${year}-${month}-${day}`;
 };
 
-const toIsoToday = (time: string) => {
-  const today = getLocalDateStr();
-  return `${today}T${time}:00`;
-};
-
 const toIsoTodayWithNextDayIfNeeded = (startTime: string, endTime: string) => {
   const today = getLocalDateStr();
   const startIso = `${today}T${startTime}:00`;
   let endIso = `${today}T${endTime}:00`;
   
-  // If end time is before start time, assume it's next day (midnight crossing)
   if (endTime < startTime) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -83,7 +77,7 @@ export function ShiftCreateForm({ departments, onCreated, embedded }: ShiftCreat
       } else {
         setError(json.message || 'Errore nella creazione del turno');
       }
-    } catch (err) {
+    } catch {
       setError('Errore di comunicazione con il server');
     } finally {
       setCreating(false);

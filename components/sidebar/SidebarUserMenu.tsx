@@ -9,7 +9,7 @@ import {
 import { ArrowLeftRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import type { UserMenuAction, SidebarUserMenuProps } from '@/types/sidebar';
+import type { SidebarUserMenuProps } from '@/types/sidebar';
 
 export function SidebarUserMenu({
   initials,

@@ -29,13 +29,6 @@ export default function ShiftDetailPage() {
   const [employees, setEmployees] = useState<EmployeeTableRow[]>([]);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
 
-  const departmentNameById = useMemo(() => {
-    return departments.reduce<Record<number, string>>((acc, dept) => {
-      acc[dept.id] = dept.department_name;
-      return acc;
-    }, {});
-  }, [departments]);
-
   const fetchData = async () => {
     if (!shiftId || Number.isNaN(shiftId)) {
       setError('ID turno non valido');

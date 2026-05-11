@@ -11,7 +11,12 @@ jest.mock('@/lib/db/attendances');
 jest.mock('@/lib/db');
 
 describe('POST /api/attendances/punch', () => {
-  let mockConnection: any;
+  let mockConnection: {
+    beginTransaction: jest.Mock;
+    commit: jest.Mock;
+    rollback: jest.Mock;
+    release: jest.Mock;
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -124,8 +129,6 @@ describe('POST /api/attendances/punch', () => {
       id: 1,
       name: 'Morning Shift',
     };
-
-    const now = new Date();
 
     (middleware.verifyAuth as jest.Mock).mockReturnValueOnce(mockAuthResult);
     (permissions.checkUserPermission as jest.Mock).mockResolvedValueOnce(true);

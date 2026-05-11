@@ -37,7 +37,7 @@ export function DepartmentCreateForm({ onCreated, embedded }: DepartmentCreateFo
       } else {
         setError(json.message || 'Errore nella creazione del dipartimento');
       }
-    } catch (err) {
+    } catch {
       setError('Errore di comunicazione con il server');
     } finally {
       setCreating(false);

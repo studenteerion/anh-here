@@ -6,11 +6,9 @@ import TenantStats from '@/components/tenants/TenantStats';
 import TenantList from '@/components/tenants/TenantList';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import type { PlatformMe } from '@/types/tenants';
 
 export default function PlatformDashboardPage() {
   const { isLoading } = useAuth();
-  const [me, setMe] = useState<PlatformMe | null>(null);
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -26,14 +24,7 @@ export default function PlatformDashboardPage() {
   });
 
   useEffect(() => {
-    const load = async () => {
-      const meRes = await fetch('/api/platform/me', { credentials: 'include' });
-      if (meRes.ok) {
-        const meJson = await meRes.json();
-        setMe(meJson.data || null);
-      }
-    };
-    load();
+    // Load any needed data on mount if required
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

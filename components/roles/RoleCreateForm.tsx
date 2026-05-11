@@ -37,7 +37,7 @@ export function RoleCreateForm({ onCreated, embedded }: RoleCreateFormProps) {
       } else {
         setError(json.message || 'Errore nella creazione del ruolo');
       }
-    } catch (err) {
+    } catch {
       setError('Errore di comunicazione con il server');
     } finally {
       setCreating(false);

@@ -3,8 +3,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { AlertTriangle, RefreshCw, X, Plus, User, Settings, History, MoreVertical, Trash2, CheckCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { AlertTriangle, RefreshCw, X, Plus, User, Settings, MoreVertical, Trash2, CheckCircle } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,6 @@ const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
 export default function AnomaliesPage() {
-  const router = useRouter();
   const authFetch = useAuthFetch();
   const [items, setItems] = useState<AnomalyListItem[]>([]);
   const [loading, setLoading] = useState(true);

@@ -15,4 +15,4 @@ export function verify<T = unknown>(token: string, secret: string, options?: Rec
   return jwtLib.verify(token, secret, options) as T;
 }
 
-export default { sign, verify };
+export const jwtConfig = { sign, verify };

@@ -3,7 +3,7 @@
 import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getEmployeeAnomalies, getEmployeeAnomaliesCount, getAnomalyById } from "@/lib/db/anomalies";
+import { getAnomalyById } from "@/lib/db/anomalies";
 import pool from "@/lib/db";
 
 /**

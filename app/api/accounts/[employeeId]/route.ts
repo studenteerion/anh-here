@@ -3,7 +3,6 @@ import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@
 import { checkUserPermission } from "@/lib/db/permissions";
 import {
   getUserAccountByEmployeeId,
-  getUserAccountByEmail,
   getUserAccountByEmailExcluding,
   updateUserAccountEmail,
   updateUserAccountPassword,

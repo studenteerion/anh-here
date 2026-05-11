@@ -2,7 +2,7 @@
 
 import pool from "@/lib/db";
 import { Department, DepartmentFilter } from "@/types/departments";
-import { countRows, getById, getByField, insert, updateById, deleteById, exists } from "./utils";
+import { getById, getByField, insert, updateById, deleteById } from "./utils";
 
 export async function getAllDepartments(
   tenantId: number,

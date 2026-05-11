@@ -16,11 +16,6 @@ const toTimeInputValue = (value: string) => {
   return match ? match[1] : '';
 };
 
-const toIsoToday = (time: string) => {
-  const today = new Date().toISOString().slice(0, 10);
-  return `${today}T${time}:00`;
-};
-
 const toIsoTodayWithNextDayIfNeeded = (startTime: string, endTime: string) => {
   const today = new Date().toISOString().slice(0, 10);
   const startIso = `${today}T${startTime}:00`;

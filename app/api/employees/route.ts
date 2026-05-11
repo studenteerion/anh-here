@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
-import { getAllEmployees, getEmployeeById, createEmployee, getEmployeesCount } from "@/lib/db/employees";
+import { getAllEmployees, createEmployee, getEmployeesCount } from "@/lib/db/employees";
 import { exists } from "@/lib/db/utils";
-import { Employee } from "@/types/employees";
 import { isValidEmployeeStatus, EMPLOYEE_STATUSES } from "@/lib/validation/enums";
 import { hashPassword } from "@/lib/auth";
+import { Employee } from "@/types/employees";
 
 /**
  * @swagger

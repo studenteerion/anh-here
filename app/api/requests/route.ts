@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { verifyAuth, authErrorResponse, errorResponse, successResponse } from "@/lib/middleware";
 import { checkUserPermission } from "@/lib/db/permissions";
 import { createLeaveRequest, getUserLeaveRequests, getUserLeaveRequestsCount } from "@/lib/db/requests";
-import { LeaveRequest } from "@/types/requests";
 import { isValidLeaveRequestType, isValidLeaveRequestStatus, LEAVE_REQUEST_TYPES, LEAVE_REQUEST_STATUSES } from "@/lib/validation/enums";
+import { LeaveRequest } from "@/types/requests";
 
 /**
  * @swagger

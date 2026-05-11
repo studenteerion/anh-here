@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { AlertTriangle, ArrowLeft, Save, UserCog, FileClock, History, CheckSquare } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Save, UserCog, History, CheckSquare } from 'lucide-react';
 import { useAuthFetch } from '@/lib/api/authFetch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +40,6 @@ export default function EmployeeDetailPage() {
 
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequestSummary[]>([]);
   const [anomalies, setAnomalies] = useState<AnomalyListItem[]>([]);
-  const [activeHistoryTab, setActiveHistoryTab] = useState<'attendance' | 'anomalies' | 'requests'>('attendance');
 
   const loadAll = async () => {
     if (!employeeId || Number.isNaN(employeeId)) {

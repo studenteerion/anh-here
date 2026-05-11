@@ -5,7 +5,7 @@
  * It eliminates the need for `as any` casts when working with database operations.
  */
 
-import { RowDataPacket, ResultSetHeader, Pool, PoolConnection } from 'mysql2/promise';
+import { RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 
 /**
  * Result from a SELECT query
