@@ -7,6 +7,12 @@ Questo documento descrive i test unitari per le seguenti endpoint API:
 - **Me** (`GET /api/auth/me`)
 - **Attendances Punch** (`POST /api/attendances/punch`)
 
+## 📚 DOCUMENTAZIONE CORRELATA
+
+**Nuovi ai test?** Leggi questi documenti:
+- **[TEST_EXPLANATION.md](docs/TEST_EXPLANATION.md)** - Spiegazione dettagliata di COME funzionano i test, con esempi pratici
+- **[TEST_VS_REAL.md](docs/TEST_VS_REAL.md)** - Differenza tra test unitari e richieste HTTP reali
+
 ## Installazione
 
 Le dipendenze di test sono già installate. Se hai bisogno di reinstallarle:

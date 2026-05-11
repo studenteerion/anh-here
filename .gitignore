@@ -18,6 +18,7 @@ yarn.lock
 
 # Next.js build directories
 /.next/
+/.swc/
 /out/
 /build
 
