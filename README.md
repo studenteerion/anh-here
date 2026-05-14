@@ -2,10 +2,10 @@
 ## Cognome Nome
 **Ballushi Erion**
 ## Tagline
-**Controllo delle presenze senza stress. Con ANH-here, tutto torna.**
+Controllo delle presenze senza stress. Con ANH-here, tutto torna.
 ---
 ## Descrizione
-**ANH-here è un servizio che permette all’Ufficio Amministrazione Dipendenti di registrare in modo automatizzato ed efficace le effettive ore di lavoro di un impiegato, grazie a un sistema integrato di rilevamento delle presenze che consente di monitorare gli orari di entrata e uscita, le pause e le eventuali assenze, garantendo così una gestione trasparente e precisa del monte ore lavorativo.**
+ANH-here è un servizio che permette all’Ufficio Amministrazione Dipendenti di registrare in modo automatizzato ed efficace le effettive ore di lavoro di un impiegato, grazie a un sistema integrato di rilevamento delle presenze che consente di monitorare gli orari di entrata e uscita, le pause e le eventuali assenze, garantendo così una gestione trasparente e precisa del monte ore lavorativo.
 ---
 ## Descrizione completa
 ANH-here è una piattaforma digitale progettata per semplificare e rendere più efficiente la gestione delle presenze e degli orari di lavoro all’interno di un’azienda. Il sistema consente all’Ufficio Amministrazione Dipendenti di monitorare in modo preciso e automatizzato le effettive ore lavorate da ciascun dipendente, registrando gli orari di entrata e uscita, le pause, le assenze, i permessi e ogni altra variazione della giornata lavorativa.
