@@ -15,6 +15,8 @@ ANH-here è una piattaforma digitale progettata per semplificare e rendere più 
 Grazie alla sua struttura flessibile e ai ruoli differenziati per tipologia di utente, ANH-here permette una gestione capillare del personale: ogni figura coinvolta ha accesso a funzionalità specifiche, adeguate alle proprie responsabilità. La piattaforma consente non solo di registrare le presenze in tempo reale, ma anche di visualizzare lo storico lavorativo, ricevere notifiche in caso di anomalie, approvare richieste, pianificare turni, inclusi quelli straordinari o in trasferta, e generare report dettagliati per l’analisi delle attività.
 Inoltre, ANH-here integra strumenti utili per la gestione amministrativa, come il calcolo automatico del monte ore, la gestione dell’anagrafica del personale e l’esportazione dei dati verso i sistemi di elaborazione paghe. Il risultato è un sistema completo, sicuro e trasparente, in grado di adattarsi alle esigenze organizzative dell’azienda e di garantire il rispetto delle politiche interne e delle normative contrattuali.
 
+
+> 📄 **Per una descrizione ancora più dettagliata**, consulta il file **[ANH-here.docx](./ANH-here.docx)**
 ---
 ## Target
 Il servizio si rivolge principalmente alle figure professionali che operano all'interno degli uffici di amministrazione del personale, in particolare:
