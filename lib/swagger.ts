@@ -19,8 +19,34 @@ const resolveApiFolder = () => {
   return 'app/api';
 };
 
-export const getApiDocs = async () => {
+export const getApiDocs = async (options?: { baseUrl?: string }) => {
   const apiFolder = resolveApiFolder();
+  const envApiUrl = process.env.API_URL || 'http://localhost:3000';
+  const baseUrl = options?.baseUrl || envApiUrl;
+  const servers = [
+    {
+      url: baseUrl,
+      description:
+        process.env.NODE_ENV === 'production'
+          ? 'Production Server'
+          : 'Current Server',
+    },
+  ];
+
+  if (envApiUrl && envApiUrl !== baseUrl) {
+    servers.push({
+      url: envApiUrl,
+      description: 'Configured Server (API_URL)',
+    });
+  }
+
+  if (!servers.find((server) => server.url.includes('localhost'))) {
+    servers.push({
+      url: 'http://localhost:3000',
+      description: 'Local Development Server',
+    });
+  }
+
   const spec = createSwaggerSpec({
     apiFolder,
     definition: {
@@ -34,12 +60,7 @@ export const getApiDocs = async () => {
           email: 'support@anhere.local',
         },
       },
-      servers: [
-        {
-          url: process.env.API_URL || 'http://localhost:3000',
-          description: 'Development Server',
-        },
-      ],
+      servers,
       components: {
         securitySchemes: {
           BearerAuth: {
