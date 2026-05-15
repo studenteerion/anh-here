@@ -2,21 +2,64 @@ import { createSwaggerSpec } from 'next-swagger-doc';
 import fs from 'node:fs';
 import path from 'node:path';
 
+let resolvedApiFolder: string | null = null;
+
+const hasSwaggerAnnotations = (folder: string): boolean => {
+  if (!fs.existsSync(folder)) {
+    return false;
+  }
+
+  const entries = fs.readdirSync(folder, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(folder, entry.name);
+    if (entry.isDirectory()) {
+      if (hasSwaggerAnnotations(fullPath)) {
+        return true;
+      }
+      continue;
+    }
+
+    if (!/route\.(ts|tsx|js|jsx)$/i.test(entry.name)) {
+      continue;
+    }
+
+    try {
+      const content = fs.readFileSync(fullPath, 'utf8');
+      if (content.includes('@swagger')) {
+        return true;
+      }
+    } catch {
+      // ignore unreadable files and keep scanning
+    }
+  }
+
+  return false;
+};
+
 const resolveApiFolder = () => {
+  if (resolvedApiFolder) {
+    return resolvedApiFolder;
+  }
+
+  const cwd = process.cwd();
   const candidates = [
     process.env.SWAGGER_API_FOLDER,
-    path.join(process.cwd(), 'app', 'api'),
-    path.join(process.cwd(), '..', 'app', 'api'),
-    path.join(process.cwd(), '..', '..', 'app', 'api'),
+    path.join(cwd, 'app', 'api'),
+    path.join(cwd, '.next', 'standalone', 'app', 'api'),
+    path.join(cwd, '.next', 'server', 'app', 'api'),
+    path.join(cwd, '..', 'app', 'api'),
+    path.join(cwd, '..', '..', 'app', 'api'),
   ].filter(Boolean) as string[];
 
   for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
+    if (hasSwaggerAnnotations(candidate)) {
+      resolvedApiFolder = candidate;
       return candidate;
     }
   }
 
-  return 'app/api';
+  resolvedApiFolder = 'app/api';
+  return resolvedApiFolder;
 };
 
 export const getApiDocs = async (options?: { baseUrl?: string }) => {
