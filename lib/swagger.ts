@@ -1,8 +1,28 @@
 import { createSwaggerSpec } from 'next-swagger-doc';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const resolveApiFolder = () => {
+  const candidates = [
+    process.env.SWAGGER_API_FOLDER,
+    path.join(process.cwd(), 'app', 'api'),
+    path.join(process.cwd(), '..', 'app', 'api'),
+    path.join(process.cwd(), '..', '..', 'app', 'api'),
+  ].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return 'app/api';
+};
 
 export const getApiDocs = async () => {
+  const apiFolder = resolveApiFolder();
   const spec = createSwaggerSpec({
-    apiFolder: 'app/api',
+    apiFolder,
     definition: {
       openapi: '3.0.0',
       info: {
